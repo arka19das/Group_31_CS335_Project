@@ -18,3 +18,6 @@ We created a specification of language for which compiler will be developed. For
 # to test test_lexer_1 
 ./testing_script.sh 1
 ```
+# Things to do
+Illegal character, directly stop lexing and exit.  
+New and delete keyword 
