@@ -1,10 +1,16 @@
 import ply.yacc as yacc
 from scanner import *
 import pydot
+import pprint
 
 myobj = Mylexer()
 myobj.build()
 tokens = myobj.tokens
+
+
+def p_start(p):
+    """start : translation_unit"""
+    p[0] = ["start"] + p[1:]
 
 
 def p_primary_expression(p):
@@ -663,6 +669,7 @@ if __name__ == "__main__":
             tree = yacc.parse(data)
             if args.output[-4:] == ".dot":
                 args.output = args.output[:-4]
+            pprint.PrettyPrinter(depth=19).pprint(tree)
             # if args.trim:
             #     generate_graph_from_ast(reduce_ast(tree), args.output)
             # else:
