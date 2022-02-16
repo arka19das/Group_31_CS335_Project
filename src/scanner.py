@@ -29,8 +29,7 @@ class Mylexer(object):
         "sizeof": "SIZEOF",
         "struct": "STRUCT",
         "switch": "SWITCH",
-        "typedef": "TYPEDEF",
-        "union": "UNION",  # temporarily having union
+        "typedef": "TYPEDEF",  # "union": "UNION",  # temporarily having union
         "unsigned": "UNSIGNED",
         "void": "VOID",
         "while": "WHILE",
@@ -38,9 +37,9 @@ class Mylexer(object):
         "private": "PRIVATE",
         "public": "PUBLIC",
         "protected": "PROTECTED",
-        "bool": "BOOLEAN",  # newly added
-        "true": "TRUE",  # newly added might be removed
-        "false": "FALSE",  # newly added might be removed
+        # "bool": "BOOLEAN",  # newly added
+        # "true": "TRUE",  # newly added might be removed
+        # "false": "FALSE",  # newly added might be removed
     }
 
     tokens = list(reserved.values()) + [
@@ -101,6 +100,24 @@ class Mylexer(object):
     ]
 
     TYPE_NAMES = []
+
+    def t_TRUE(self, t):
+        r"true"
+        t.type = "INT_CONSTANT"
+        t.value = "1"
+        return t
+
+    def t_FALSE(self, t):
+        r"false"
+        t.type = "INT_CONSTANT"
+        t.value = "0"
+        return t
+
+    def t_BOOLEAN(self, t):
+        r"bool"
+        t.type = "INT"
+        t.value = "int"
+        return t
 
     def t_IDENTIFIER(self, t):
         r"[a-zA-Z_][a-zA-Z0-9_]*"
