@@ -132,7 +132,7 @@ def p_exclusive_or_expression(p):
 
     p[0] = ['exclusive_or_expression'] + p[1:]
 
-#Corrected
+#CORRECTED
 def p_inclusive_or_expression(p):
     """inclusive_or_expression : exclusive_or_expression
     | inclusive_or_expression BITWISE_OR exclusive_or_expression
@@ -183,7 +183,6 @@ def p_assignment_operator(p):
 
     p[0] = ['assignment_operator'] + p[1]
 
-#Are we allowing colon assignment
 def p_expression(p):
     """expression : assignment_expression
     | expression COMMA assignment_expression"""
@@ -195,9 +194,28 @@ def p_constant_expression(p):
 
     p[0] = ['constant_expression'] + p[1]
 
-#Declaration MISSING if allowing
+#ADDED
+def p_declaration(p):
+    """ declaration : declaration_specifier SEMICOLON
+    | declaration_specifier init_declarator_list SEMICOLON 
+    """
 
-# Have to rethink, function specifier MISSING 
+    p[0] = ['declaration'] + p[1:]
+    
+# Have to rethink, function specifier MISSING and we are not allowing only function declaration
+# def p_declaration_specifiers(p):
+#     """declaration_specifiers : storage_class_specifier declaration_specifiers
+#     | storage_class_specifier
+#     | type_specifier declaration_specifiers
+#     | type_specifier
+#     | type_qualifier declaration_specifiers
+#     | type_qualifier
+#     | function_specifier declaration_specifiers
+#     | function_specifier
+#     r"""
+
+#     p[0] = ['declaration_specifier'] + p[1:]
+
 def p_declaration_specifiers(p):
     """declaration_specifiers : storage_class_specifier declaration_specifiers
     | storage_class_specifier
@@ -205,9 +223,7 @@ def p_declaration_specifiers(p):
     | type_specifier
     | type_qualifier declaration_specifiers
     | type_qualifier
-    | function_specifier declaration_specifiers
-    | function_specifier
-    r"""
+    """
 
     p[0] = ['declaration_specifier'] + p[1:]
 
@@ -229,8 +245,7 @@ def p_storage_class_specifier(p):
     p[0] = ['storage_class_specifier'] + p[1]
 
 # p_class_defifnition MISSING
-#What TYPE_NAME specifies, Avik-pal ke tokens mein hai apne mein nahi hai 
-#CHANGED
+#CHANGED CORRECTED
 def p_type_specifier(p):
     """type_specifier : VOID
     | CHAR
@@ -244,7 +259,7 @@ def p_type_specifier(p):
     | BOOL
     | struct_specifier
     | class_definition
-    | TYPE_NAME"""
+    """
 
     p[0] = ['type_specifier'] + p[1:]
 
@@ -266,7 +281,6 @@ def p_struct_declaration(p):
    
     p[0] = ['struct_declaration'] + p[1:]
 
-# Is it correct ? Mean are we allowing all such rules or restrictive
 def p_specifier_qualifier_list(p):
     """specifier_qualifier_list : type_specifier specifier_qualifier_list
     | type_specifier
@@ -289,11 +303,9 @@ def p_struct_declarator(p):
     
     p[0] = ['struct_declaration'] + p[1:]
 
-# Are we allowing volatile
+# CORRECTED CHANGED
 def p_type_qualifier(p):
-    """type_qualifier
-    : CONST
-    | VOLATILE"""
+    """type_qualifier : CONST """
 
     p[0] = ['type_qualifier'] + p[1]
 
@@ -303,7 +315,6 @@ def p_declarator(p):
 
     p[0] = ['declarator'] + p[1:]
 
-# All type allowed ?
 def p_direct_declarator(p):
     """direct_declarator : IDENTIFIER
     | LEFT_BRACKET declarator RIGHT_BRACKET
@@ -329,10 +340,9 @@ def p_type_qualifier_list(p):
 
     p[0] = ['type_qualifier_list'] + p[1:]
 
-#Are we allowing ellipsis
+#CHANGED
 def p_parameter_type_list(p):
-    """parameter_type_list : parameter_list
-    | parameter_list COMMA ELLIPSIS"""
+    """parameter_type_list : parameter_list"""
 
     p[0] = ['parameter_type_list'] + p[1:]
 
@@ -413,25 +423,50 @@ def p_labeled_statement(p):
 
 ##HIGHLY ERROR PRONE FROM HERE TO END
 ##This portion is different for my code
-## DOUBT FROM 456-473 Afterwards OK
-def p_compound_statement(p):
+# def p_compound_statement(p):
+#     """compound_statement : LEFT_CURLY_BRACKET RIGHT_CURLY_BRACKET
+#     | LEFT_CURLY_BRACKET block_list RIGHT_CURLY_BRACKET"""
+
+#     p[0] = ['compound_statement'] + p[1:]
+
+# def p_block_item_list(p):
+#     """block_item_list : block_item
+#     | block_item_list block_item"""
+
+#     p[0] = ['block_item_list'] + p[1:]
+
+# def p_block_item(p):
+#     """block_item : declaration
+#     | statement"""
+
+#     p[0] = ['block_item'] + p[1:]
+
+#CHANGED
+def p_compund_statement(p):
     """compound_statement : LEFT_CURLY_BRACKET RIGHT_CURLY_BRACKET
-    | LEFT_CURLY_BRACKET block_list RIGHT_CURLY_BRACKET"""
+     | LEFT_CURLY_BRACKET statement_list RIGHT_CURLY_BRACKET
+     | LEFT_CURLY_BRACKET declaration_list RIGHT_CURLY_BRACKET
+     | LEFT_CURLY_BRACKET declaration_list statement_list RIGHT_CURLY_BRACKET
+    """
 
     p[0] = ['compound_statement'] + p[1:]
 
-def p_block_item_list(p):
-    """block_item_list : block_item
-    | block_item_list block_item"""
+#ADDED
+def p_statement_list(p):
+    """
+    statement_list : statement
+    | statement_list statement
+    """
+    p[0] = ['statement_list'] + p[1:]
 
-    p[0] = ['block_item_list'] + p[1:]
-
-def p_block_item(p):
-    """block_item : declaration
-    | statement"""
-
-    p[0] = ['block_item'] + p[1:]
-
+#ADDED
+def p_declaration_list(p):
+    """
+    declaration_list : declaration
+    | declaration_list declaration
+    """
+    p[0] = ['declaration_list'] + p[1:]
+        
 def p_expression_statement(p):
     """expression_statement : SEMICOLON
     | expression SEMICOLON"""
@@ -476,7 +511,7 @@ def p_external_declaration(p):
 
     p[0] = ['external_declaration'] + p[1:]
 
-#Changed
+#CHANGED
 def p_function_definition(p):
     """function_definition : declaration_specifiers declarator declaration_list compound_statement
     | declaration_specifiers declarator compound_statement
@@ -485,18 +520,82 @@ def p_function_definition(p):
 
     p[0] = ['function_definition'] + p[1:]
 
-def p_declaration_list(p):
-    """declaration_list : declaration
-    | declaration_list declaration"""
 
-    p[0] = ['declaration'] + p[1:]
+def p_inheritance_specifier(p):
+    """inheritance_specifier : access_specifier IDENTIFIER"""
+    p[0] = ("inheritance_specifier",) + tuple(p[-len(p) + 1 :])
+
+
+def p_inheritance_specifier_list(p):
+    """inheritance_specifier_list : inheritance_specifier
+    | inheritance_specifier_list COMMA inheritance_specifier"""
+    p[0] = ("inheritance_specifier_list",) + tuple(p[-len(p) + 1 :])
+
+
+def p_access_specifier(p):
+    """access_specifier : PRIVATE
+    | PUBLIC
+    | PROTECTED"""
+    p[0] = p[1]
+
+def p_class_definition_head(p):
+    """class_definition_head : CLASS 
+    | CLASS INHERITANCE_OP inheritance_specifier_list
+    | CLASS IDENTIFIER
+    | CLASS IDENTIFIER  INHERITANCE_OP inheritance_specifier_list"""
+    p[0] = ("class_definition_head",) + tuple(p[-len(p) + 1 :])
+
+
+def p_class_definition(p):
+    """class_definition : class_definition_head lbrace class_internal_definition_list rbrace
+    | class_definition_head"""
+    p[0] = ("class_definition",) + tuple(p[-len(p) + 1 :])
+
+
+def p_class_internal_definition_list(p):
+    """class_internal_definition_list : class_internal_definition
+    | class_internal_definition_list class_internal_definition"""
+    p[0] = ("class_internal_definition_list",) + tuple(p[-len(p) + 1 :])
+
+
+def p_class_internal_definition(p):
+    """class_internal_definition : access_specifier lbrace class_member_list rbrace SEMICOLON"""
+    p[0] = ("class_internal_definition",) + tuple(p[-len(p) + 1 :])
+
+
+def p_class_member_list(p):
+    """class_member_list : class_member
+    | class_member_list class_member"""
+    p[0] = ("class_member_list",) + tuple(p[-len(p) + 1 :])
+
+
+def p_class_member(p):
+    """class_member : function_definition
+    | declaration"""
+    p[0] = ("class_member",) + tuple(p[-len(p) + 1 :])
 
 # Build the parser
 parser = yacc.yacc()
 
-# def getArgs():
-#     parser = argparse.ArgumentParser()
-#     parser.add_argument("input", type=str, default=None, help="Input file")
-#     parser.add_argument("-o", "--output", type=str, default="AST", help="Output file")
-#     parser.add_argument("-t", "--trim", action="store_true", help="Trimmed ast")
-#     return parser
+def getArgs():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("input", type=str, default=None, help="Input file")
+    parser.add_argument("-o", "--output", type=str, default="AST", help="Output file")
+    parser.add_argument("-t", "--trim", action="store_true", help="Trimmed ast")
+    return parser
+
+
+if __name__ == "__main__":
+    args = getArgs().parse_args()
+    if args.input == None:
+        print("No input file specified")
+    else:
+        with open(str(args.input), "r+") as file:
+            data = file.read()
+            tree = yacc.parse(data)
+            if args.output[-4:] == ".dot":
+                args.output = args.output[:-4]
+            # if args.trim:
+            #     generate_graph_from_ast(reduce_ast(tree), args.output)
+            # else:
+            #     generate_graph_from_ast(tree, args.output)
