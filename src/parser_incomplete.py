@@ -576,13 +576,13 @@ def p_function_definition(p):
 
 def p_inheritance_specifier(p):
     """inheritance_specifier : access_specifier IDENTIFIER"""
-    p[0] = ("inheritance_specifier",) + tuple(p[-len(p) + 1 :])
+    p[0] = ["inheritance_specifier"] + p[1:]
 
 
 def p_inheritance_specifier_list(p):
     """inheritance_specifier_list : inheritance_specifier
     | inheritance_specifier_list COMMA inheritance_specifier"""
-    p[0] = ("inheritance_specifier_list",) + tuple(p[-len(p) + 1 :])
+    p[0] = ["inheritance_specifier_list"] + p[1:]
 
 
 def p_access_specifier(p):
@@ -597,36 +597,36 @@ def p_class_definition_head(p):
     | CLASS INHERITANCE_OP inheritance_specifier_list
     | CLASS IDENTIFIER
     | CLASS IDENTIFIER  INHERITANCE_OP inheritance_specifier_list"""
-    p[0] = ("class_definition_head",) + tuple(p[-len(p) + 1 :])
+    p[0] = ["class_definition_head"] + p[1:]
 
 
 def p_class_definition(p):
     """class_definition : class_definition_head LEFT_CURLY_BRACKET class_internal_definition_list RIGHT_CURLY_BRACKET
     | class_definition_head"""
-    p[0] = ("class_definition",) + tuple(p[-len(p) + 1 :])
+    p[0] = ["class_definition"] + p[1:]
 
 
 def p_class_internal_definition_list(p):
     """class_internal_definition_list : class_internal_definition
     | class_internal_definition_list class_internal_definition"""
-    p[0] = ("class_internal_definition_list",) + tuple(p[-len(p) + 1 :])
+    p[0] = ["class_internal_definition_list"] + p[1:]
 
 
 def p_class_internal_definition(p):
     """class_internal_definition : access_specifier LEFT_CURLY_BRACKET class_member_list RIGHT_CURLY_BRACKET SEMICOLON"""
-    p[0] = ("class_internal_definition",) + tuple(p[-len(p) + 1 :])
+    p[0] = ["class_internal_definition"] + p[1:]
 
 
 def p_class_member_list(p):
     """class_member_list : class_member
     | class_member_list class_member"""
-    p[0] = ("class_member_list",) + tuple(p[-len(p) + 1 :])
+    p[0] = ["class_member_list"] + p[1:]
 
 
 def p_class_member(p):
     """class_member : function_definition
     | declaration"""
-    p[0] = ("class_member",) + tuple(p[-len(p) + 1 :])
+    p[0] = ["class_member"] + p[1:]
 
 
 # CAN BE CHANGED
