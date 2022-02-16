@@ -1,3 +1,4 @@
+# line 101 warning
 import ply.lex as lex
 import sys
 import argparse
@@ -97,6 +98,7 @@ class Mylexer(object):
         #'EXPONENT',
         "BITWISE_OR",
         "QUESTION",
+        "TYPE_NAME",  ##############NOT SURE of implications############
     ]
 
     TYPE_NAMES = []

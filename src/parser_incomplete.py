@@ -517,12 +517,12 @@ def p_block_item(p):
 
 
 # ADDED
-# def p_declaration_list(p):
-#     """
-#     declaration_list : declaration
-#     | declaration_list declaration
-#     """
-#     p[0] = ["declaration_list"] + p[1:]
+def p_declaration_list(p):
+    """
+    declaration_list : declaration
+    | declaration_list declaration
+    """
+    p[0] = ["declaration_list"] + p[1:]
 
 
 def p_expression_statement(p):
