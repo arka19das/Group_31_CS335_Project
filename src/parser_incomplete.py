@@ -669,7 +669,7 @@ if __name__ == "__main__":
             tree = yacc.parse(data)
             if args.output[-4:] == ".dot":
                 args.output = args.output[:-4]
-            pprint.PrettyPrinter(depth=19).pprint(tree)
+            pprint.PrettyPrinter(depth=None).pprint(tree)
             # if args.trim:
             #     generate_graph_from_ast(reduce_ast(tree), args.output)
             # else:
