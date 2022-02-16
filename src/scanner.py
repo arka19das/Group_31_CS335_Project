@@ -1,4 +1,3 @@
-from tkinter.tix import Tree
 import ply.lex as lex
 import sys
 import argparse
