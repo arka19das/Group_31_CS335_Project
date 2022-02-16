@@ -1,9 +1,11 @@
+from tkinter.tix import Tree
 import ply.lex as lex
 import sys
 import argparse
 
 
 class Mylexer(object):
+    error_flag = False
     reserved = {
         "auto": "AUTO",
         "break": "BREAK",
@@ -15,23 +17,23 @@ class Mylexer(object):
         "default": "DEFAULT",
         "do": "DO",
         "double": "DOUBLE",
-        "else": "ELSE",  
+        "else": "ELSE",
         "float": "FLOAT",
         "for": "FOR",
         "goto": "GOTO",
         "if": "IF",
         "int": "INT",
-        "long": "LONG",  
+        "long": "LONG",
         "return": "RETURN",
         "short": "SHORT",
         "signed": "SIGNED",
-        "sizeof": "SIZEOF",  
+        "sizeof": "SIZEOF",
         "struct": "STRUCT",
         "switch": "SWITCH",
         "typedef": "TYPEDEF",
         "union": "UNION",  # temporarily having union
         "unsigned": "UNSIGNED",
-        "void": "VOID",  
+        "void": "VOID",
         "while": "WHILE",
         "class": "CLASS",
         "private": "PRIVATE",
@@ -49,7 +51,7 @@ class Mylexer(object):
         "OCT_CONSTANT",
         "INT_CONSTANT",
         "CHAR_CONSTANT",
-        "STRING_LITERAL",  
+        "STRING_LITERAL",
         "RIGHT_ASSIGN",
         "LEFT_ASSIGN",
         "ADD_ASSIGN",
@@ -104,16 +106,19 @@ class Mylexer(object):
     def t_IDENTIFIER(self, t):
         r"[a-zA-Z_][a-zA-Z0-9_]*"
         t.type = self.reserved.get(t.value, "IDENTIFIER")
+        if t.type == "IDENTIFIER":
+            if t.value in self.TYPE_NAMES:
+                t.type = "TYPE_NAME"
         # incomplete
         return t
-        
+
     def t_NEWLINE(self, t):
         r"\n+"
         t.lexer.lineno += t.value.count("\n")
 
     def t_comment(self, t):
         r"/\*(.|\n)*?\*/ | //(.)*?\n"
-        t.lexer.lineno += t.value.count("\n")
+        t.lexer.lineno += t.value.count("\|n")
 
     def t_preprocessor(self, t):
         r"\#(.)*?\n"
@@ -156,8 +161,8 @@ class Mylexer(object):
     t_EQ = r"="
     t_LEFT_BRACKET = r"\("
     t_RIGHT_BRACKET = r"\)"
-    t_LEFT_THIRD_BRACKET = r"(\[)" #|<: 
-    t_RIGHT_THIRD_BRACKET = r"(\])" #|:>
+    t_LEFT_THIRD_BRACKET = r"(\[)"  # |<:
+    t_RIGHT_THIRD_BRACKET = r"(\])"  # |:>
     t_DOT = r"\."
     t_BITWISE_AND = r"&"
     t_BITWISE_NOT = r"~"
@@ -176,7 +181,8 @@ class Mylexer(object):
     t_ignore = " \t"
 
     def t_error(self, t):
-        print("Illegal character '%s'" % t.value[0])
+        print("Illegal character '%s' at %d" % (t.value[0], self.find_column(data, t)))
+        self.error_flag = True
         t.lexer.skip(1)
 
     @staticmethod
@@ -186,16 +192,17 @@ class Mylexer(object):
 
     # Build the lexer
     def build(self, **kwargs):
-        #lex.lex(debug=1)
+        # lex.lex(debug=1)
         # lexer=lex.lex(optimize=1)
         self.lexer = lex.lex(module=self, **kwargs)
 
     def test(self, data):
         self.lexer.input(data)
-        while True:
+        while self.error_flag == False:
             tok = self.lexer.token()
-            if not tok:
+            if self.error_flag == True or not tok:
                 break
+
             print(
                 "|{: <20} |{: <20} |{: >20} |{:>20}|".format(
                     tok.type, tok.value, tok.lineno, self.find_column(data, tok)
