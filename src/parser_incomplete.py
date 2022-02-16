@@ -6,17 +6,6 @@ myobj = Mylexer()
 myobj.build()
 tokens = myobj.tokens
 
-# CAN BE CHANGED
-def p_error(p):
-    # global flag_for_error
-    # flag_for_error = 1
-
-    if p is not None:
-        print("error at line no:  %s :: %s" % ((p.lineno), (p.value)))
-        parser.errok()
-    else:
-        print("Unexpected end of input")
-
 
 def p_primary_expression(p):
     """primary_expression : IDENTIFIER
@@ -638,6 +627,18 @@ def p_class_member(p):
     """class_member : function_definition
     | declaration"""
     p[0] = ("class_member",) + tuple(p[-len(p) + 1 :])
+
+
+# CAN BE CHANGED
+def p_error(p):
+    # global flag_for_error
+    # flag_for_error = 1
+
+    if p is not None:
+        print("error at line no:  %s :: %s" % ((p.lineno), (p.value)))
+        parser.errok()
+    else:
+        print("Unexpected end of input")
 
 
 # Build the parser
