@@ -27,14 +27,15 @@ for i in range(2, 723, 2):
 graph = pydot.Dot("Grammar_graph", graph_type="graph", bgcolor="white")
 
 for i in range(0, 361):
-    my_node = pydot.Node(f'I{i}', label="Foo", shape="circle", color="blue")
+    my_node = pydot.Node(str(i), label=f"I{i}", shape="circle", color="blue")
     graph.add_node(my_node)
 
 for key, value in shift_dict.items():
-    #print(key)
+    # print(key)
     graph.add_edge(pydot.Edge(str(key[0]), str(key[1]), label=value, color="blue"))
 
 graph.write_raw("output_raw.dot")
+
 #graph.write_png("output.png")
 
 # with open("shift_dict.txt", "w") as f:
