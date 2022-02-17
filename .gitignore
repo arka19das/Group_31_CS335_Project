@@ -1,1 +1,8 @@
 .dist
+.vscode
+__pycache__
+__pycache__/
+parsetab.py
+*.txt
+*.out
+*.dot

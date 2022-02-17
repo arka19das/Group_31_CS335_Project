@@ -4,7 +4,7 @@ import sys
 import argparse
 
 
-class Mylexer(object):
+class Lexer(object):
     error_flag = False
     reserved = {
         "auto": "AUTO",

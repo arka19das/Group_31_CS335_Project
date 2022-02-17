@@ -3,9 +3,9 @@ from scanner import *
 import pydot
 import pprint
 
-myobj = Mylexer()
-myobj.build()
-tokens = myobj.tokens
+lexer = Lexer()
+lexer.build()
+tokens = lexer.tokens
 
 
 def p_start(p):
@@ -139,8 +139,6 @@ def p_exclusive_or_expression(p):
 
     p[0] = ["exclusive_or_expression"] + p[1:]
 
-
-# CORRECTED
 def p_inclusive_or_expression(p):
     """inclusive_or_expression : exclusive_or_expression
     | inclusive_or_expression BITWISE_OR exclusive_or_expression
@@ -194,7 +192,7 @@ def p_assignment_operator(p):
     | OR_ASSIGN
     """
 
-    p[0] = ["assignment_operator"] + p[1]
+    p[0] = ["assignment_operator"] + p[1:]
 
 
 def p_expression(p):
@@ -207,10 +205,9 @@ def p_expression(p):
 def p_constant_expression(p):
     """constant_expression : conditional_expression"""
 
-    p[0] = ["constant_expression"] + p[1]
+    p[0] = ["constant_expression"] + p[1:]
 
 
-# ADDED
 def p_declaration(p):
     """declaration : declaration_specifiers SEMICOLON
     | declaration_specifiers init_declarator_list SEMICOLON
@@ -219,7 +216,6 @@ def p_declaration(p):
     p[0] = ["declaration"] + p[1:]
 
 
-# Have to rethink, function specifier MISSING and we are not allowing only function declaration
 # def p_declaration_specifiers(p):
 #     """declaration_specifiers : storage_class_specifier declaration_specifiers
 #     | storage_class_specifier
@@ -264,11 +260,9 @@ def p_storage_class_specifier(p):
     """storage_class_specifier : TYPEDEF
     | AUTO"""
 
-    p[0] = ["storage_class_specifier"] + p[1]
+    p[0] = ["storage_class_specifier"] + p[1:]
 
 
-# p_class_defifnition MISSING
-# CHANGED CORRECTED
 def p_type_specifier(p):
     """type_specifier : VOID
     | CHAR
@@ -334,11 +328,10 @@ def p_struct_declarator(p):
     p[0] = ["struct_declaration"] + p[1:]
 
 
-# CORRECTED CHANGED
 def p_type_qualifier(p):
     """type_qualifier : CONST"""
 
-    p[0] = ["type_qualifier"] + p[1]
+    p[0] = ["type_qualifier"] + p[1:]
 
 
 def p_declarator(p):
@@ -376,7 +369,6 @@ def p_type_qualifier_list(p):
     p[0] = ["type_qualifier_list"] + p[1:]
 
 
-# CHANGED
 def p_parameter_type_list(p):
     """parameter_type_list : parameter_list"""
 
@@ -468,8 +460,7 @@ def p_labeled_statement(p):
     p[0] = ["labeled_statement"] + p[1:]
 
 
-##HIGHLY ERROR PRONE FROM HERE TO END
-##This portion is different for my code
+##Have to recheck
 def p_compound_statement(p):
     """compound_statement : LEFT_CURLY_BRACKET RIGHT_CURLY_BRACKET
     | LEFT_CURLY_BRACKET block_item_list RIGHT_CURLY_BRACKET"""
@@ -491,7 +482,6 @@ def p_block_item(p):
     p[0] = ["block_item"] + p[1:]
 
 
-# CHANGED
 # def p_compound_statement(p):
 #     """compound_statement : LEFT_CURLY_BRACKET RIGHT_CURLY_BRACKET
 #     | LEFT_CURLY_BRACKET statement_list RIGHT_CURLY_BRACKET
@@ -501,8 +491,6 @@ def p_block_item(p):
 
 #     p[0] = ["compound_statement"] + p[1:]
 
-
-# ADDED
 # def p_statement_list(p):
 #     """
 #     statement_list : statement
@@ -511,7 +499,6 @@ def p_block_item(p):
 #     p[0] = ["statement_list"] + p[1:]
 
 
-# ADDED
 def p_declaration_list(p):
     """
     declaration_list : declaration
@@ -527,7 +514,6 @@ def p_expression_statement(p):
     p[0] = ["expression_statement"] + p[1:]
 
 
-# CHANGED
 def p_selection_statement(p):
     """selection_statement : IF LEFT_BRACKET expression RIGHT_BRACKET compound_statement
     | IF LEFT_BRACKET expression RIGHT_BRACKET compound_statement ELSE compound_statement
@@ -536,7 +522,6 @@ def p_selection_statement(p):
     p[0] = ["selection_statement"] + p[1:]
 
 
-# To be changed compound statement and expressions
 def p_iteration_statement(p):
     """iteration_statement : WHILE LEFT_BRACKET expression RIGHT_BRACKET compound_statement
     | DO compound_statement WHILE LEFT_BRACKET expression RIGHT_BRACKET SEMICOLON
@@ -570,7 +555,6 @@ def p_external_declaration(p):
     p[0] = ["external_declaration"] + p[1:]
 
 
-# CHANGED
 def p_function_definition(p):
     """function_definition : declaration_specifiers declarator declaration_list compound_statement
     | declaration_specifiers declarator compound_statement
@@ -595,7 +579,7 @@ def p_access_specifier(p):
     """access_specifier : PRIVATE
     | PUBLIC
     | PROTECTED"""
-    p[0] = p[1]
+    p[0] = p[1:]
 
 
 def p_class_definition_head(p):
@@ -637,9 +621,7 @@ def p_class_member(p):
 
 # CAN BE CHANGED
 def p_error(p):
-    # global flag_for_error
-    # flag_for_error = 1
-
+    
     if p is not None:
         print("error at line no:  %s :: %s" % ((p.lineno), (p.value)))
         parser.errok()
@@ -649,35 +631,28 @@ def p_error(p):
 
 # Build the parser
 parser = yacc.yacc()
-print(
-    [
-        method_name
-        for method_name in dir(parser)
-        if callable(getattr(parser, method_name))
-    ]
-)
-
+# print(
+#     [
+#         method_name
+#         for method_name in dir(parser)
+#         if callable(getattr(parser, method_name))
+#     ]
+#)
 
 def getArgs():
     parser = argparse.ArgumentParser()
-    parser.add_argument("input", type=str, default=None, help="Input file")
-    parser.add_argument("-o", "--output", type=str, default="AST", help="Output file")
-    parser.add_argument("-t", "--trim", action="store_true", help="Trimmed ast")
+    parser.add_argument("-input", type=str, required=True, help="Input file")
+    parser.add_argument("-o", "--output",  type=str, default="AST", help="Output file")
+    parser.add_argument("-v", action='store_true', help="Verbose output")
     return parser
-
 
 if __name__ == "__main__":
     args = getArgs().parse_args()
-    if args.input == None:
-        print("No input file specified")
-    else:
-        with open(str(args.input), "r+") as file:
-            data = file.read()
-            tree = yacc.parse(data)
-            if args.output[-4:] == ".dot":
-                args.output = args.output[:-4]
-            pprint.PrettyPrinter(depth=None).pprint(tree)
-            # if args.trim:
-            #     generate_graph_from_ast(reduce_ast(tree), args.output)
-            # else:
-            #     generate_graph_from_ast(tree, args.output)
+    with open(str(args.input), "r+") as file:
+        data = file.read()
+    tree = parser.parse(data)
+    
+    if args.output[-4:] == ".dot":
+        args.output = args.output[:-4]
+    if args.v:
+        pprint.PrettyPrinter(depth=None).pprint(tree)
