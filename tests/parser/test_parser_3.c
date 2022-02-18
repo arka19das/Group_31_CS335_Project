@@ -1,29 +1,47 @@
-//Recursion
 
-void f2()
-{
-    // printf("In f2");
-    1 + 1;
-} 
+struct complex {
+  int imag;
+  float real;
+};
 
-int f1(int n)
-{
-    // printf("In f1");
-    f2();
-    return fact(n);
-}
+struct number {
+  struct complex comp;
+  int integer;
+} num1, num2, num3;
 
-int fact(int n)
-{
-    if (n==0)
-        return 1;
-    else
-        return n*fact(n-1);
-}
- 
-// Driver Code
-int main()
-{
-    printf("%d\n",f1(2));
-    return 0;
+int main() {
+
+  // initialize complex variables
+  num1.comp.imag = 11;
+  num1.comp.real = 5.25;
+  num2.comp.imag = -22;
+  num2.comp.real = -5.25;
+  // initialize number variable
+  num1.integer = 6;
+  num2.inetger = 10;
+  char operation = '/';
+  int a=1,b=2,c;
+  switch(operation)
+    {
+        case '+':
+            c=a+b;
+            break;
+
+        case '-':
+            c=a-b;
+            break;
+
+        case '*':
+            c=a*b;
+            break;
+
+        case '/':
+            c=a/b;
+            break;
+
+        default:
+            ;
+    }
+  int x = num1==num2?1:0;
+  return 0;
 }
