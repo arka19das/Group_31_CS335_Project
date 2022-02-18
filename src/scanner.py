@@ -142,9 +142,9 @@ class Lexer(object):
         r"\#(.)*?\n"
         t.lexer.lineno += 1
 
-    t_INT_CONSTANT = r"[0-9]+([uU]|[lL]|[uU][lL]|[uU][lL][lL]|[lL][lL])?"  # u,l,U,L,ul,ull,ll,Ul,Ull,ULL,UL
-    t_HEX_CONSTANT = r"0[xX][0-9a-fA-F]+([uU]|[lL]|[uU][lL]|[uU][lL][lL]|[lL][lL])?"
-    t_OCT_CONSTANT = r"0[0-7]+([uU]|[lL]|[uU][lL]|[uU][lL][lL]|[lL][lL])?"
+    t_INT_CONSTANT = r"[0-9]+([uU][lL][lL]|[uU][lL]|[lL][lL]|[uU]|[lL])?"  # u,l,U,L,ul,ull,ll,Ul,Ull,ULL,UL
+    t_HEX_CONSTANT = r"0[xX][0-9a-fA-F]+([uU][lL][lL]|[uU][lL]|[lL][lL]|[uU]|[lL])?"
+    t_OCT_CONSTANT = r"0[0-7]+([uU][lL][lL]|[uU][lL]|[lL][lL]|[uU]|[lL])?"
     t_FLOAT_CONSTANT = r"((\d+)(\.\d+)(e(\+|-)?(\d+))? | (\d+)\.?e(\+|-)?(\d+)| (\.\d+)(e(\+|-)?(\d+))?)([lL]|[fF])?"
     t_STRING_LITERAL = r"\"([^\"\\\n]|(\\.))*\""
     t_CHAR_CONSTANT = r"(L)?\'([^\\\n]|(\\.))*?\'"
