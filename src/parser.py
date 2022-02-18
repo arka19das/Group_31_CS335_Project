@@ -70,10 +70,11 @@ def p_unary_operator(p):
 
 def p_cast_expression(p):
     """cast_expression : unary_expression
-    | '(' type_name ')' cast_expression
+    | LEFT_BRACKET type_name RIGHT_BRACKET cast_expression
     """
 
     p[0] = ["cast_expression"] + p[1:]
+
 
 
 def p_multiplicative_expression(p):
