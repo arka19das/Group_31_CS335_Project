@@ -553,10 +553,10 @@ def p_access_specifier(p):
 
 
 def p_class_definition_head(p):
-    """class_definition_head : CLASS
-    | CLASS INHERITANCE_OP inheritance_specifier_list
+    """class_definition_head : CLASS IDENTIFIER  INHERITANCE_OP inheritance_specifier_list
     | CLASS IDENTIFIER
-    | CLASS IDENTIFIER  INHERITANCE_OP inheritance_specifier_list"""
+    | CLASS INHERITANCE_OP inheritance_specifier_list
+    | CLASS"""
     p[0] = ["class_definition_head"] + p[1:]
 
 
@@ -601,13 +601,6 @@ def p_error(p):
 
 # Build the parser
 parser = yacc.yacc()
-# print(
-#     [
-#         method_name
-#         for method_name in dir(parser)
-#         if callable(getattr(parser, method_name))
-#     ]
-#)
 
 def getArgs():
     parser = argparse.ArgumentParser()

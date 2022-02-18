@@ -11,7 +11,6 @@ def main(input_path, output_path):
 
     shift_dict = {}
     reduce_dict = {}
-# print(split_text[0])
 
     for i in range(2, 723, 2):
         matching_text = re.findall(
@@ -21,10 +20,6 @@ def main(input_path, output_path):
             shift_dict[int(split_text[i - 1]), int(items[2])] = items[0]
         matching_text1 = re.findall("(\w+)(\s+) reduce using rule (\d+)", split_text[i])
 
-        # for items in matching_text1:
-        #     reduce_dict[int(split_text[i - 1]), int(items[2])] = items[0]
-
-
     graph = pydot.Dot("Grammar_graph", graph_type="digraph", bgcolor="white")
 
     for i in range(0, 361):
@@ -32,24 +27,12 @@ def main(input_path, output_path):
         graph.add_node(my_node)
 
     for key, value in shift_dict.items():
-        # print(key)
         graph.add_edge(pydot.Edge(str(key[0]), str(key[1]), label=value, color="black"))
 
     graph.write_raw(output_path)
 
-#graph.write_png("output.png")
-
-# with open("shift_dict.txt", "w") as f:
-#     sys.stdout = f  # Change the standard output to the file we created.
-#     print(shift_dict)
-#     sys.stdout = original_stdout
-
-# with open("reduce_dict.txt", "w") as f:
-#     sys.stdout = f  # Change the standard output to the file we created.
-#     print(reduce_dict)
-#     sys.stdout = original_stdout
-
     file.close()
+
 
 if __name__ == "__main__":
     main(sys.argv[1], sys.argv[2])
