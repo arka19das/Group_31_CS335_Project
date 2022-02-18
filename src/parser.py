@@ -217,20 +217,6 @@ def p_declaration(p):
     p[0] = ["declaration"] + p[1:]
 
 
-# def p_declaration_specifiers(p):
-#     """declaration_specifiers : storage_class_specifier declaration_specifiers
-#     | storage_class_specifier
-#     | type_specifier declaration_specifiers
-#     | type_specifier
-#     | type_qualifier declaration_specifiers
-#     | type_qualifier
-#     | function_specifier declaration_specifiers
-#     | function_specifier
-#     r"""
-
-#     p[0] = ['declaration_specifier'] + p[1:]
-
-
 def p_declaration_specifiers(p):
     """declaration_specifiers : storage_class_specifier declaration_specifiers
     | storage_class_specifier
@@ -481,23 +467,6 @@ def p_block_item(p):
     | statement"""
 
     p[0] = ["block_item"] + p[1:]
-
-
-# def p_compound_statement(p):
-#     """compound_statement : LEFT_CURLY_BRACKET RIGHT_CURLY_BRACKET
-#     | LEFT_CURLY_BRACKET statement_list RIGHT_CURLY_BRACKET
-#     | LEFT_CURLY_BRACKET declaration_list RIGHT_CURLY_BRACKET
-#     | LEFT_CURLY_BRACKET declaration_list statement_list RIGHT_CURLY_BRACKET
-#     """
-
-#     p[0] = ["compound_statement"] + p[1:]
-
-# def p_statement_list(p):
-#     """
-#     statement_list : statement
-#     | statement_list statement
-#     """
-#     p[0] = ["statement_list"] + p[1:]
 
 
 def p_declaration_list(p):
