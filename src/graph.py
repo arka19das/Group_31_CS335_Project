@@ -24,15 +24,15 @@ for i in range(2, 723, 2):
     #     reduce_dict[int(split_text[i - 1]), int(items[2])] = items[0]
 
 
-graph = pydot.Dot("Grammar_graph", graph_type="graph", bgcolor="white")
+graph = pydot.Dot("Grammar_graph", graph_type="digraph", bgcolor="white")
 
 for i in range(0, 361):
-    my_node = pydot.Node(str(i), label=f"I{i}", shape="circle", color="blue")
+    my_node = pydot.Node(str(i), label=f"I{i}", shape="circle",style="filled",fillcolor="yellow")
     graph.add_node(my_node)
 
 for key, value in shift_dict.items():
     # print(key)
-    graph.add_edge(pydot.Edge(str(key[0]), str(key[1]), label=value, color="blue"))
+    graph.add_edge(pydot.Edge(str(key[0]), str(key[1]), label=value, color="black"))
 
 graph.write_raw("output_raw.dot")
 
