@@ -255,7 +255,7 @@ if __name__ == "__main__":
             )
         )
 
-        myobj = Mylexer()
+        myobj = Lexer()
         myobj.build()
         myobj.test(data)
         print(
