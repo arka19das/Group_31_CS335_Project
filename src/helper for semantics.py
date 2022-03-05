@@ -68,16 +68,18 @@ SIZE_OF_TYPE = {
     "LONG DOUBLE": 16,
 }
 
-
-# Not handled typedef
+#pointer not being handled 
+# Variables (0-V) -> {"name", "type", "datatype", "value", "is_array", "dims", "pointer_lvl"}
+# Functions (1-F) -> {"name", "type", "ret_type", "param_types"}
+# Structs (2-S)   -> {"name", "type", "alt name" (via typedef), "field names", "field types"}
+# Classes (3-C)   -> {"name", "type",... TBD}
+# Labels (4-L)    -> {"name"}
 class SymbolTableBase:
     def __init__(self, parent=None, function_scope=None) -> None:
         # self.table = {}
-        # Variables (0-V) -> {"name", "type", "datatype", "value", "is_array", "dims", "pointer_lvl"}
-        # Functions (1-F) -> {"name", "type", "ret_type", "param_types"}
-        # Structs (2-S)   -> {"name", "type", "alt name" (via typedef), "field names", "field types"}
-        # Classes (3-C)   -> {"name", "type",... TBD}
-        # Labels (4-L)    -> {"name"}
+        
+        self._custom_types = dict()
+        self._parameters=[]
         self._table = dict()
         self.function_scope = function_scope
         if self.parent is not None:
@@ -87,67 +89,64 @@ class SymbolTableBase:
             self.table_name = "GLOBAL"
         else:
             self.table_name = f"BLOCK_{self.table_number}"  ### error since i wanna try something different than other
-
     def _get_proper_name(entry: dict, type: int = 0):
         if type == 1:
             return entry["name"] + "(" + ",".join(entry["param_types"]) + ")"
         else:
             return entry["name"]
-
-    def lookUpCurrtable(
-        self, name: str, paramtab_check: bool, type: int = 0
-    ) -> Union[None, list, dict]:
+    def _lookUpCurrtable(self, name: str, paramtab_check: bool, type: int = 0) -> Union[None, list, dict]:
         if name in self.table.keys():
             return self.table["name"]
-        elif paramtab_check and name in self._parameters.keys():
-            return self._parameters
+        elif paramtab_check and (name in self._parameters):
+            return self._parameters["name"]
         return None
-
-    def lookup_type(self, name) -> Union[None, str]:
-        if self.lookUpCurrtable(name):
-            return self[name]["datatype"]
-        return None
-
-    # def delete(self, name) -> None:
-    #     (self.table).pop(name, None)
-
-    def _insert(
-        self, entry: dict, type: int = 0, fname=None, param: bool = false
-    ) -> Tuple[bool, Union[dict, List[dict]]]:
-        global SIZE_OF_TYPE
-        name = self._get_proper_name(entry, type)
-        prev_entry = self.lookUpCurrtable(name, False, type)
-
-        if prev_entry == None:
-            entry["type"] = type
-            entry["pointer_lvl"]= entry.get("pointer_lvl",0)
-            if type==0:
-                pass
-            if type==1:
-                pass
-            elif type==2:
-                pass
-            elif type==3:
-                pass
-            elif type==4:
-                pass
-            
-
-    ## update shouldn't be done for struct or func ..keep this mind in parsing but this function wont stop you from doing it
-    def update(self, name: str, value) -> bool:
-        if name in self.table.keys():
-            (self.table)[name]["value"] = value
-            return True
-
-    def getDetail(self, name) -> Union[None, str]:
-        if self.lookUp(name):
-            return self.table[name]
+    def lookUptables(self, name: str, paramtab_check: bool, type: int = 0)-> Union[None, list, dict]:
+        ans=self._lookUpCurrtable(name,paramtab_check, type)
+        if ans:
+            return ans 
+        elif self.parent:
+            ans=self.parent._lookUptables(name,paramtab_check, type)
         else:
             return None
-
-    # def setParent(self, parent) -> None:
-    #     self.parent = parent
-
+    def update(self, name: str, value) -> bool:
+        res=lookUpTables(name,paramtab_check)
+        if res:
+            #TODO: check if value conforms to datatype
+            #TODO: not done yet
+            res["value"] = value
+            return True
+        else:
+            raise Exception(f"{name} is not defined in SymbolTables")
+    def insert(self, entry, type: int,is_param_tab_check=False ):
+        name=self._get_proper_name(entry,type)
+        res=self.lookUptables(name,paramtab_check=is_param_tab_check)
+        if res:
+            print(f"already present {name}")
+            return false,res
+        entry["type"]=type
+        # entry["pointr_lvl"]=entry.get("pointer_lvl",0)
+        if type>4:
+            raise Exception("{name} is of {type} which is unidentified")
+        if type==0:
+            if not self.check_type(entry["datatype"]):
+                raise Exception(f"{entry['datatype']} is not valid datatype")
+            if entry["is_array"]:
+                pass
+            entry["table_name"]=self.table_name
+            self._table[name]=entry
+            if param:
+                self._param_tab
+        elif type==1:
+            pass
+        elif type==2:
+            pass
+        elif type==3:
+            pass
+        elif type==4:
+            pass
+        
+        
+        
 
 class Parser:
     def __init__(self):
