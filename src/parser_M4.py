@@ -1,4 +1,6 @@
-
+from binascii import Incomplete
+from pickle import GLOBAL
+import struct
 import ply.yacc as yacc
 from scanner import *
 import pydot
@@ -56,18 +58,17 @@ def p_primary_expression(p):
 
 def p_float_constant(p):
     """float_constant : FLOAT_CONSTANT"""
-    p[0] = {"value": p[1], "code": [], "type": "double", "kind": "CONSTANT"}
+    p[0] = {"value": p[1], "code": [], "type": "float", "kind": "CONSTANT"}
 
 
 def p_hex_constant(p):
     """hex_constant : HEX_CONSTANT"""
-    print(str(int(p[1], 16)))
-    p[0] = {"value": str(int(p[1], 16)), "code": [], "type": "int", "kind": "CONSTANT"}
+    p[0] = {"value": p[1], "code": [], "type": "int", "kind": "CONSTANT"}
 
 
 def p_oct_constant(p):
     """oct_constant : OCT_CONSTANT"""
-    p[0] = {"value": str(int(p[1], 8)), "code": [], "type": "int", "kind": "CONSTANT"}
+    p[0] = {"value": p[1], "code": [], "type": "int", "kind": "CONSTANT"}
 
 
 def p_int_constant(p):
@@ -93,8 +94,33 @@ def p_string_literal(p):
 
 def p_identifier(p):
     """identifier : IDENTIFIER"""
-    # TODO: INCOMPLETE
-    p[0] = p[1]
+    # TODO: COMPLETE
+    symtable = get_current_symtab()
+    entry = symtable.lookup(p[1])
+    if entry == None:
+        GLOBAL_ERROR_LIST.append(
+            f"Error in line number {str(p.lineno(1))} : usage of undeclared identifier"
+        )
+    if entry["kind"] == 0:
+        p[0] = {
+            "value": p[1],
+            "code": [],
+            "type": entry["type"],
+            "pointer_lvl": entry.get("pointer_lvl", 0),
+            "kind": "IDENTIFIER",
+            "is_array": entry.get("is_array", False),
+            "dimensions": entry.get("dimensions", [])
+            # "entry": entry,  # FIXME: Add this back in the final code
+        }
+    elif entry["kind"] == 1:
+        p[0] = {
+            "value": p[1],
+            "code": [],
+            "type": entry["return type"],
+            "pointer_lvl": entry.get("pointer_lvl", 0),
+            "kind": "IDENTIFIER",
+            # "entry": entry,  # FIXME: Add this back in the final code
+        }
 
 
 def p_postfix_expression(p):
@@ -110,11 +136,127 @@ def p_postfix_expression(p):
     if len(p) == 2:
         p[0] = p[1]
     elif len(p) == 3:
-        # TODO: INCOMPLETE
-        pass
+        # TODO: COMPLETE postfix_expression LEFT_BRACKET RIGHT_BRACKET
+        symtable = get_current_symtab()
+        if p[1].get("pointer_level", 0) > 0:
+            offset = DATATYPE2SIZE[p[1]["type"].upper()]
+            arg_type = "long"
+            print("offset used")
+        else:
+            offset = 0
+            arg_type = p[1]["type"]
+        func = p[2] + f"({arg_type})"
+        entry = symtable.lookup(func)
+        ## ERROR check
+        if entry is None:
+            # Uncessary for this case
+            err_msg = (
+                "Error at line number "
+                + str(p.lineno(2))
+                + ": No entry found in symbol table"
+            )
+            GLOBAL_ERROR_LIST.append(err_msg)
+            raise SyntaxError
+        p[0] = {
+            "value": funcname,
+            "type": entry["return type"],
+            "arguments": [p[1]],
+            "kind": "FUNCTION CALL",
+            "p_offset": offset,
+        }
+        # TODO: UNABLE TO UNDERSTAND INCOMPLETE
+        # nvar = get_tmp_var(p[0]["type"])
+        # p[0]["code"] = [[p[0]["kind"], p[0]["type"], p[0]["value"], p[0]["arguments"], nvar]]
+        # p[0]["value"] = nvar
+        # del p[0]["arguments"]
     elif len(p) == 4:
-        # TODO: INCOMPLETE
-        pass
+        # TODO: COMPLETE
+        if p[2] == "->":
+            symtable = get_current_symtab()
+            entry = symtable.lookup(p[1])
+            if entry == None:
+                GLOBAL_ERROR_LIST.append(
+                    f"Error in line number {str(p.lineno(1))} : usage of undeclared identifier"
+                )
+            if entry.get("pointer_lvl", 0) == 0:
+                err_msg = (
+                    "Error at line number "
+                    + str(p.lineno(1))
+                    + "Cannot de-reference non-pointer"
+                )
+                GLOBAL_ERROR_LIST.append(err_msg)
+                raise SyntaxError
+            struct_entry = symtable.lookup_type(entry["type"])
+            if struct_entry is None:
+                GLOBAL_ERROR_LIST.append(
+                    f"Error at line number {str(p.lineno(1))}: Undeclared Struct used"
+                )
+                raise SyntaxError
+            else:
+                if struct_entry["kind"] == 2:
+                    if p[3] in struct_entry["field names"]:
+                        GLOBAL_ERROR_LIST.append(
+                            f"Error at line number {str(p.lineno(1))}:Field not there in  Struct"
+                        )
+                        raise SyntaxError
+                    else:
+                        p[0] = {
+                            "value": p[1]["value"] + "->" + p[3],
+                            "type": struct_entry["field types"][
+                                struct_entry["field names"].index(p[3])
+                            ],
+                            "code": [],
+                        }
+                else:
+                    GLOBAL_ERROR_LIST.append(
+                        f"Error at line number {str(p.lineno(1))}:not Struct"
+                    )
+                    raise SyntaxError
+
+        elif p[2] == ".":
+            symtable = get_current_symtab()
+            entry = symtable.lookup(p[1])
+            if entry == None:
+                GLOBAL_ERROR_LIST.append(
+                    f"Error in line number {str(p.lineno(1))} : usage of undeclared identifier"
+                )
+            # if entry.get("pointer_lvl", 0) > 0:
+            #     err_msg = "Error at line number " + str(p.lineno(1)) + "Without de-reference cannot access non-pointer"
+            #     GLOBAL_ERROR_LIST.append(err_msg)
+            #     raise SyntaxError
+            struct_entry = symtable.lookup_type(entry["type"])
+            if struct_entry is None:
+                GLOBAL_ERROR_LIST.append(
+                    f"Error at line number {str(p.lineno(1))}: Undeclared Struct used"
+                )
+                raise SyntaxError
+            else:
+                if struct_entry["kind"] == 2:
+                    if p[3] in struct_entry["field names"]:
+                        GLOBAL_ERROR_LIST.append(
+                            f"Error at line number {str(p.lineno(1))}:Field not there in  Struct"
+                        )
+                        raise SyntaxError
+                    else:
+                        p[0] = {
+                            "value": p[1]["value"] + "." + p[3],
+                            "type": struct_entry["field types"][
+                                struct_entry["field names"].index(p[3])
+                            ],
+                            "code": [],
+                        }
+                else:
+                    GLOBAL_ERROR_LIST.append(
+                        f"Error at line number {str(p.lineno(1))}:not Struct"
+                    )
+                    raise SyntaxError
+        elif p[3] == ")":
+            # function
+            symtable = get_current_symtab()
+            funcname = p[1]["value"] + p[2] + p[3]
+            entry = symtable.lookup(funcname)
+            # TODO:ERROR
+
     elif len(p) == 5:
         # TODO: INCOMPLETE
         pass
