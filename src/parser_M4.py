@@ -145,7 +145,7 @@ def p_postfix_expression(p):
         else:
             offset = 0
             arg_type = p[1]["type"]
-        func = p[2] + f"({arg_type})"
+        func = "postfix" + p[2] + f"({arg_type})"
         entry = symtable.lookup(func)
         ## ERROR check
         if entry is None:
@@ -164,11 +164,15 @@ def p_postfix_expression(p):
             "kind": "FUNCTION CALL",
             "p_offset": offset,
         }
-        # TODO: UNABLE TO UNDERSTAND INCOMPLETE
-        # nvar = get_tmp_var(p[0]["type"])
-        # p[0]["code"] = [[p[0]["kind"], p[0]["type"], p[0]["value"], p[0]["arguments"], nvar]]
-        # p[0]["value"] = nvar
-        # del p[0]["arguments"]
+        # DONE: UNABLE TO UNDERSTAND INCOMPLETE
+        # this is done to store return value after calling a function
+
+        nvar = get_tmp_var(p[0]["type"])
+        p[0]["code"] = [
+            [p[0]["kind"], p[0]["type"], p[0]["value"], p[0]["arguments"], nvar]
+        ]
+        p[0]["value"] = nvar
+        del p[0]["arguments"]
     elif len(p) == 4:
         # TODO: COMPLETE
         if p[2] == "->":
@@ -257,19 +261,65 @@ def p_postfix_expression(p):
             entry = symtable.lookup(funcname)
             # TODO:ERROR
 
+            p[0] = {
+                "value": funcname,
+                "type": entry["return type"],
+                "arguments": [],
+                "kind": "FUNCTION CALL",
+                # "p_offset": offset,
+            }
+            # DONE:unable to understand
+            # this is done to store return value after calling a function
+
+            nvar = get_tmp_var(p[0]["type"])
+            p[0]["code"] = [
+                [p[0]["kind"], p[0]["type"], p[0]["value"], p[0]["arguments"], nvar]
+            ]
+            p[0]["value"] = nvar
+            del p[0]["arguments"]
+
     elif len(p) == 5:
-        # TODO: INCOMPLETE
-        pass
+        if p[2] == "[":
+            if p[3].type.upper() in INTEGER_TYPES:
+                # TODO: Array indexing Incomplete
+                pass
+            else:
+                GLOBAL_ERROR_LIST.append(
+                    f"ERROR in line {p.lineno(3)} : Non integer indexing"
+                )
+                raise SyntaxError
+        elif p[2] == "(":
+            symTab = get_current_symtab()
+            proper_funcname = p[1].value + p[2] + ",".join(p[3].type) + p[4]
+            entry = symtable.lookup(proper_funcname)
+            if entry == None:
+                GLOBAL_ERROR_LIST.append(
+                    f"ERROR in line {p.lineno(3)} : {proper_funcname}This function doesnt exist"
+                )
+                raise SyntaxError
+            # DONE
+            # this is done to store return value after calling a function
+            nvar = get_tmp_var(p[0]["type"])
+            p[0]["code"] = [
+                [p[0]["kind"], p[0]["type"], p[0]["value"], p[0]["arguments"], nvar]
+            ]
+            p[0]["value"] = nvar
+            del p[0]["arguments"]
 
 
 def p_argument_expression_list(p):
     """argument_expression_list : assignment_expression
     | argument_expression_list COMMA assignment_expression"""
 
-    if len(p) == 2:
-        p[0] = p[1]
+    p[0] = {"code": [], "type": [], "value": []}
+    # TODO: INCOMPLETE
+    if len(p) == 4:
+        p[0].code = p[1].code
+        p[0].type = p[1].type
+        p[0].value = p[1].value
+
     else:
-        # TODO: INCOMPLETE
+
         pass
 
 
@@ -302,15 +352,51 @@ def p_unary_expression(p):
                 "code": p[2]["code"],
             }
         # TODO: INCOMPLETE
-        elif p[1] == "++":
-            pass
-        # TODO: INCOMPLETE
-        elif p[1] == "--":
-            pass
+        elif p[1] == "++" or p[1] == "--":
+            symTab = get_current_symtab()
+
+            # check for pointer arguments
+            if p[2].get("pointer_lvl", 0) > 0:
+                # obtain offset
+                offset = DATATYPE2SIZE[p[2]["type"].upper()]
+                arg_type = "long"
+
+            else:
+                arg_type = p[2]["type"]
+                offset = 0
+
+            funcname = "prefix" + p[1] + f"({arg_type})"
+            entry = symTab.lookup(funcname)
+            if entry is None:
+                # Uncessary for this case
+                err_msg = (
+                    "Error at line number "
+                    + str(p.lineno(1))
+                    + ": No entry found in symbol table"
+                )
+                GLOBAL_ERROR_LIST.append(err_msg)
+                raise SyntaxError
+                # raise Exception
+            p[0] = {
+                "value": funcname,
+                "type": entry["return type"],
+                "arguments": [p[2]],
+                "kind": "FUNCTION CALL",
+                "p_offset": offset,
+            }
+
+            nvar = get_tmp_var(p[0]["type"])
+            p[0]["code"] = [
+                [p[0]["kind"], p[0]["type"], p[0]["value"], p[0]["arguments"], nvar]
+            ]
+            p[0]["value"] = nvar
+            del p[0]["arguments"]
+
         elif p[1][0] == "*":
             p[0] = p[2]
             if p[2].get("pointer_lvl", 0) > 0:
                 # TODO: INCOMPLETE
+                p[0].pointer_lvl -= 1
                 pass
             else:
                 GLOBAL_ERROR_LIST.append(
