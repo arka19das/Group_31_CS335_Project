@@ -1,60 +1,87 @@
-from binascii import Incomplete
+
 import ply.yacc as yacc
 from scanner import *
 import pydot
 import pprint
 
+from symtable import (
+    BASIC_TYPES,
+    pop_scope,
+    push_scope,
+    new_scope,
+    get_current_symtab,
+    get_tmp_label,
+    get_tmp_var,
+    get_tmp_closure,
+    get_default_value,
+    compute_storage_size,
+    NUMERIC_TYPES,
+    CHARACTER_TYPES,
+    DATATYPE2SIZE,
+    BASIC_TYPES,
+    FLOATING_POINT_TYPES,
+    INTEGER_TYPES,
+    SYMBOL_TABLES,
+    STATIC_VARIABLE_MAPS,
+)
+
 lexer = Lexer()
 lexer.build()
 tokens = lexer.tokens
+GLOBAL_ERROR_LIST = []
 
 
 def _get_conversion_function_expr():
     pass
 
 
-def get_current_symbol_table():
-    pass
-
-
-def p_start(p):
-    """start : translation_unit"""
-    p[0] = ["start"] + p[1:]
+start = "translation_unit"
 
 
 def p_primary_expression(p):
-    """primary_expression : IDENTIFIER"""
-    # TODO: INCOMPLETE
-    p[0] = p[1]
+    """primary_expression : identifier
+    | float_constant
+    | hex_constant
+    | oct_constant
+    | int_constant
+    | char_constant
+    | string_literal
+    | LEFT_BRACKET expression RIGHT_BRACKET"""
+
+    if len(p) == 2:
+        p[0] = p[1]
+    else:
+        p[0] = p[2]
 
 
-def p_primary_expression(p):
-    """primary_expression :  FLOAT_CONSTANT"""
+def p_float_constant(p):
+    """float_constant : FLOAT_CONSTANT"""
     p[0] = {"value": p[1], "code": [], "type": "double", "kind": "CONSTANT"}
 
 
-def p_primary_expression(p):
-    """primary_expression :  HEX_CONSTANT"""
+def p_hex_constant(p):
+    """hex_constant : HEX_CONSTANT"""
+    print(str(int(p[1], 16)))
     p[0] = {"value": str(int(p[1], 16)), "code": [], "type": "int", "kind": "CONSTANT"}
 
 
-def p_primary_expression(p):
-    """primary_expression :  OCT_CONSTANT"""
+def p_oct_constant(p):
+    """oct_constant : OCT_CONSTANT"""
     p[0] = {"value": str(int(p[1], 8)), "code": [], "type": "int", "kind": "CONSTANT"}
 
 
-def p_primary_expression(p):
-    """primary_expression :  INT_CONSTANT"""
+def p_int_constant(p):
+    """int_constant : INT_CONSTANT"""
     p[0] = {"value": p[1], "code": [], "type": "int", "kind": "CONSTANT"}
 
 
-def p_primary_expression(p):
-    """primary_expression :  CHAR_CONSTANT"""
+def p_char_constant(p):
+    """char_constant : CHAR_CONSTANT"""
     p[0] = {"value": p[1], "code": [], "type": "char", "kind": "CONSTANT"}
 
 
-def p_primary_expression(p):
-    """primary_expression : STRING_LITERAL"""
+def p_string_literal(p):
+    """string_literal : STRING_LITERAL"""
     p[0] = {
         "value": p[1],
         "code": [],
@@ -64,9 +91,10 @@ def p_primary_expression(p):
     }
 
 
-def p_primary_expression(p):
-    """primary_expression :  LEFT_BRACKET expression RIGHT_BRACKET"""
-    p[0] = p[2]
+def p_identifier(p):
+    """identifier : IDENTIFIER"""
+    # TODO: INCOMPLETE
+    p[0] = p[1]
 
 
 def p_postfix_expression(p):
@@ -490,7 +518,9 @@ def p_specifier_qualifier_list(p):
     if len(p) == 2:
         p[0] = p[1]
     else:
-        p[0] = {}
+        # TODO: SAmjh nehi aya complete karna hai and modify bhi
+        print(p[1], p[2], "p_specifier_qualifier_list")
+        p[0] = {"value": p[1]["value"] + " " + p[2]["value"], "code": []}
     # p[0] = ["specifier_qualifier_list"] + p[1:]
 
 
@@ -498,29 +528,41 @@ def p_struct_declarator_list(p):
     """struct_declarator_list : struct_declarator
     | struct_declarator_list COMMA struct_declarator"""
 
-    p[0] = ["struct_declaration_list"] + p[1:]
+    if len(p) == 2:
+        p[0] = [p[1]]
+    else:
+        p[0] = p[1] + [p[3]]
+    # p[0] = ["struct_declaration_list"] + p[1:]
 
 
-# Is colon assignment allowed ?
+# Is colon assignment allowed ? Assuming it is not allowed
 def p_struct_declarator(p):
-    """struct_declarator : declarator
-    | COLON constant_expression
-    | declarator COLON constant_expression"""
+    """struct_declarator : declarator"""
+    # | COLON constant_expression
+    # | declarator COLON constant_expression
+    p[0] = p[1]
 
-    p[0] = ["struct_declaration"] + p[1:]
+    # p[0] = ["struct_declaration"] + p[1:]
 
 
 def p_type_qualifier(p):
     """type_qualifier : CONST"""
 
-    p[0] = ["type_qualifier"] + p[1:]
+    p[0] = p[1]
 
 
 def p_declarator(p):
     """declarator : pointer direct_declarator
     | direct_declarator"""
 
-    p[0] = ["declarator"] + p[1:]
+    if len(p) == 2:
+        p[0] = p[1]
+    else:
+        print(p[1])  # using for debugging
+        p[0] = p[2]
+        p[0]["pointer_lvl"] = 0  # TODO: Incomplete
+
+    # p[0] = ["declarator"] + p[1:]
 
 
 def p_direct_declarator(p):
@@ -532,7 +574,8 @@ def p_direct_declarator(p):
     | direct_declarator LEFT_BRACKET identifier_list RIGHT_BRACKET
     | direct_declarator LEFT_BRACKET RIGHT_BRACKET"""
 
-    p[0] = ["direct_declarator"] + p[1:]
+    # TODO: Not understood at all
+    # p[0] = ["direct_declarator"] + p[1:]
 
 
 def p_pointer(p):
