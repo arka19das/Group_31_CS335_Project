@@ -5,8 +5,7 @@ import ply.yacc as yacc
 from scanner import *
 import pydot
 import pprint
-
-from symtable import (
+from symtable_new import (
     BASIC_TYPES,
     pop_scope,
     push_scope,
@@ -36,6 +35,28 @@ GLOBAL_ERROR_LIST = []
 def _get_conversion_function_expr():
     pass
 
+
+def op_util(p):
+    if len(p) == 2:
+        p[0] = p[1]
+    else:
+        fname, entry, args = resolve_function_name_uniform_types(p[2], [p[1], p[3]])
+        p[0] = {
+            "value": fname,
+            "type": entry["return type"],
+            "arguments": args,
+            "kind": "FUNCTION CALL",
+        }
+        nvar = get_tmp_var(p[0]["type"])
+        codes = []
+        for _a in args:
+            if len(_a["code"]) == 0:
+                continue
+            codes += _a["code"]
+            _a["code"] = []
+        p[0]["code"] = codes + [[p[0]["kind"], p[0]["type"], p[0]["value"], p[0]["arguments"], nvar]]
+        p[0]["value"] = nvar
+        del p[0]["arguments"]
 
 start = "translation_unit"
 
@@ -102,312 +123,330 @@ def p_identifier(p):
             f"Error in line number {str(p.lineno(1))} : usage of undeclared identifier"
         )
     if entry["kind"] == 0:
-        p[0] = {
-            "value": p[1],
-            "code": [],
-            "type": entry["type"],
-            "pointer_lvl": entry.get("pointer_lvl", 0),
-            "kind": "IDENTIFIER",
-            "is_array": entry.get("is_array", False),
-            "dimensions": entry.get("dimensions", [])
+        p[0] = { "value": p[1], "code": [], "type": entry["type"], "pointer_lvl": entry.get("pointer_lvl", 0),
+            "kind": "IDENTIFIER", "is_array": entry.get("is_array", False),"dimensions": entry.get("dimensions", [])
             # "entry": entry,  # FIXME: Add this back in the final code
         }
     elif entry["kind"] == 1:
-        p[0] = {
-            "value": p[1],
-            "code": [],
-            "type": entry["return type"],
-            "pointer_lvl": entry.get("pointer_lvl", 0),
-            "kind": "IDENTIFIER",
+        p[0] = { "value": p[1], "code": [], "type": entry["return type"], "pointer_lvl": entry.get("pointer_lvl", 0), "kind": "IDENTIFIER",
             # "entry": entry,  # FIXME: Add this back in the final code
         }
+def p_postfix_expression_1(p):
+    """postfix_expression : primary_expression"""
+    p[0] = p[1]
 
-
-def p_postfix_expression(p):
-    """postfix_expression : primary_expression
-    | postfix_expression LEFT_THIRD_BRACKET expression RIGHT_THIRD_BRACKET
-    | postfix_expression LEFT_BRACKET RIGHT_BRACKET
-    | postfix_expression LEFT_BRACKET argument_expression_list RIGHT_BRACKET
-    | postfix_expression DOT IDENTIFIER
-    | postfix_expression PTR_OP IDENTIFIER
-    | postfix_expression INC_OP
-    | postfix_expression DEC_OP"""
-
-    if len(p) == 2:
-        p[0] = p[1]
-    elif len(p) == 3:
-        # TODO: COMPLETE postfix_expression LEFT_BRACKET RIGHT_BRACKET
-        symtable = get_current_symtab()
-        if p[1].get("pointer_level", 0) > 0:
-            offset = DATATYPE2SIZE[p[1]["type"].upper()]
-            arg_type = "long"
-            print("offset used")
-        else:
-            offset = 0
-            arg_type = p[1]["type"]
-        func = "postfix" + p[2] + f"({arg_type})"
-        entry = symtable.lookup(func)
-        ## ERROR check
-        if entry is None:
-            # Uncessary for this case
-            err_msg = (
-                "Error at line number "
-                + str(p.lineno(2))
-                + ": No entry found in symbol table"
-            )
-            GLOBAL_ERROR_LIST.append(err_msg)
-            raise SyntaxError
+def p_postfix_expression_2(p):
+    """postfix_expression : postfix_expression LEFT_THIRD_BRACKET expression RIGHT_THIRD_BRACKET"""
+    if p[3]["type"] == "int":
+        ##TO_DO Multi-dimensional check
+        symTab = get_current_symtab()
+        temp_dict = copy.deepcopy(p[1])
+        temp_dict["is_array"] = False
+        funcname = "__get_array_element" + f"({_get_type_info(temp_dict)}*,int)"
+        nvar = get_tmp_var(_get_type_info(temp_dict))
+        c1 = p[1]["code"]
+        c2 = p[3]["code"]
+        p[1]["code"] = []
+        p[3]["code"] = []
         p[0] = {
-            "value": funcname,
-            "type": entry["return type"],
-            "arguments": [p[1]],
-            "kind": "FUNCTION CALL",
-            "p_offset": offset,
+            "value": nvar,
+            "type": temp_dict["type"],
+            "code": c1 + c2 + [["FUNCTION CALL", temp_dict["type"], funcname, [p[1], p[3]], nvar]],
         }
-        # DONE: UNABLE TO UNDERSTAND INCOMPLETE
-        # this is done to store return value after calling a function
+        del temp_dict
+    else:
+        err_msg = "Error at line number " + str(p.lineno(3)) + ": Not an integr index"
+        GLOBAL_ERROR_LIST.append(err_msg)
+        raise SyntaxError
 
-        nvar = get_tmp_var(p[0]["type"])
-        p[0]["code"] = [
-            [p[0]["kind"], p[0]["type"], p[0]["value"], p[0]["arguments"], nvar]
-        ]
-        p[0]["value"] = nvar
-        del p[0]["arguments"]
-    elif len(p) == 4:
-        # TODO: COMPLETE
-        if p[2] == "->":
-            symtable = get_current_symtab()
-            entry = symtable.lookup(p[1])
-            if entry == None:
-                GLOBAL_ERROR_LIST.append(
-                    f"Error in line number {str(p.lineno(1))} : usage of undeclared identifier"
-                )
-            if entry.get("pointer_lvl", 0) == 0:
-                err_msg = (
-                    "Error at line number "
-                    + str(p.lineno(1))
-                    + "Cannot de-reference non-pointer"
-                )
+def p_postfix_expression_3(p):
+    """postfix_expression : postfix_expression LEFT_BRACKET RIGHT_BRACKET"""
+    symTab = get_current_symtab()
+    funcname = p[1]["value"] + "()"
+    entry = symTab.lookup(funcname)
+    if entry is None:
+        err_msg = "Error at line number " + str(p.lineno(1)) + ": No such function in symbol table"
+        GLOBAL_ERROR_LIST.append(err_msg)
+        raise SyntaxError
+        # raise Exception
+    p[0] = {
+        "value": funcname,
+        "type": entry["return type"],
+        "arguments": [],
+        "kind": "FUNCTION CALL",
+    }
+    nvar = get_tmp_var(p[0]["type"])
+    p[0]["code"] = [[p[0]["kind"], p[0]["type"], p[0]["value"], p[0]["arguments"], nvar]]
+    p[0]["value"] = nvar
+    print(nvar)
+    del p[0]["arguments"]
+
+def p_postfix_expression_4(p):
+    """postfix_expression : LEFT_BRACKET argument_expression_list RIGHT_BRACKET"""
+
+    symTab = get_current_symtab()
+    proper_funcname = p[1].value + p[2] + ",".join(p[3].type) + p[4]
+    entry = symTab.lookup(proper_funcname)
+    if entry == None:
+        GLOBAL_ERROR_LIST.append( f"ERROR in line {p.lineno(3)} : {proper_funcname}This function doesnt exist")
+        raise SyntaxError
+    
+    p[0] = {
+        "value": proper_funcname,
+        "type": entry["return type"],
+        "arguments": p[3]["value"],
+        "kind": "FUNCTION CALL",
+    }
+    
+    nvar = get_tmp_var(p[0]["type"])
+    p[0]["code"] = [
+        [p[0]["kind"], p[0]["type"], p[0]["value"], p[0]["arguments"], nvar]
+    ]
+    p[0]["value"] = nvar
+    del p[0]["arguments"]
+
+def p_postfix_expression_5(p):
+    """postfix_expression : postfix_expression DOT IDENTIFIER
+    | postfix_expression PTR_OP IDENTIFIER"""
+    
+    symTab = get_current_symtab()
+    entry = symTab.lookup(p[1]["value"])
+    if entry is None:
+        err_msg = "Error at line number " + str(p.lineno(1)) + ": Undeclared identifier used"
+        GLOBAL_ERROR_LIST.append(err_msg)
+        raise SyntaxError
+    elif (entry["pointer_lvl"] and p[2]==".") or (entry["pointer_lvl"]==0 and p[2]=="->"):
+        err_msg = "Error at line number " + str(p.lineno(1)) + ": Invalid operator used used"
+        GLOBAL_ERROR_LIST.append(err_msg)
+        raise SyntaxError
+        
+    struct_entry = symTab.lookup_type(entry["type"])  # not needed if already checked at time of storing
+    if struct_entry is None:
+        err_msg = "Error at line number " + str(p.lineno(1)) + ": Undeclared Struct used"
+        GLOBAL_ERROR_LIST.append(err_msg)
+        raise SyntaxError
+    else:
+        if struct_entry["kind"] in [2, 5]:
+            if p[3] not in struct_entry["field names"]:
+                err_msg = "Error at line number " + str(p.lineno(3)) + ": No such field exists"
                 GLOBAL_ERROR_LIST.append(err_msg)
                 raise SyntaxError
-            struct_entry = symtable.lookup_type(entry["type"])
-            if struct_entry is None:
-                GLOBAL_ERROR_LIST.append(
-                    f"Error at line number {str(p.lineno(1))}: Undeclared Struct used"
-                )
-                raise SyntaxError
             else:
-                if struct_entry["kind"] == 2:
-                    if p[3] in struct_entry["field names"]:
-                        GLOBAL_ERROR_LIST.append(
-                            f"Error at line number {str(p.lineno(1))}:Field not there in  Struct"
-                        )
-                        raise SyntaxError
-                    else:
-                        p[0] = {
-                            "value": p[1]["value"] + "->" + p[3],
-                            "type": struct_entry["field types"][
-                                struct_entry["field names"].index(p[3])
-                            ],
-                            "code": [],
-                        }
-                else:
-                    GLOBAL_ERROR_LIST.append(
-                        f"Error at line number {str(p.lineno(1))}:not Struct"
-                    )
-                    raise SyntaxError
+                p[0] = {
+                    "type": struct_entry["field types"][struct_entry["field names"].index(p[3])],
+                    "value": p[1]["value"] + p[2] + p[3],
+                    "code": [],
+                }
+                # print(p[0])
+        else:
+            err_msg = "Error at line number " + str(p.lineno(1)) + ": No such Struct definition"
+            GLOBAL_ERROR_LIST.append(err_msg)
+            raise SyntaxError
 
-        elif p[2] == ".":
-            symtable = get_current_symtab()
-            entry = symtable.lookup(p[1])
-            if entry == None:
-                GLOBAL_ERROR_LIST.append(
-                    f"Error in line number {str(p.lineno(1))} : usage of undeclared identifier"
-                )
-            # if entry.get("pointer_lvl", 0) > 0:
-            #     err_msg = "Error at line number " + str(p.lineno(1)) + "Without de-reference cannot access non-pointer"
-            #     GLOBAL_ERROR_LIST.append(err_msg)
-            #     raise SyntaxError
-            struct_entry = symtable.lookup_type(entry["type"])
-            if struct_entry is None:
-                GLOBAL_ERROR_LIST.append(
-                    f"Error at line number {str(p.lineno(1))}: Undeclared Struct used"
-                )
-                raise SyntaxError
-            else:
-                if struct_entry["kind"] == 2:
-                    if p[3] in struct_entry["field names"]:
-                        GLOBAL_ERROR_LIST.append(
-                            f"Error at line number {str(p.lineno(1))}:Field not there in  Struct"
-                        )
-                        raise SyntaxError
-                    else:
-                        p[0] = {
-                            "value": p[1]["value"] + "." + p[3],
-                            "type": struct_entry["field types"][
-                                struct_entry["field names"].index(p[3])
-                            ],
-                            "code": [],
-                        }
-                else:
-                    GLOBAL_ERROR_LIST.append(
-                        f"Error at line number {str(p.lineno(1))}:not Struct"
-                    )
-                    raise SyntaxError
-        elif p[3] == ")":
-            # function
-            symtable = get_current_symtab()
-            funcname = p[1]["value"] + p[2] + p[3]
-            entry = symtable.lookup(funcname)
-            # TODO:ERROR
+def p_postfix_expression_6(p):
+    """postfix_expression : postfix_expression INC_OP
+    | postfix_expression DEC_OP"""
+    symTab = get_current_symtab()
+    if p[1]["type"].startswith("struct"):
+        error =  "Error at line" + str(p.lineno(1)) + " :Invalid operation on " + p[1]["value"]
+        GLOBAL_ERROR_LIST.append(error)
+        raise SyntaxError
 
-            p[0] = {
-                "value": funcname,
-                "type": entry["return type"],
-                "arguments": [],
-                "kind": "FUNCTION CALL",
-                # "p_offset": offset,
-            }
-            # DONE:unable to understand
-            # this is done to store return value after calling a function
+    if p[1].get("pointer_lvl", 0) > 0:
+        # obtain offset
+        offset = DATATYPE2SIZE[p[1]["type"].upper()]
+        arg_type = "long"
+    else:
+        offset = 0
+        arg_type = p[1]["type"]
 
-            nvar = get_tmp_var(p[0]["type"])
-            p[0]["code"] = [
-                [p[0]["kind"], p[0]["type"], p[0]["value"], p[0]["arguments"], nvar]
-            ]
-            p[0]["value"] = nvar
-            del p[0]["arguments"]
+    funcname = p[2] + f"({arg_type})"
+    entry = symTab.lookup(funcname)
+    if entry is None:
+        err_msg = "Error at line number " + str(p.lineno(2)) + ": No entry found in symbol table"
+        GLOBAL_ERROR_LIST.append(err_msg)
+        raise SyntaxError
 
-    elif len(p) == 5:
-        if p[2] == "[":
-            if p[3].type.upper() in INTEGER_TYPES:
-                # TODO: Array indexing Incomplete
-                pass
-            else:
-                GLOBAL_ERROR_LIST.append(
-                    f"ERROR in line {p.lineno(3)} : Non integer indexing"
-                )
-                raise SyntaxError
-        elif p[2] == "(":
-            symTab = get_current_symtab()
-            proper_funcname = p[1].value + p[2] + ",".join(p[3].type) + p[4]
-            entry = symtable.lookup(proper_funcname)
-            if entry == None:
-                GLOBAL_ERROR_LIST.append(
-                    f"ERROR in line {p.lineno(3)} : {proper_funcname}This function doesnt exist"
-                )
-                raise SyntaxError
-            # DONE
-            # this is done to store return value after calling a function
-            nvar = get_tmp_var(p[0]["type"])
-            p[0]["code"] = [
-                [p[0]["kind"], p[0]["type"], p[0]["value"], p[0]["arguments"], nvar]
-            ]
-            p[0]["value"] = nvar
-            del p[0]["arguments"]
+    p[0] = {
+        "value": funcname,
+        "type": entry["return type"],
+        "arguments": [p[1]],
+        "kind": "FUNCTION CALL",
+        "p_offset": offset,
+    }
 
-
+    nvar = get_tmp_var(p[0]["type"])
+    p[0]["code"] = [[p[0]["kind"], p[0]["type"], p[0]["value"], p[0]["arguments"], nvar]]
+    p[0]["value"] = nvar
+    print(nvar)
+    del p[0]["arguments"]
+        
 def p_argument_expression_list(p):
     """argument_expression_list : assignment_expression
     | argument_expression_list COMMA assignment_expression"""
 
     p[0] = {"code": [], "type": [], "value": []}
     # TODO: INCOMPLETE
-    if len(p) == 4:
-        p[0].code = p[1].code
-        p[0].type = p[1].type
-        p[0].value = p[1].value
-
+    if len(p) == 2:
+        ind = 1
     else:
+        ind = 3
+        p[0]["code"] += p[1]["code"]
+        p[0]["type"] += p[1]["type"]
+        p[0]["value"] += p[1]["value"]
+    # print(f"arg_expr_list {p[1]}")
+    out_dict = copy.deepcopy(p[ind])
+    if p[ind].get("is_array", False):
+       out_dict["dimensions"][0] = "variable"
+    p[0]["code"].append(out_dict["code"])
+    p[0]["type"].append(_get_type_info(out_dict))
+    p[0]["value"].append(out_dict["value"])
+    del out_dict
 
-        pass
-
-
-def p_unary_expression(p):
+def p_unary_expression_1(p):
     """unary_expression : postfix_expression
     | INC_OP unary_expression
     | DEC_OP unary_expression
-    | unary_operator cast_expression
-    | SIZEOF unary_expression
-    | SIZEOF LEFT_BRACKET type_name RIGHT_BRACKET"""
+    """
     if len(p) == 2:
         p[0] = p[1]
 
-    elif len(p) == 4:
+    else:
+        symTab = get_current_symtab()
+        # check for pointer arguments
+        if p[2].get("pointer_lvl", 0) > 0:
+            # obtain offset
+            offset = DATATYPE2SIZE[p[2]["type"].upper()]
+            arg_type = "long"
+
+        else:
+            offset = 0
+            arg_type = p[2]["type"]
+
+        funcname = p[1] + f"({arg_type})"
+        entry = symTab.lookup(funcname)
+
+        if entry is None:
+            err_msg = "Error at line number " + str(p.lineno(1)) + ": No such function in symbol table"
+            GLOBAL_ERROR_LIST.append(err_msg)
+            raise SyntaxError
+            # raise Exception
+
+        p[0] = {
+            "value": funcname,
+            "type": entry["return type"],
+            "arguments": [p[2]],
+            "kind": "FUNCTION CALL",
+            "p_offset": offset,
+        }
+
+        nvar = get_tmp_var(p[0]["type"])
+        p[0]["code"] = [[p[0]["kind"], p[0]["type"], p[0]["value"], p[0]["arguments"], nvar]]
+        p[0]["value"] = nvar
+        del p[0]["arguments"]
+
+    
+def p_unary_expression_2(p):
+    """unary_expression : unary_operator cast_expression
+    """
+    if p[1].startswith("*"):
+        # print(p[1])
+        p[0] = p[2]
+        # p[0]["deref"] = p[0].get("deref", 0) + len(p[1])
+        if p[2].get("pointer_lvl", 0) > 0:
+            nvar = get_tmp_var(_get_type_info(p[2]))
+            p[0]["code"] = [
+                [
+                    "FUNCTION CALL",
+                    _get_type_info(p[2]),
+                    f"__deref({p[0]['value']})",
+                    [
+                        {
+                            "value": get_default_value(_get_type_info(p[2])),
+                            "type": _get_type_info(p[2]),
+                            "kind": p[2].get("kind", "CONSTANT"),
+                        }
+                    ],
+                    nvar,
+                ]
+            ]
+            p[0]["pointer_lvl"] -= 1
+        else:
+            err_msg = "Cannot Dereference a non-pointer : %s" % ((p[0]["value"]))
+            GLOBAL_ERROR_LIST.append(err_msg)
+
+    elif p[1].startswith("&"):
+        p[0] = p[2]
+        nvar = get_tmp_var(_get_type_info(p[2]))
+        p[0]["code"] = [
+            [
+                "FUNCTION CALL",
+                _get_type_info(p[2]),
+                f"__deref({p[0]['value']})",
+                [
+                    {
+                        "value": get_default_value(_get_type_info(p[2])),
+                        "type": _get_type_info(p[2]),
+                        "kind": p[2].get("kind", "CONSTANT"),
+                    }
+                ],
+                nvar,
+            ]
+        ]
+        p[0]["pointer_lvl"] = p[0].get("pointer_lvl", 0) + 1
+        # print(p[0])
+
+    elif p[1] == "+" or p[1] == "-":
+
+        symTab = get_current_symtab()
+        arg = p[2]["type"]
+        funcname = p[1] + f"({arg})"
+        entry = symTab.lookup(funcname)
+
+        if entry is None:
+            err_msg = "Error at line number " + str(p.lineno(1)) + ": No such function in symbol table"
+            GLOBAL_ERROR_LIST.append(err_msg)
+            raise SyntaxError
+            # raise Exception
+
+        p[0] = {
+            "value": funcname,
+            "type": entry["return type"],
+            "arguments": [p[2]],
+            "kind": "FUNCTION CALL",
+        }
+
+        nvar = get_tmp_var(p[0]["type"])
+        p[0]["code"] = [[p[0]["kind"], p[0]["type"], p[0]["value"], p[0]["arguments"], nvar]]
+        p[0]["value"] = nvar
+        del p[0]["arguments"]
+
+    else:
+        # TODO: depends on cast expression
+        pass
+
+def p_unary_expression_2(p):
+    """unary_expression :  SIZEOF unary_expression
+    | SIZEOF LEFT_BRACKET type_name RIGHT_BRACKET"""
+    
+    if len(p)==3:
+        symTab = get_current_symtab()
+        entry = symTab.lookup(p[2]["value"])
+        typeentry = symTab.lookup_type(entry["type"])
         p[0] = {
             "type": "int",
-            "value": compute_storage_size(
-                {"value": p[3]["value"], "type": p[3]["type"]}, None
-            ),
-            "code": p[3]["code"],
+            "value": compute_storage_size(entry, typeentry),
+            "code": p[2]["code"]
         }
 
     else:
-        if p[1] == "sizeof":
-            p[0] = {
-                "type": "int",
-                "value": compute_storage_size(
-                    {"value": p[2]["value"], "type": p[2]["type"]}, None
-                ),
-                "code": p[2]["code"],
-            }
-        # TODO: INCOMPLETE
-        elif p[1] == "++" or p[1] == "--":
-            symTab = get_current_symtab()
+        p[0] = {
+            "type": "int",
+            "value": compute_storage_size({"value": p[3]["value"], "type": p[3]["value"]}, None),
+            "code": p[3]["code"],
+        }
 
-            # check for pointer arguments
-            if p[2].get("pointer_lvl", 0) > 0:
-                # obtain offset
-                offset = DATATYPE2SIZE[p[2]["type"].upper()]
-                arg_type = "long"
-
-            else:
-                arg_type = p[2]["type"]
-                offset = 0
-
-            funcname = "prefix" + p[1] + f"({arg_type})"
-            entry = symTab.lookup(funcname)
-            if entry is None:
-                # Uncessary for this case
-                err_msg = (
-                    "Error at line number "
-                    + str(p.lineno(1))
-                    + ": No entry found in symbol table"
-                )
-                GLOBAL_ERROR_LIST.append(err_msg)
-                raise SyntaxError
-                # raise Exception
-            p[0] = {
-                "value": funcname,
-                "type": entry["return type"],
-                "arguments": [p[2]],
-                "kind": "FUNCTION CALL",
-                "p_offset": offset,
-            }
-
-            nvar = get_tmp_var(p[0]["type"])
-            p[0]["code"] = [
-                [p[0]["kind"], p[0]["type"], p[0]["value"], p[0]["arguments"], nvar]
-            ]
-            p[0]["value"] = nvar
-            del p[0]["arguments"]
-
-        elif p[1][0] == "*":
-            p[0] = p[2]
-            if p[2].get("pointer_lvl", 0) > 0:
-                # TODO: INCOMPLETE
-                p[0].pointer_lvl -= 1
-                pass
-            else:
-                GLOBAL_ERROR_LIST.append(
-                    f"Cannot dereference a non pointer {p[2][value]}"
-                )
-        elif p[1][0] == "&":
-            # TODO: INCOMPLETE
-            pass
-        elif p[1][0] == "+" or p[1][0] == "-":
-            # TODO: INCOMPLETE
-            pass
+    
 
 
 def p_unary_operator(p):
@@ -439,41 +478,22 @@ def p_multiplicative_expression(p):
     | multiplicative_expression DIVIDE cast_expression
     | multiplicative_expression MOD cast_expression
     """
-    if len(p) == 2:
-        p[0] = p[1]
-    else:
-        # TODO: RESOLUTION OF FUNCTION name and type
-        pass
-
-    # p[0] = ["multiplicative_expression"] + p[1:]
-
-
+    op_util(p)
+    
 def p_additive_expression(p):
     """additive_expression : multiplicative_expression
     | additive_expression PLUS multiplicative_expression
     | additive_expression MINUS multiplicative_expression
     """
-    if len(p) == 2:
-        p[0] = p[1]
-    else:
-        # TODO: RESOLUTION OF FUNCTION name and type same as above
-        pass
-    # p[0] = ["additive_expression"] + p[1:]
-
-
+    op_util(p)
+    
 def p_shift_expression(p):
     """shift_expression : additive_expression
     | shift_expression LEFT_OP additive_expression
     | shift_expression RIGHT_OP additive_expression
     """
-    if len(p) == 2:
-        p[0] = p[1]
-    else:
-        # TODO: RESOLUTION OF FUNCTION name and type same as above
-        pass
-    # p[0] = ["shift_expression"] + p[1:]
-
-
+    op_util(p)
+    
 def p_relational_expression(p):
     """relational_expression : shift_expression
     | relational_expression LESS shift_expression
@@ -481,87 +501,46 @@ def p_relational_expression(p):
     | relational_expression LE_OP shift_expression
     | relational_expression GE_OP shift_expression
     """
-    if len(p) == 2:
-        p[0] = p[1]
-    else:
-        # TODO: RESOLUTION OF FUNCTION name and type same as above
-        pass
-    # p[0] = ["relation_expression"] + p[1:]
-
-
+    op_util(p)
+    
 def p_equality_expression(p):
     """equality_expression : relational_expression
     | equality_expression EQ_OP relational_expression
     | equality_expression NE_OP relational_expression
     """
-    if len(p) == 2:
-        p[0] = p[1]
-    else:
-        # TODO: RESOLUTION OF FUNCTION name and type same as above
-        pass
-    # p[0] = ["equality_expression"] + p[1:]
-
-
+    op_util(p)
+    
 def p_and_expression(p):
     """and_expression : equality_expression
     | and_expression BITWISE_AND equality_expression
     """
-    if len(p) == 2:
-        p[0] = p[1]
-    else:
-        # TODO: RESOLUTION OF FUNCTION name and type same as above
-        pass
-    # p[0] = ["and_expression"] + p[1:]
-
-
+    op_util(p)
+    
 def p_exclusive_or_expression(p):
     """exclusive_or_expression : and_expression
     | exclusive_or_expression BITWISE_XOR and_expression
     """
-    if len(p) == 2:
-        p[0] = p[1]
-    else:
-        # TODO: RESOLUTION OF FUNCTION name and type same as above
-        pass
-    # p[0] = ["exclusive_or_expression"] + p[1:]
-
-
+    op_util(p)
+    
 def p_inclusive_or_expression(p):
     """inclusive_or_expression : exclusive_or_expression
     | inclusive_or_expression BITWISE_OR exclusive_or_expression
     """
-    if len(p) == 2:
-        p[0] = p[1]
-    else:
-        # TODO: RESOLUTION OF FUNCTION name and type same as above
-        pass
-    # p[0] = ["inclusive_or_expression"] + p[1:]
-
-
+    op_util(p)
+    
 def p_logical_and_expression(p):
     """logical_and_expression : inclusive_or_expression
     | logical_and_expression LOGICAL_AND_OP inclusive_or_expression
     """
-    if len(p) == 2:
-        p[0] = p[1]
-    else:
-        # TODO: RESOLUTION OF FUNCTION name and type same as above
-        pass
-    # p[0] = ["logical_and_expression"] + p[1:]
-
-
+    op_util(p)
+    
 def p_logical_or_expression(p):
     """logical_or_expression : logical_and_expression
     | logical_or_expression LOGICAL_OR_OP logical_and_expression
     """
-    if len(p) == 2:
-        p[0] = p[1]
-    else:
-        # TODO: RESOLUTION OF FUNCTION name and type same as above
-        pass
-    # p[0] = ["logical_or_expression"] + p[1:]
-
-
+    op_util(p)
+    
+    
 def p_conditional_expression(p):
     """conditional_expression : logical_or_expression
     | logical_or_expression QUESTION expression COLON conditional_expression"""

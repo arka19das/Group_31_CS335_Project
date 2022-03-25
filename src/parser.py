@@ -14,18 +14,55 @@ def p_start(p):
 
 
 def p_primary_expression(p):
-    """primary_expression : IDENTIFIER
-    | FLOAT_CONSTANT
-    | HEX_CONSTANT
-    | OCT_CONSTANT
-    | INT_CONSTANT
-    | CHAR_CONSTANT
-    | STRING_LITERAL
+    """primary_expression : identifier
+    | float_constant
+    | hex_constant
+    | oct_constant
+    | int_constant
+    | char_constant
+    | string_literal
     | LEFT_BRACKET expression RIGHT_BRACKET"""
 
-    p[0] = ["primary_expression"] + p[1:]
+    if len(p)==2:
+        p[0]=p[1]
+    else:
+        p[0]=p[2]
+        
+def p_float_constant(p):
+    """ float_constant : FLOAT_CONSTANT
+    """
+    p[0] = Const(p[0],"float")
+     
+def p_hex_constant(p):
+    """ hex_constant : HEX_CONSTANT
+    """
+    p[0] = Const(p[0],"int")
+    
+def p_oct_constant(p):
+    """ oct_constant : OCT_CONSTANT
+    """
+    p[0] = Const(p[0],"int")
 
+def p_int_constant(p):
+    """ int_constant : INT_CONSTANT
+    """
+    p[0] = Const(p[0],"int")
 
+def p_char_constant(p):
+    """ char_constant : CHAR_CONSTANT
+    """
+    p[0] = Const(p[0],"char")
+
+def p_string_literal(p):
+    """ string_literal : STRING_LITERAL
+    """
+    p[0] = Const(p[0],"STRING_LITERAL")
+
+def p_identifier(p):
+    """ identifier : IDENTIFIER
+    """
+    p[0] = Identifier(p[1])
+    
 def p_postfix_expression(p):
     """postfix_expression : primary_expression
     | postfix_expression LEFT_THIRD_BRACKET expression RIGHT_THIRD_BRACKET
@@ -36,15 +73,34 @@ def p_postfix_expression(p):
     | postfix_expression INC_OP
     | postfix_expression DEC_OP"""
 
-    p[0] = ["postfix_expression"] + p[1:]
+    if len(p)==2:
+        p[0]=p[1]
+    
+    elif len(p)==3:
+        p[0]=PostfixExpr(p[1],p[2])
+    
+    elif len(p)==4:
+        if p[2]=='(':
+            p[0]=PostfixExpr(p[1],'(',None)
+        else: 
+            p[0]=PostfixExpr(p[1],p[2],p[3])
 
+    elif len(p)==5:
+        p[0]=PostfixExpr(p[1],p[2],p[3])
+        # if p[2]=='(':
+        #     p[0]=PostfixExpr(p[1],'(',p[3])
+        # else: 
+        #     p[0]=PostfixExpr(p[1],'[',p[3])
 
+    
 def p_argument_expression_list(p):
     """argument_expression_list : assignment_expression
     | argument_expression_list COMMA assignment_expression"""
 
-    p[0] = ["argument_expression_list"] + p[1:]
-
+    if len(p) == 2:
+        p[0] = [p[1]]
+    else:
+        p[0] = p[1] + [p[3]]
 
 def p_unary_expression(p):
     """unary_expression : postfix_expression
@@ -54,8 +110,15 @@ def p_unary_expression(p):
     | SIZEOF unary_expression
     | SIZEOF LEFT_BRACKET type_name RIGHT_BRACKET"""
 
-    p[0] = ["unary_expression"] + p[1:]
-
+    if len(p)==2:
+        p[0] = p[1]
+    elif len(p)==3:
+        p[0] = UnaryExpr(p[1], p[2])
+    # FIXME: Once we have done all type_name 
+    # related thing then sizeof(type_name)
+    # should be ConstExpr
+    else:
+        p[0] = UnaryExpr(p[1], p[3])
 
 def p_unary_operator(p):
     """unary_operator : BITWISE_AND
@@ -65,7 +128,7 @@ def p_unary_operator(p):
     | BITWISE_NOT
     | LOGICAL_NOT"""
 
-    p[0] = ["unary_operator"] + p[1:]
+    p[0] = p[1]
 
 
 def p_cast_expression(p):
@@ -73,8 +136,10 @@ def p_cast_expression(p):
     | LEFT_BRACKET type_name RIGHT_BRACKET cast_expression
     """
 
-    p[0] = ["cast_expression"] + p[1:]
-
+    if len(p)==2:
+        p[0] = p[1]
+    else:
+        p[0] = CastExpr(p[2], p[4])
 
 
 def p_multiplicative_expression(p):
@@ -83,17 +148,20 @@ def p_multiplicative_expression(p):
     | multiplicative_expression DIVIDE cast_expression
     | multiplicative_expression MOD cast_expression
     """
-
-    p[0] = ["multiplicative_expression"] + p[1:]
-
+    if len(p)==2:
+        p[0] = p[1]
+    else:
+        p[0] = OpExpr(p[1], p[2], p[3])
 
 def p_additive_expression(p):
     """additive_expression : multiplicative_expression
     | additive_expression PLUS multiplicative_expression
     | additive_expression MINUS multiplicative_expression
     """
-
-    p[0] = ["additive_expression"] + p[1:]
+    if len(p)==2:
+        p[0] = p[1]
+    else:
+        p[0] = OpExpr(p[1], p[2], p[3])
 
 
 def p_shift_expression(p):
@@ -112,8 +180,10 @@ def p_relational_expression(p):
     | relational_expression LE_OP shift_expression
     | relational_expression GE_OP shift_expression
     """
-
-    p[0] = ["relation_expression"] + p[1:]
+    if len(p)==2:
+            p[0] = p[1]
+    else:
+        p[0] = OpExpr(p[1], p[2], p[3])
 
 
 def p_equality_expression(p):
@@ -121,39 +191,48 @@ def p_equality_expression(p):
     | equality_expression EQ_OP relational_expression
     | equality_expression NE_OP relational_expression
     """
-
-    p[0] = ["equality_expression"] + p[1:]
+    if len(p)==2:
+        p[0] = p[1]
+    else:
+        p[0] = OpExpr(p[1], p[2], p[3])
 
 
 def p_and_expression(p):
     """and_expression : equality_expression
     | and_expression BITWISE_AND equality_expression
     """
-
-    p[0] = ["and_expression"] + p[1:]
+    if len(p)==2:
+            p[0] = p[1]
+    else:
+        p[0] = OpExpr(p[1], p[2], p[3])
 
 
 def p_exclusive_or_expression(p):
     """exclusive_or_expression : and_expression
     | exclusive_or_expression BITWISE_XOR and_expression
     """
-
-    p[0] = ["exclusive_or_expression"] + p[1:]
+    if len(p)==2:
+        p[0] = p[1]
+    else:
+        p[0] = OpExpr(p[1], p[2], p[3])
 
 def p_inclusive_or_expression(p):
     """inclusive_or_expression : exclusive_or_expression
     | inclusive_or_expression BITWISE_OR exclusive_or_expression
     """
-
-    p[0] = ["inclusive_or_expression"] + p[1:]
-
+    if len(p)==2:
+        p[0] = p[1]
+    else:
+        p[0] = OpExpr(p[1], p[2], p[3])
 
 def p_logical_and_expression(p):
     """logical_and_expression : inclusive_or_expression
     | logical_and_expression LOGICAL_AND_OP inclusive_or_expression
     """
-
-    p[0] = ["logical_and_expression"] + p[1:]
+    if len(p)==2:
+        p[0] = p[1]
+    else:
+        p[0] = OpExpr(p[1], p[2], p[3])
 
 
 def p_logical_or_expression(p):
@@ -161,24 +240,29 @@ def p_logical_or_expression(p):
     | logical_or_expression LOGICAL_OR_OP logical_and_expression
     """
 
-    p[0] = ["logical_or_expression"] + p[1:]
-
+    if len(p)==2:
+        p[0] = p[1]
+    else:
+        p[0] = OpExpr(p[1], p[2], p[3])
 
 def p_conditional_expression(p):
     """conditional_expression : logical_or_expression
     | logical_or_expression QUESTION expression COLON conditional_expression"""
 
-    p[0] = ["conditional_expression"] + p[1:]
-
+    if len(p)==2:
+        p[0] = p[1]
+    else:
+        p[0] = CondExpr(p[1], p[3], p[5])
 
 def p_assignment_expression(p):
     """assignment_expression : conditional_expression
     | unary_expression assignment_operator assignment_expression
     """
-
-    p[0] = ["assignment_expression"] + p[1:]
-
-
+    if len(p)==2:
+        p[0] = p[1]
+    else:
+        p[0] = AssignExpr(p[1], p[2], p[3])
+            
 def p_assignment_operator(p):
     """assignment_operator : EQ
     | MUL_ASSIGN
@@ -193,20 +277,23 @@ def p_assignment_operator(p):
     | OR_ASSIGN
     """
 
-    p[0] = ["assignment_operator"] + p[1:]
+    p[0] = p[1]
 
 
+#TO_BE_CHECKED
 def p_expression(p):
     """expression : assignment_expression
     | expression COMMA assignment_expression"""
 
-    p[0] = ["expression"] + p[1:]
-
+    if len(p) == 2:
+        p[0] = [p[1]]
+    else:
+        p[0] = p[1] + [p[3]]
 
 def p_constant_expression(p):
     """constant_expression : conditional_expression"""
 
-    p[0] = ["constant_expression"] + p[1:]
+    p[0] = p[1]
 
 
 def p_declaration(p):
