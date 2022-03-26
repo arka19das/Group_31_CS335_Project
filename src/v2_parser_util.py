@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field, fields
-from typing import List, Any
+from typing import List, Any, Union
 
 TYPE_FLOAT = ["FLOAT", "DOUBLE", "LONG DOUBLE"]
 TYPE_INTEGER = [
@@ -72,6 +72,8 @@ SIZE_OF_TYPE = {
     "UNSIGNED LONG LONG INT": 8,    
 }
 
+IGNORE_LIST = ['(', ')', '{', '}', '[', ']', ',', ';']
+
 ops_type = {
     # arithmetic operators
     '+' : PRIMITIVE_TYPES,
@@ -80,7 +82,7 @@ ops_type = {
     '/' : PRIMITIVE_TYPES,
     '%' : TYPE_INTEGER,
 
-    # comparsion operators
+    # comparison operators
     '>' : PRIMITIVE_TYPES,
     '>=' : PRIMITIVE_TYPES,
     '<' : PRIMITIVE_TYPES,
@@ -116,7 +118,7 @@ class Node:
     maxDepth: int = 0
     isFunc: int = 0
     parentStruct: str = ''
-    argumentList: List[Any] = None
+    argumentList: Union[None, List[Any]] = None
     #argumentList  = None
     field_list: list = field(default_factory=list)
     level: int = 0
@@ -126,9 +128,17 @@ class Node:
         s = {}
         for field in fields(self):
           value = getattr(self, field.name)
-          if getattr(self, field.name) != field.default and value != []: 
+          if getattr(self, field.name) != field.default: 
+              if field != 'argumentList' and value == []:
+                  continue
               s[field.name] = value
         return s
+
+    @property
+    def base_type(self):
+        if not self.type:
+            return self.type 
+        return self.type.split()[-1].upper()
 
 @dataclass
 class ScopeTable:
@@ -137,7 +147,7 @@ class ScopeTable:
     def find(self, key):
         for node in self.nodes:
             if node.name == key:
-                return node 
+                return node
         return None
 
     def insert(self, node):
@@ -209,42 +219,42 @@ def is_iden(p):
       error = "Compilation Error at line " +str(p.lno)+ " :Invalid operation on" + p.val
       ST.c_error.append(error)   
 
-def type_util(op1, op2, op):
+def type_util(op1: Node, op2: Node, op: str):
   temp = Node(name = op+'Operation' ,val = op1.val+op+op2.val,lno = op1.lno,type = 'int',children = [])
   if(op1.type == '' or op2.type == ''):
     temp.type = 'int' #default
     return temp
   top1 = str(op1.type)
   top2 = str(op2.type)
-  tp1 = op1.type.split()[-1].upper()
-  tp2 = op2.type.split()[-1].upper()
+  tp1 = op1.base_type
+  tp2 = op2.base_type
   
-  if top1.endswith("*") >0 and top2.endswith("*")>0:
+  if top1.endswith("*") and top2.endswith("*"):
       error = "Can not cast pointer to pointer"
       ST.c_error.append(error)
       temp.type = op1.type
       #temp.level = op1.level
-  elif top1.endswith("*") >0 or top2.endswith("*")>0:
+  elif top1.endswith("*") or top2.endswith("*"):
       ##MODIFIED
-      if top1.endswith("*") >0 and tp2 in TYPE_FLOAT:
+      if top1.endswith("*") and tp2 in TYPE_FLOAT:
         error = str(op1.lno) +  ' COMPILATION ERROR : Incompatible data type with ' + op +  ' operator'  
         ST.c_error.append(error)
         temp.type = op1.type
         temp.level = op1.level
-      elif top1.endswith("*") >0:
+      elif top1.endswith("*"):
         temp.type = op1.type
         temp.level = op1.level
-      elif top2.endswith("*") >0 and tp1 in TYPE_FLOAT:
+      elif top2.endswith("*") and tp1 in TYPE_FLOAT:
         error = str(op1.lno) +  ' COMPILATION ERROR : Incompatible data type with ' + op +  ' operator'  
         ST.c_error.append(error)
         temp.type = op2.type
         temp.level = op2.level
-      elif top2.endswith("*") >0:
+      elif top2.endswith("*"):
         temp.type = op2.type
         temp.level = op2.level
      
   else:
-    if tp1 not in ops_type[op] or tp2 not in  ops_type[op]:
+    if tp1 not in ops_type[op] or tp2 not in ops_type[op]:
         error = str(op1.lno) + ' COMPILATION ERROR : Incompatible data type with ' + op +  ' operator' 
         ST.c_error.append(error)
         
@@ -288,26 +298,8 @@ def get_data_type_size(type_1):
         return -1
     return ST.find(type_1).size    
   
-  type_1 = type_1.split()[-1]
-  if type_1.upper() not in SIZE_OF_TYPE.keys():
-    return -1
-  return SIZE_OF_TYPE[type_1.upper()]
+  base_type = type_1.split()[-1].upper()
+  return SIZE_OF_TYPE.get(base_type, -1)
   
 def ignore_1(s):
-  if(s == "}"):
-    return True
-  elif(s == "{"):
-    return True
-  elif(s == ")"):
-    return True
-  elif(s == "("):
-    return True
-  elif(s == ";"):
-    return True
-  elif(s == '['):
-    return True
-  elif(s == ']'):
-    return True
-  elif(s == ','):
-    return True
-  return False
+    return s in IGNORE_LIST
