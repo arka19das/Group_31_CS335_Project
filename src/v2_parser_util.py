@@ -210,7 +210,7 @@ def is_iden(p):
       ST.c_error.append(error)   
 
 def type_util(op1, op2, op):
-  temp = Node(name = op+'Operation' ,val = '',lno = op1.lno,type = 'int',children = [])
+  temp = Node(name = op+'Operation' ,val = op1.val+op+op2.val,lno = op1.lno,type = 'int',children = [])
   if(op1.type == '' or op2.type == ''):
     temp.type = 'int' #default
     return temp
@@ -223,15 +223,26 @@ def type_util(op1, op2, op):
       error = "Can not cast pointer to pointer"
       ST.c_error.append(error)
       temp.type = op1.type
+      #temp.level = op1.level
   elif top1.endswith("*") >0 or top2.endswith("*")>0:
+      ##MODIFIED
       if top1.endswith("*") >0 and tp2 in TYPE_FLOAT:
         error = str(op1.lno) +  ' COMPILATION ERROR : Incompatible data type with ' + op +  ' operator'  
         ST.c_error.append(error)
         temp.type = op1.type
-      if top2.endswith("*") >0 and tp1 in TYPE_FLOAT:
+        temp.level = op1.level
+      elif top1.endswith("*") >0:
+        temp.type = op1.type
+        temp.level = op1.level
+      elif top2.endswith("*") >0 and tp1 in TYPE_FLOAT:
         error = str(op1.lno) +  ' COMPILATION ERROR : Incompatible data type with ' + op +  ' operator'  
         ST.c_error.append(error)
         temp.type = op2.type
+        temp.level = op2.level
+      elif top2.endswith("*") >0:
+        temp.type = op2.type
+        temp.level = op2.level
+     
   else:
     if tp1 not in ops_type[op] or tp2 not in  ops_type[op]:
         error = str(op1.lno) + ' COMPILATION ERROR : Incompatible data type with ' + op +  ' operator' 

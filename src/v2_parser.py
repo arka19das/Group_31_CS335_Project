@@ -229,6 +229,7 @@ def p_postfix_expression_3(p):
       else:
         i = 0
         for arguments in p1v_node.argumentList:
+          ##HAVE TO THINK
           curVal = p[3].children[i].val
           cv_node = ST.current_table.find(curVal)
           if cv_node is None:
@@ -266,13 +267,12 @@ def p_unary_expression(p):
     p[0].ast = build_AST(p)
   elif len(p)==3:
     if p[1]=="++" or p[1]=="--":
-      #check lineno  also check if child should be added or not
       tempNode = Node(name = '',val = p[1],lno = p[2].lno,type = '',children = '')
       p[0] = Node(name = 'UnaryOperation',val = p[2].val,lno = p[2].lno,type = p[2].type,children = [tempNode,p[2]])
       is_iden(p[2])
     elif p[1] =='sizeof':
-      # should I add SIZEOF in children
-      p[0] = Node(name = 'SizeOf',val = p[2].val,lno = p[2].lno,type = p[2].type,children = [p[2]])
+      ##MODIFIED
+      p[0] = Node(name = 'SizeOf',val = p[2].val,lno = p[2].lno, type = 'int', children = [p[2]])
     elif p[1].val == '&':
         p[0] = Node(name = 'AddressOfVariable',val = p[2].val,lno = p[2].lno,type = p[2].type + ' *',level=p[1].level+1, children = [p[2]])
     elif p[1].val == '*':
@@ -286,7 +286,8 @@ def p_unary_expression(p):
       p[0] = Node(name = 'UnaryOperation',val = p[2].val,lno = p[2].lno,type = p[2].type,children = []) 
     p[0].ast = build_AST(p)
   else:
-    p[0] = Node(name = 'SizeOf',val = p[3].val,lno = p[3].lno,type = p[3].type,children = [p[3]])
+    ##MODIFIED
+    p[0] = Node(name = 'SizeOf',val = p[3].val,lno = p[3].lno,type = 'int',children = [p[3]])
     p[0].ast = build_AST(p,[2,4])
     
 def p_unary_operator(p):

@@ -1,48 +1,35 @@
 In "#global"[
     {
+        "name": "f",
+        "type": "int",
+        "isFunc": 1,
+        "argumentList": [
+            "int",
+            "char"
+        ]
+    },
+    {
         "name": "main",
         "type": "int",
         "isFunc": 1
     }
 ]
+In "f"[
+    {
+        "name": "x",
+        "type": "int",
+        "size": 4
+    },
+    {
+        "name": "y",
+        "type": "char",
+        "size": 1
+    }
+]
 In "main"[
     {
-        "name": "marks",
-        "type": "int",
-        "size": 40,
-        "array": [
-            10
-        ]
-    },
-    {
-        "name": "i",
-        "type": "int",
+        "name": "x",
+        "type": "float",
         "size": 4
-    },
-    {
-        "name": "n",
-        "type": "int",
-        "size": 4
-    },
-    {
-        "name": "sum",
-        "val": "0",
-        "type": "int",
-        "size": 4
-    },
-    {
-        "name": "average",
-        "type": "int",
-        "size": 4
-    },
-    {
-        "name": "a",
-        "type": "int *",
-        "size": 8
-    },
-    {
-        "name": "b",
-        "type": "int *",
-        "size": 8
     }
 ]
