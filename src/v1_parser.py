@@ -5,7 +5,7 @@ import pydot
 import copy
 import json
 from scanner import *
-from parser_utils import  *
+from v1_parser_util import  *
 # Get the token map from the lexer.  This is required.
 lexer = Lexer()
 lexer.build()
@@ -122,6 +122,7 @@ def p_identifier(p):
             p[0].level=str(p[0].type).count("*")
         if('array' in ST.symbol_table[scope][p[1]].keys()):
             p[0].level+=len(ST.symbol_table[scope][p[1]]['array'])
+            p[0].array = ST.symbol_table[scope][p[1]]['array']
         if('isFunc' in ST.symbol_table[scope][p[1]].keys()):
             p[0].isFunc = 1
         p[0].ast = build_AST(p)
@@ -258,22 +259,22 @@ def p_unary_expression(p):
   if(len(p) == 2):  
     p[0] = p[1]
     p[0].ast = build_AST(p)
+    
   elif len(p)==3:
     if p[1]=="++" or p[1]=="--":
-      #check lineno  also check if child should be added or not
       tempNode = Node(name = '',val = p[1],lno = p[2].lno,type = '',children = '')
       p[0] = Node(name = 'UnaryOperation',val = p[2].val,lno = p[2].lno,type = p[2].type,children = [tempNode,p[2]])
       is_iden(p[2])
-    if(p[1] == '&'):
+    elif p[1].val == '&':
         p[0] = Node(name = 'AddressOfVariable',val = p[2].val,lno = p[2].lno,type = p[2].type + ' *',level=p[1].level+1, children = [p[2]])
-    elif(p[1] == '*'):
+    elif p[1].val == '*':
       if(not p[2].type.endswith('*')):
         error = 'COMPILATION ERROR at line ' + str(p[1].lno) + ' cannot dereference variable of type ' + p[2].type
         ST.c_error.append(error)
       p[0] = Node(name = 'PointerVariable',val = p[2].val,lno = p[2].lno,type = p[2].type[:len(p[2].type)-2],children = [p[2]])
-    elif(p[1] == '-'):
+    elif p[1].val == '-':
       p[0] = Node(name = 'UnaryOperationMinus',val = p[2].val,lno = p[2].lno,type = p[2].type,children = [p[2]])
-    elif p[1]=='sizeof':
+    elif p[1] =='sizeof':
       # should I add SIZEOF in children
       p[0] = Node(name = 'SizeOf',val = p[2].val,lno = p[2].lno,type = p[2].type,children = [p[2]])
     else:
@@ -306,8 +307,6 @@ def p_cast_expression(p):
     # confusion about val
     p[0] = Node(name = 'TypeCasting',val = p[2].val,lno = p[2].lno,type = p[2].type,children = [])
     p[0].ast = build_AST(p,[1,3])
-
-################
 
 def p_multipicative_expression(p):
   '''multiplicative_expression : cast_expression
@@ -383,8 +382,6 @@ def p_and_expression(p):
   '''and_expression : equality_expression
 	| and_expression BITWISE_AND equality_expression
   '''
-  #p[0] = Node()
-  # p[0] = build_AST(p)
   if(len(p) == 2):
     p[0] = p[1]
     p[0].ast = build_AST(p)
@@ -397,8 +394,6 @@ def p_exclusive_or_expression(p):
   '''exclusive_or_expression : and_expression
 	| exclusive_or_expression BITWISE_XOR and_expression
 	'''
-  #p[0] = Node()
-  # p[0] = build_AST(p)
   if(len(p) == 2):
     p[0] = p[1]
     p[0].ast = build_AST(p)
@@ -454,6 +449,7 @@ def p_conditional_expression(p):
   
   if(len(p) == 2):
     p[0] = p[1]
+    
   else:  
     p[0] = Node(name = 'ConditionalOperation',val = '',lno = p[1].lno,type = '',children = [])
   p[0].ast = build_AST(p)
@@ -476,20 +472,20 @@ def p_assignment_expression(p):
     if('const' in p[1].type.split()):
       error = 'Error, modifying a variable declared with const keyword at line ' + str(p[1].lno)
       ST.c_error.append(error) 
-      #print('Error, modifying a variable declared with const keyword at line ' + str(p[1].lno))
-    if('struct' in p[1].type.split() and 'struct' not in p[3].type.split()):
-      error = 'COMPILATION ERROR at line ' + str(p[1].lno) + ', cannot assign variable of type ' + p[3].type + ' to ' + p[1].type
-      ST.c_error.append(error)
-      #print('COMPILATION ERROR at line ' + str(p[1].lno) + ', cannot assign variable of type ' + p[3].type + ' to ' + p[1].type)
-    elif('struct' not in p[1].type.split() and 'struct' in p[3].type.split()):
-      error = 'COMPILATION ERROR at line ' + str(p[1].lno) + ', cannot assign variable of type ' + p[3].type + ' to ' + p[1].type
-      ST.c_error.append(error)
-      #print('COMPILATION ERROR at line ' + str(p[1].lno) + ', cannot assign variable of type ' + p[3].type + ' to ' + p[1].type)
+    if('struct' in p[1].type.split() or 'struct' not in p[3].type.split()):
+      op1 = 'struct' in p[1].type.split()
+      op2 = 'struct' in p[3].type.split()
+      if op1 ^ op2:
+        error = 'COMPILATION ERROR at line ' + str(p[1].lno) + ', cannot assign variable of type ' + p[3].type + ' to ' + p[1].type
+        ST.c_error.append(error)
+    if(p[1].level != p[3].level):
+      error = "COMPILATION ERROR at line ," + str(p[1].lno) + ", type mismatch in assignment"
+      ST.c_error.append(error) 
+    elif len(p[1].array)>0:
+      error = "COMPILATION ERROR at line ," + str(p[1].lno) + ", Invalid Array assignment"
+      ST.c_error.append(error)       
     elif(p[1].type.split()[-1] != p[3].type.split()[-1]):
       error = 'Warning at line ' + str(p[1].lno) + ': type mismatch in assignment'
-      ST.c_error.append(error) 
-    elif(p[1].level != p[3].level):
-      error = "COMPILATION ERROR at line ," + str(p[1].lno) + ", type mismatch in assignment"
       ST.c_error.append(error) 
     
     if(len(p[1].parentStruct) > 0):
@@ -506,19 +502,16 @@ def p_assignment_expression(p):
     if (found_scope != -1) and ((p[1].isFunc == 1)):
       error = "Compilation Error at line" + str(p[1].lno) + ":Invalid operation on " + p[1].val
       ST.c_error.append(error) 
-      #print("Compilation Error at line", str(p[1].lno), ":Invalid operation on", p[1].val)
 
     found_scope = ST.find_scope(p[3].val)
     if (found_scope != -1) and ((p[3].isFunc == 1)):
       error = "Compilation Error at line" + str(p[1].lno) + ":Invalid operation on " + p[3].val
       ST.c_error.append(error)
-      #print("Compilation Error at line", str(p[3].lno), ":Invalid operation on", p[3].val)
 
     if p[2].val != '=':
       if ('struct' in p[1].type.split()) or ('struct' in p[3].type.split()):
         error = "Compilation Error at line" + str(p[1].lno) + ":Invalid operation on " + p[1].val
         ST.c_error.append(error) 
-        #print("Compilation Error at line", str(p[1].lno), ":Invalid operation on", p[1].val)
     
     p[0] = Node(name = 'AssignmentOperation',val = '',type = p[1].type, lno = p[1].lno, children = [], level = p[1].level)
     p[0].ast = build_AST(p)
@@ -763,8 +756,6 @@ def p_struct_or_union_specifier(p):
         curr_list.append(child.array)
         for ele in child.array:
           totalEle *= ele
-        # print(child.val, isinstance(totalEle, str), get_data_type_size(child.type))  
-        # totalEle = int(totalEle)
       curr_offset = curr_offset + get_data_type_size(child.type)*totalEle
       curr_list[2] *= totalEle
       SZ *= totalEle
@@ -1281,9 +1272,8 @@ def p_switch(p):
     ST.switchDepth += 1
     p[0] = build_AST(p)
 
-
 def p_iteration_statement(p):
-    '''iteration_statement : while LEFT_BRACKET expression RIGHT_BRACKET new_compound_statement
+    '''iteration_statement : while LEFT_BRACKET expression RIGHT_BRACKET compound_statement
     | do compound_statement WHILE LEFT_BRACKET expression RIGHT_BRACKET SEMICOLON
     | for lopenparen for_init_statement expression SEMICOLON expression RIGHT_BRACKET new_compound_statement
     | for lopenparen for_init_statement expression SEMICOLON RIGHT_BRACKET new_compound_statement

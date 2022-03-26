@@ -1,22 +1,4 @@
-//DOUBT
-int *f(int x)
-{
-    return 5 ;
+//Should give Warning
+int main(){
+    ;
 }
-int main()
-{
-    int x ;
-    f(x) ;
-    return 0 ;
-}
-
-// int *f(int x)
-// {
-//     return 5 ;
-// }
-// int main()
-// {
-//     int x ;
-//     f(x) ;
-//     return 0 ;
-// }

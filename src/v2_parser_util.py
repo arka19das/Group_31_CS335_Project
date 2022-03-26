@@ -1,4 +1,5 @@
-import sys
+from dataclasses import dataclass, field, fields
+from typing import List, Any
 
 TYPE_FLOAT = ["FLOAT", "DOUBLE", "LONG DOUBLE"]
 TYPE_INTEGER = [
@@ -102,11 +103,51 @@ ops_type = {
     '^' : TYPE_INTEGER,
 }
 
+@dataclass
+class Node:
+    name: str = ''
+    val: Any = ''
+    type: str = ''
+    lno: int = 0
+    size: int = 0
+    children: list = field(default_factory=list)
+    scope: int = 0
+    array: list = field(default_factory=list)
+    maxDepth: int = 0
+    isFunc: int = 0
+    parentStruct: str = ''
+    argumentList: List[Any] = None
+    #argumentList  = None
+    field_list: list = field(default_factory=list)
+    level: int = 0
+    ast: Any = None
+
+    def to_dict(self):
+        s = {}
+        for field in fields(self):
+          value = getattr(self, field.name)
+          if getattr(self, field.name) != field.default and value != []: 
+              s[field.name] = value
+        return s
+
+@dataclass
+class ScopeTable:
+    nodes: list = field(default_factory=list)
+
+    def find(self, key):
+        for node in self.nodes:
+            if node.name == key:
+                return node 
+        return None
+
+    def insert(self, node):
+        self.nodes.append(node)
+
 class SymbolTable:
     def __init__(self):
         self.curType = []
         self.curFuncReturnType = ''
-        self.symbol_table = []
+        self.symbol_table: list[ScopeTable] = []
         # typedef_list = {}
         # all_typedef = []
         self.scope_to_function = {}
@@ -119,48 +160,52 @@ class SymbolTable:
         self.set()
         
     def set(self):
-        self.symbol_table.append({})
+        self.symbol_table.append(ScopeTable())
         self.parent[0]=0
         self.scope_to_function[0] = '#global'
 
     def find_scope(self, key):
         curscp = self.currentScope
         while(self.parent[curscp] != curscp):
-            if(key in self.symbol_table[curscp].keys()):
+            if self.symbol_table[curscp].find(key) is not None:
                 break
             curscp = self.parent[curscp]
-        if (curscp == 0 and key not in self.symbol_table[curscp].keys()):
+        if (curscp == 0 and self.symbol_table[curscp].find(key) is None):
             return -1 
         else :
             return curscp
 
-class Node:
-  def __init__(self, name = '',val = '',lno = 0,type = '',children = '',scope = 0, array = [], is_array=0, maxDepth = 0,isFunc = 0, isarray=0, parentStruct = '', level = 0,ast = None):
-    
-    self.name = name
-    self.val = val
-    self.type = type
-    self.lno = lno
-    self.scope = scope
-    self.array = array
-    self.is_array = is_array
-    self.maxDepth = maxDepth
-    self.isFunc = isFunc
-    self.isarray = isarray
-    self.parentStruct = parentStruct
-    self.ast = ast
-    self.level = level
-    if children:
-      self.children = children
-    else:
-      self.children = []
+    def find(self, key):
+        scope = self.currentScope
+        node = self.symbol_table[scope].find(key)
+        while node is None:
+            scope = self.parent[scope]
+            node = self.symbol_table[scope].find(key)
+            if scope == 0:
+                break
+        return node
+
+    def scope_table(self, scope):
+        return self.symbol_table[scope]
+
+    @property
+    def current_table(self):
+        return self.symbol_table[self.currentScope]
+
+    @property
+    def parent_table(self):
+        return self.symbol_table[self.parent[self.currentScope]]
+
+    @property
+    def global_table(self):
+        return self.symbol_table[0]
 
 ST = SymbolTable()
 
 def is_iden(p):
-  found_scope = ST.find_scope(p.val)
+  p_node = ST.find(p.val)
   
-  if (found_scope != -1) and ((p.isFunc == 1) or ('struct' in p.type.split())):
+  if (p_node is not None) and ((p.isFunc == 1) or ('struct' in p.type.split())):
       error = "Compilation Error at line " +str(p.lno)+ " :Invalid operation on" + p.val
       ST.c_error.append(error)   
 
@@ -169,32 +214,31 @@ def type_util(op1, op2, op):
   if(op1.type == '' or op2.type == ''):
     temp.type = 'int' #default
     return temp
-  
   top1 = str(op1.type)
   top2 = str(op2.type)
+  tp1 = op1.type.split()[-1].upper()
+  tp2 = op2.type.split()[-1].upper()
+  
   if top1.endswith("*") >0 and top2.endswith("*")>0:
       error = "Can not cast pointer to pointer"
       ST.c_error.append(error)
       temp.type = op1.type
   elif top1.endswith("*") >0 or top2.endswith("*")>0:
-      if top1.endswith("*") >0 and op2.type.split()[-1].upper() in TYPE_FLOAT:
+      if top1.endswith("*") >0 and tp2 in TYPE_FLOAT:
         error = str(op1.lno) +  ' COMPILATION ERROR : Incompatible data type with ' + op +  ' operator'  
         ST.c_error.append(error)
         temp.type = op1.type
-      if top2.endswith("*") >0 and op1.type.split()[-1].upper() in TYPE_FLOAT:
+      if top2.endswith("*") >0 and tp1 in TYPE_FLOAT:
         error = str(op1.lno) +  ' COMPILATION ERROR : Incompatible data type with ' + op +  ' operator'  
         ST.c_error.append(error)
         temp.type = op2.type
-      
   else:
-    print(op1.type, op2.type)
-    if op1.type.split()[-1].upper() not in ops_type[op] or op2.type.split()[-1].upper() not in  ops_type[op]:
-      error = str(op1.lno) + ' COMPILATION ERROR : Incompatible data type with ' + op +  ' operator' 
-      ST.c_error.append(error)
-
-    size1 = SIZE_OF_TYPE[op1.type.split()[-1].upper()]
-    size2 = SIZE_OF_TYPE[op2.type.split()[-1].upper()]
-
+    if tp1 not in ops_type[op] or tp2 not in  ops_type[op]:
+        error = str(op1.lno) + ' COMPILATION ERROR : Incompatible data type with ' + op +  ' operator' 
+        ST.c_error.append(error)
+        
+    size1 = SIZE_OF_TYPE[tp1]
+    size2 = SIZE_OF_TYPE[tp2]
     if size1>size2:
       error = str(op1.lno) + ' WARNING : Implicit Type casting of ' + op2.val 
       ST.c_error.append(error)
@@ -204,10 +248,15 @@ def type_util(op1, op2, op):
       ST.c_error.append(error)
       temp.type = op2.type
     else:
-          if str(op1.type).startswith("unsigned"):
-            temp.type = op1.type
-          else:
-            temp.type = op2.type
+      if tp1=="FLOAT" or tp2=="FLOAT":
+        temp.type = "float"
+      elif tp1=="DOUBLE" or tp2=="DOUBLE":
+            temp.type = "float"
+      elif top1.startswith("unsigned"):
+        temp.type = op1.type
+      else:
+        temp.type = op2.type
+
   if temp.type == 'char':
     temp.type = 'int'
   
@@ -223,10 +272,10 @@ def get_data_type_size(type_1):
   if type_1.endswith('*'):
     return 8
   if type_1.startswith('struct'):
-    scope = ST.find_scope(type_1)
-    if scope==-1:
+    node = ST.find(type_1)
+    if node is None:
         return -1
-    return ST.symbol_table[scope][type_1]['size']    
+    return ST.find(type_1).size    
   
   type_1 = type_1.split()[-1]
   if type_1.upper() not in SIZE_OF_TYPE.keys():

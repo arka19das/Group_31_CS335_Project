@@ -1,0 +1,48 @@
+In "#global"[
+    {
+        "name": "main",
+        "type": "int",
+        "isFunc": 1
+    }
+]
+In "main"[
+    {
+        "name": "marks",
+        "type": "int",
+        "size": 40,
+        "array": [
+            10
+        ]
+    },
+    {
+        "name": "i",
+        "type": "int",
+        "size": 4
+    },
+    {
+        "name": "n",
+        "type": "int",
+        "size": 4
+    },
+    {
+        "name": "sum",
+        "val": "0",
+        "type": "int",
+        "size": 4
+    },
+    {
+        "name": "average",
+        "type": "int",
+        "size": 4
+    },
+    {
+        "name": "a",
+        "type": "int *",
+        "size": 8
+    },
+    {
+        "name": "b",
+        "type": "int *",
+        "size": 8
+    }
+]

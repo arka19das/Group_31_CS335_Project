@@ -22,8 +22,8 @@ int main() {
   num2.integer = 10;
   
   
-  int x; 
-  char operation = 'a';
+  // int x; 
+  // char operation = 'a';
   
   switch(a){
         case '+':

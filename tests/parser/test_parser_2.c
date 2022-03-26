@@ -35,18 +35,15 @@ float Find_median(int array[3] , int n)
 }
 int main()
 {   
-    int a[10];
-    a[10]=5;    
-    //int arr[10];
-    // int arr[15] = {11,9,8,5,3,1,1,6,10,5,3,1,2};
-    // int i=0, sum=0;
-    // int n = sizeof(arr)/sizeof(arr[0]);
-    // while (i<n)
-    // {
-    //     i++;
-    //     sum += i;
-    // }
-    // Array_sort(arr,n);
-    // float f =Find_median(arr,n);
-    // return 0;
+    int arr[15] = {11,9,8,5,3,1,1,6,10,5,3,1,2};
+    int i=0, sum=0;
+    int n = sizeof(arr)/sizeof(arr[0]);
+    while (i<n)
+    {
+        i++;
+        sum += i;
+    }
+    Array_sort(arr,n);
+    //float f =Find_median(arr,n);
+    return 0;
 }
