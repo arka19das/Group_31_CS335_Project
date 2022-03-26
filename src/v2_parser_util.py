@@ -106,6 +106,21 @@ ops_type = {
 }
 
 @dataclass
+class Error:
+    line_number: int
+    rule_name: str = ''
+    err_type: str = ''
+    message: str = ''
+
+    def __str__(self):
+        message = self.err_type.upper()
+        if self.line_number != -1:
+            message += f" (at line {self.line_number})"
+        message += ": " + self.message
+        return message
+
+
+@dataclass
 class Node:
     name: str = ''
     val: Any = ''
@@ -166,7 +181,7 @@ class SymbolTable:
         self.parent = {}
         self.loopingDepth = 0
         self.switchDepth = 0
-        self.c_error = []
+        self.c_error: list[Error] = []
         self.set()
         
     def set(self):
@@ -210,16 +225,26 @@ class SymbolTable:
     def global_table(self):
         return self.symbol_table[0]
 
+    def error(self, err: Error):
+        self.c_error.append(err) 
+
+    def display_error(self, verbose: bool = False):
+        for err in self.c_error:
+            if err.err_type == 'warning' and not verbose:
+                continue 
+            print(str(err))
+
 ST = SymbolTable()
 
 def is_iden(p):
   p_node = ST.find(p.val)
   
   if (p_node is not None) and ((p.isFunc == 1) or ('struct' in p.type.split())):
-      error = "Compilation Error at line " +str(p.lno)+ " :Invalid operation on" + p.val
-      ST.c_error.append(error)   
+      # error = "Compilation Error at line " +str(p.lno)+ " :Invalid operation on" + p.val
+      ST.error(Error(p[1].lno, rule_name, "compilation error", f'Invalid operation on {p.val}'))
 
 def type_util(op1: Node, op2: Node, op: str):
+  rule_name = 'type_util'
   temp = Node(name = op+'Operation' ,val = op1.val+op+op2.val,lno = op1.lno,type = 'int',children = [])
   if(op1.type == '' or op2.type == ''):
     temp.type = 'int' #default
@@ -230,23 +255,23 @@ def type_util(op1: Node, op2: Node, op: str):
   tp2 = op2.base_type
   
   if top1.endswith("*") and top2.endswith("*"):
-      error = "Can not cast pointer to pointer"
-      ST.c_error.append(error)
+      # error = "Can not cast pointer to pointer"
+      ST.error(Error(-1, rule_name, "compilation error", 'Cannot cast pointer to pointer'))
       temp.type = op1.type
       #temp.level = op1.level
   elif top1.endswith("*") or top2.endswith("*"):
       ##MODIFIED
       if top1.endswith("*") and tp2 in TYPE_FLOAT:
-        error = str(op1.lno) +  ' COMPILATION ERROR : Incompatible data type with ' + op +  ' operator'  
-        ST.c_error.append(error)
+        # error = str(op1.lno) +  ' COMPILATION ERROR : Incompatible data type with ' + op +  ' operator'  
+        ST.error(Error(-1, rule_name, "compilation error", f'Incompatible data type {op} operator'))
         temp.type = op1.type
         temp.level = op1.level
       elif top1.endswith("*"):
         temp.type = op1.type
         temp.level = op1.level
       elif top2.endswith("*") and tp1 in TYPE_FLOAT:
-        error = str(op1.lno) +  ' COMPILATION ERROR : Incompatible data type with ' + op +  ' operator'  
-        ST.c_error.append(error)
+        # error = str(op1.lno) +  ' COMPILATION ERROR : Incompatible data type with ' + op +  ' operator'  
+        ST.error(Error(-1, rule_name, "compilation error", f'Incompatible data type {op} operator'))
         temp.type = op2.type
         temp.level = op2.level
       elif top2.endswith("*"):
@@ -255,18 +280,16 @@ def type_util(op1: Node, op2: Node, op: str):
      
   else:
     if tp1 not in ops_type[op] or tp2 not in ops_type[op]:
-        error = str(op1.lno) + ' COMPILATION ERROR : Incompatible data type with ' + op +  ' operator' 
-        ST.c_error.append(error)
+        # error = str(op1.lno) + ' COMPILATION ERROR : Incompatible data type with ' + op +  ' operator' 
+        ST.error(Error(-1, rule_name, "compilation error", f'Incompatible data type {op} operator'))
         
     size1 = SIZE_OF_TYPE[tp1]
     size2 = SIZE_OF_TYPE[tp2]
     if size1>size2:
-      error = str(op1.lno) + ' WARNING : Implicit Type casting of ' + op2.val 
-      ST.c_error.append(error)
+      ST.error(Error(-1, rule_name, "warning", f'Implicit type casting of {op2.val}'))
       temp.type = op1.type
     elif size2>size1:
-      error = str(op1.lno) + ' WARNING : Implicit Type casting of ' + op1.val 
-      ST.c_error.append(error)
+      ST.error(Error(-1, rule_name, "warning", f'Implicit type casting of {op1.val}'))
       temp.type = op2.type
     else:
       if tp1=="FLOAT" or tp2=="FLOAT":

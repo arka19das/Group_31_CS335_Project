@@ -17,7 +17,7 @@ tokens = lexer.tokens
 #      ('nonassoc', 'ELSE')
 #  )
 
-ST.c_error = []
+# ST.c_error = []
 #cur_num =0
 # def build_AST(p, nope = []):
 #   global cur_num
@@ -188,8 +188,8 @@ def p_identifier(p):
         p[0].isFunc = p1_node.isFunc
         p[0].ast = build_AST(p,rule_name)
     else:
-        error = str(p.lineno(1)) + 'COMPILATION ERROR: IDENTIFIER: ' + str(p[1]) + ' not declared'
-        ST.c_error.append(error)        
+        # error = str(p.lineno(1)) + 'COMPILATION ERROR: IDENTIFIER: ' + str(p[1]) + ' not declared'
+        ST.error(Error(p.lineno[1], rule_name, 'compilation error', f'Identifier {p[1]} not declared'))        
 
 ########################
 
@@ -219,28 +219,28 @@ def p_postfix_expression_3(p):
       p[0].ast = build_AST(p,rule_name)
       p1v_node = ST.global_table.find(p[1].val)
       if p1v_node is None or not p1v_node.isFunc:
-        error = 'COMPILATION ERROR at line ' + str(p[1].lno) + ': no function with name ' + p[1].val + ' declared'
-        ST.c_error.append(error) 
+        # error = 'COMPILATION ERROR at line ' + str(p[1].lno) + ': no function with name ' + p[1].val + ' declared'
+        ST.error(Error(p[1].lno, rule_name, 'compilation error', f'No function declared with name {p[1].val}')) 
       elif len(p1v_node.argumentList) != 0:
-        error = "Syntax Error at line" + str(p[1].lno) + "Incorrect number of arguments for function call" 
-        ST.c_error.append(error)
+        # error = "Syntax Error at line" + str(p[1].lno) + "Incorrect number of arguments for function call" 
+        ST.error(Error(p[1].lno, rule_name, 'syntax error', f'Function {p[1].val} called with incorrect number of arguments'))
     
     else:
       if (not p[1].name.startswith('Dot')):
         p1v_node = ST.find(p[1].val)
         if p1v_node is None:
-          error = "COMPILATION ERROR at line " + str(p[1].lno) + " : " + p[1].val + " not declared"
-          ST.c_error.append(error)
+          # error = "COMPILATION ERROR at line " + str(p[1].lno) + " : " + p[1].val + " not declared"
+          ST.error(Error(p[1].lno, rule_name, 'compilation error', f'{p[1].val} not declared'))
 
       p[0] = Node(name = 'DotOrPTRExpression',val = p[3],lno = p[1].lno,type = p[1].type,children = [])
       p[0].ast = build_AST(p,rule_name)
       struct_name = p[1].type
       if (struct_name.endswith('*') and p[2][0] == '.') or (not struct_name.endswith('*') and p[2][0] == '->') :
-        error = "COMPILATION ERROR at line " + str(p[1].lno) + " : invalid operator " +  " on " + struct_name
-        ST.c_error.append(error)
+        # error = "COMPILATION ERROR at line " + str(p[1].lno) + " : invalid operator " +  " on " + struct_name
+          ST.error(Error(p[1].lno, rule_name, 'compilation error', f'Invalid operator on {struct_name}'))
       if(not struct_name.startswith('struct')):
-        error = "COMPILATION ERROR at line " + str(p[1].lno) + ", " + p[1].val + " is not a struct"
-        ST.c_error.append(error) 
+        # error = "COMPILATION ERROR at line " + str(p[1].lno) + ", " + p[1].val + " is not a struct"
+        ST.error(Error(p[1].lno, rule_name, 'compilation error', f'{p[1].val} is not a struct'))
         return
 
       struct_node = ST.find(struct_name)
@@ -254,11 +254,11 @@ def p_postfix_expression_3(p):
             p[0].level = len(curr_list[4])
             
       if(p[0].level == -1):
-        error = "COMPILATION ERROR at line " + str(p[1].lno)+ ", incorrect number of dimensions specified for " + p[1].val
-        ST.c_error.append(error)
+        # error = "COMPILATION ERROR at line " + str(p[1].lno)+ ", incorrect number of dimensions specified for " + p[1].val
+        ST.error(Error(p[1].lno, rule_name, 'compilation error', f'Incorrect number of dimensions for {p[1].val}'))
       if flag == 0 :
-          error = "COMPILATION ERROR at line " + str(p[1].lno) + " : field " + " not declared in " + struct_name
-          ST.c_error.append(error)
+          # error = "COMPILATION ERROR at line " + str(p[1].lno) + " : field " + " not declared in " + struct_name
+          ST.error(Error(p[1].lno, rule_name, 'compilation error', f'Field not declared in {struct_name}'))
 
   elif len(p)==5:
     if p[2]=='[':
@@ -268,11 +268,11 @@ def p_postfix_expression_3(p):
       p[0].array.append(p[3].val)
       p[0].level = p[1].level - 1
       if(p[0].level == -1):
-        error = "COMPILATION ERROR at line " + str(p[1].lno)+ ", incorrect number of dimensions specified for " + p[1].val
-        ST.c_error.append(error)
+        # error = "COMPILATION ERROR at line " + str(p[1].lno)+ ", incorrect number of dimensions specified for " + p[1].val
+        ST.error(Error(p[1].lno, rule_name, 'compilation error', f'Incorrect number of dimensions specified for {p[1].val}'))
       if p[3].type.upper() not in TYPE_INTEGER:
-        error = "Compilation Error: Array index at line ", p[3].lno, " is not of compatible type"
-        ST.c_error.append(error)
+        # error = "Compilation Error: Array index at line ", p[3].lno, " is not of compatible type"
+        ST.error(Error(p[3].lno, rule_name, 'compilation error', 'Array Index is of incompatible type'))
     
     else:
       p[0] = Node(name = 'FunctionCall2',val = p[1].val,lno = p[1].lno,type = p[1].type,children = [],isFunc=0)
@@ -280,11 +280,11 @@ def p_postfix_expression_3(p):
       
       p1v_node = ST.global_table.find(p[1].val)
       if p1v_node is None or p1v_node.isFunc == 0:
-        error = 'COMPILATION ERROR at line :' + str(p[1].lno) + ': no function with name ' + p[1].val + ' declared'
-        ST.c_error.append(error)
+        # error = 'COMPILATION ERROR at line :' + str(p[1].lno) + ': no function with name ' + p[1].val + ' declared'
+        ST.error(Error(p[1].lno, rule_name, "compilation error", f'No function of name {p[1].val} declared'))
       elif len(p1v_node.argumentList) != len(p[3].children):
-        error = "Syntax Error at line " + str(p[1].lno) + " Incorrect number of arguments for function call"
-        ST.c_error.append(error)
+        # error = "Syntax Error at line " + str(p[1].lno) + " Incorrect number of arguments for function call"
+        ST.error(Error(p[1].lno, rule_name, "syntax error", 'Incorrect number of arguments for function call'))
       else:
         i = 0
         for arguments in p1v_node.argumentList:
@@ -295,8 +295,9 @@ def p_postfix_expression_3(p):
             continue
           ST.curType = cv_node.type
           if(ST.curType.split()[-1] != arguments.split()[-1]):
-            error = "Warning at line " + str(p[1].lno)+ ": Type mismatch in argument " + str(i+1) + " of function call, " + 'actual type : ' + arguments + ', called with : ' + ST.curType
-            ST.c_error.append(error)
+            # error = "Warning at line " + str(p[1].lno)+ ": Type mismatch in argument " + str(i+1) + " of function call, " + 'actual type : ' + arguments + ', called with : ' + ST.curType
+            ST.error(Error(p[1].lno, rule_name, "warning", 
+                           f'Type mismatch in argument {i+1} of function call. Expected: {arguments}, Received: {ST.curType}'))
           i += 1
   
 def p_argument_expression_list(p):
@@ -338,8 +339,8 @@ def p_unary_expression(p):
         p[0] = Node(name = 'AddressOfVariable',val = p[2].val,lno = p[2].lno,type = p[2].type + ' *',level=p[1].level+1, children = [p[2]])
     elif p[1].val == '*':
       if(not p[2].type.endswith('*')):
-        error = 'COMPILATION ERROR at line ' + str(p[1].lno) + ' cannot dereference variable of type ' + p[2].type
-        ST.c_error.append(error)
+        # error = 'COMPILATION ERROR at line ' + str(p[1].lno) + ' cannot dereference variable of type ' + p[2].type
+        ST.error(Error(p[1].lno, rule_name, "compilation error", f'Cannot dereference variable of type {p[2].type}'))
       p[0] = Node(name = 'PointerVariable',val = p[2].val,lno = p[2].lno,type = p[2].type[:len(p[2].type)-2],children = [p[2]])
     elif p[1].val == '-':
       p[0] = Node(name = 'UnaryOperationMinus',val = p[2].val,lno = p[2].lno,type = p[2].type,children = [p[2]])
@@ -542,23 +543,23 @@ def p_assignment_expression(p):
     if p[1].type == '-1' or p[3].type == '-1':
       return
     if('const' in p[1].type.split()):
-      error = 'Error, modifying a variable declared with const keyword at line ' + str(p[1].lno)
-      ST.c_error.append(error) 
+      # error = 'Error, modifying a variable declared with const keyword at line ' + str(p[1].lno)
+      ST.error(Error(p[1].lno, rule_name, "error", 'Modifying const variable'))
     if('struct' in p[1].type.split() or 'struct' not in p[3].type.split()):
       op1 = 'struct' in p[1].type.split()
       op2 = 'struct' in p[3].type.split()
       if op1 ^ op2:
-        error = 'COMPILATION ERROR at line ' + str(p[1].lno) + ', cannot assign variable of type ' + p[3].type + ' to ' + p[1].type
-        ST.c_error.append(error)
+        # error = 'COMPILATION ERROR at line ' + str(p[1].lno) + ', cannot assign variable of type ' + p[3].type + ' to ' + p[1].type
+        ST.error(Error(p[1].lno, rule_name, "compilation error", f'Cannot assign variable of type {p[3].type} to {p[1].type}'))
     if(p[1].level != p[3].level):
-      error = "COMPILATION ERROR at line ," + str(p[1].lno) + ", type mismatch in assignment"
-      ST.c_error.append(error) 
+      # error = "COMPILATION ERROR at line ," + str(p[1].lno) + ", type mismatch in assignment"
+      ST.error(Error(p[1].lno, rule_name, "compilation error", 'Type mismatch in assignment: Pointers of different levels'))
     elif p[1].level and len(p[1].array)>0:
-      error = "COMPILATION ERROR at line ," + str(p[1].lno) + ", Invalid Array assignment"
-      ST.c_error.append(error)       
+      # error = "COMPILATION ERROR at line ," + str(p[1].lno) + ", Invalid Array assignment"
+      ST.error(Error(p[1].lno, rule_name, "compilation error", 'Invalid array assignment'))
     elif(p[1].type.split()[-1] != p[3].type.split()[-1]):
-      error = 'Warning at line ' + str(p[1].lno) + ': type mismatch in assignment'
-      ST.c_error.append(error) 
+      # error = 'Warning at line ' + str(p[1].lno) + ': type mismatch in assignment'
+      ST.error(Error(p[1].lno, rule_name, "warning", 'Type mismatch in assignment'))
     
     if(len(p[1].parentStruct) > 0):
       node = ST.find(p[1].parentStruct)
@@ -567,23 +568,23 @@ def p_assignment_expression(p):
           if(len(curr_list) < 5 and len(p[1].array) == 0):
             break
           if(len(curr_list) < 5 or (len(curr_list[4]) < len(p[1].array))):
-            error = "COMPILATION ERROR at line " + str(p[1].lno) + ", incorrect number of dimensions"
-            ST.c_error.append(error)
+            # error = "COMPILATION ERROR at line " + str(p[1].lno) + ", incorrect number of dimensions"
+            ST.error(Error(p[1].lno, rule_name, "compilation error", 'Incorrect number of dimensions'))
     
     p1_node = ST.find(p[1].val)
     if (p1_node is not None) and ((p[1].isFunc == 1)):
-      error = "Compilation Error at line" + str(p[1].lno) + ":Invalid operation on " + p[1].val
-      ST.c_error.append(error) 
+      # error = "Compilation Error at line" + str(p[1].lno) + ":Invalid operation on " + p[1].val
+      ST.error(Error(p[1].lno, rule_name, "compilation error", f'Invalid operation on {p[1].val}'))
 
     p3_node = ST.find(p[3].val)
     if (p3_node is not None) and ((p[3].isFunc == 1)):
-      error = "Compilation Error at line" + str(p[1].lno) + ":Invalid operation on " + p[3].val
-      ST.c_error.append(error)
+      # error = "Compilation Error at line" + str(p[1].lno) + ":Invalid operation on " + p[3].val
+      ST.error(Error(p[1].lno, rule_name, "compilation error", f'Invalid operation on {p[3].val}'))
 
     if p[2].val != '=':
       if ('struct' in p[1].type.split()) or ('struct' in p[3].type.split()):
-        error = "Compilation Error at line" + str(p[1].lno) + ":Invalid operation on " + p[1].val
-        ST.c_error.append(error) 
+        # error = "Compilation Error at line" + str(p[1].lno) + ":Invalid operation on " + p[1].val
+        ST.error(Error(p[1].lno, rule_name, "compilation error", f'Invalid operation on {p[1].val}'))
     
     p[0] = Node(name = 'AssignmentOperation',val = '',type = p[1].type, lno = p[1].lno, children = [], level = p[1].level)
     p[0].ast = build_AST(p,rule_name)
@@ -643,12 +644,12 @@ def p_declaration(p):
     for child in p[2].children:
       if(child.name == 'InitDeclarator'):
         if(p[1].type.startswith('typedef')):
-          error = "COMPILATION ERROR at line " + str(p[1].lno) + ": typedef intialized"
-          ST.c_error.append(error) 
+          # error = "COMPILATION ERROR at line " + str(p[1].lno) + ": typedef intialized"
+          ST.error(Error(p[1].lno, rule_name, "compilation error", 'Typedef Initialized'))
           continue
         if ST.current_table.find(child.children[0].val):
-          error = str(p.lineno(1)) + 'COMPILATION ERROR : ' + child.children[0].val + ' already declared'
-          ST.c_error.append(error)
+          # error = str(p.lineno(1)) + 'COMPILATION ERROR : ' + child.children[0].val + ' already declared'
+          ST.error(Error(p.lineno(1), rule_name, "compilation error", f'Identifier {child.children[0].val} already declared'))
 
         node = Node(
           name=child.children[0].val,
@@ -668,13 +669,13 @@ def p_declaration(p):
           node.size = 8 
           node.type = p[1].type + ' ' + child.children[0].type 
         elif(flag == 0):
-          error = "COMPILATION ERROR at line " + str(p[1].lno) + ", variable " + child.children[0].val + " cannot have type void"
-          ST.c_error.append(error) 
+          # error = "COMPILATION ERROR at line " + str(p[1].lno) + ", variable " + child.children[0].val + " cannot have type void"
+          ST.error(Error(p[1].lno, rule_name, "compilation error", f'Identifier {child.children[0].val} cannot have type void'))
         node.size *= totalEle
       else:
         if ST.current_table.find(child.val):
-          error = str(p.lineno(1)) + 'COMPILATION ERROR : ' + child.val + ' already declared'
-          ST.c_error.append(error)
+          # error = str(p.lineno(1)) + 'COMPILATION ERROR : ' + child.val + ' already declared'
+          ST.error(Error(p.lineno(1), rule_name, "compilation error", f'Identifier {child.val} already declared'))
 
         node = Node(
           name=child.val,
@@ -693,8 +694,8 @@ def p_declaration(p):
           node.type = p[1].type + ' ' + child.type
           node.size = 8
         elif(flag == 0):
-          error = "COMPILATION ERROR at line " + str(p[1].lno) + ", variable " + child.val + " cannot have type void"
-          ST.c_error.append(error) 
+          # error = "COMPILATION ERROR at line " + str(p[1].lno) + ", variable " + child.val + " cannot have type void"
+          ST.error(Error(p[1].lno, rule_name, "compilation error", f'Identifier {child.val} cannot have type void'))
         node.size *= totalEle
 
 def p_declaration_specifiers(p):
@@ -713,15 +714,15 @@ def p_declaration_specifiers(p):
 
   elif(len(p) == 3):
     if(p[1].name == 'StorageClassSpecifier' and p[2].name.startswith('StorageClassSpecifier')):
-      error = "Invalid Syntax at line " + str(p[1].lno) + ", " + p[2].type + " not allowed after " + p[1].type
-      ST.c_error.append(error) 
+      # error = "Invalid Syntax at line " + str(p[1].lno) + ", " + p[2].type + " not allowed after " + p[1].type
+      ST.error(Error(p[1].lno, rule_name, "syntax error", f'{p[2].type} not allowed after {p[1].type}'))
     if(p[1].name == 'TypeSpecifier1' and (p[2].name.startswith('TypeSpecifier1') or p[2].name.startswith('StorageClassSpecifier') or p[2].name.startswith('TypeQualifier'))):
       if (p[1].type +" "+p[2].type).upper() not in PRIMITIVE_TYPES:    
-        error = "Invalid Syntax at line " + str(p[1].lno) + ", " + p[2].type + " not allowed after " + p[1].type
-        ST.c_error.append(error) 
+        # error = "Invalid Syntax at line " + str(p[1].lno) + ", " + p[2].type + " not allowed after " + p[1].type
+        ST.error(Error(p[1].lno, rule_name, "syntax error", f'{p[2].type} not allowed after {p[1].type}'))
     if(p[1].name == 'TypeQualifier' and (p[2].name.startswith('StorageClassSpecifier') or p[2].name.startswith('TypeQualifier'))):
-      error = "Invalid Syntax at line " + str(p[1].lno) + ", " + p[2].type + " not allowed after " + p[1].type
-      ST.c_error.append(error) 
+      # error = "Invalid Syntax at line " + str(p[1].lno) + ", " + p[2].type + " not allowed after " + p[1].type
+      ST.error(Error(p[1].lno, rule_name, "syntax error", f'{p[2].type} not allowed after {p[1].type}'))
     
     ST.curType.pop()
     ST.curType.append(p[1].type + ' ' + p[2].type)
@@ -761,11 +762,11 @@ def p_init_declarator(p):
     p[0] = Node(name = 'InitDeclarator',val = '',type = p[1].type,lno = p.lineno(1), children = [p[1],p[3]], array = p[1].array, level=p[1].level)
     p[0].ast = build_AST(p,rule_name)
     if(len(p[1].array) > 0 and (p[3].maxDepth == 0 or p[3].maxDepth > len(p[1].array))):
-      error = 'COMPILATION ERROR at line ' + str(p.lineno(1)) + ' , invalid initializer'
-      ST.c_error.append(error) 
+      # error = 'COMPILATION ERROR at line ' + str(p.lineno(1)) + ' , invalid initializer'
+      ST.error(Error(p.lineno(1), rule_name, "compilation error", 'Invalid Initializer'))
     if(p[1].level != p[3].level):
-      error = "COMPILATION ERROR at line " + str(p[1].lno) + ", type mismatch" 
-      ST.c_error.append(error)
+      # error = "COMPILATION ERROR at line " + str(p[1].lno) + ", type mismatch" 
+      ST.error(Error(p[1].lno, rule_name, "compilation error", 'Type Mismatch'))
 
 def p_storage_class_specifier(p):
   '''storage_class_specifier : TYPEDEF
@@ -812,8 +813,8 @@ def p_struct_or_union_specifier(p):
     val_name = p[1].type + ' ' + p[2]
     p[0].ast = build_AST(p,rule_name)
     if ST.current_table.find(val_name):
-      error = 'COMPILATION ERROR : near line ' + str(p[1].lno) + ' struct already declared'
-      ST.c_error.append(error) 
+      # error = 'COMPILATION ERROR : near line ' + str(p[1].lno) + ' struct already declared'
+      ST.error(Error(p[1].lno, rule_name, "compilation error", f'Struct {val_name} already declared'))
 
     valptr_name = val_name + ' *'
     val_node = Node(name=val_name, type=val_name)
@@ -825,11 +826,11 @@ def p_struct_or_union_specifier(p):
     for child in p[4].children:
       for prev_list in temp_list:
         if prev_list[1] == child.val:
-          error = 'COMPILATION ERROR : line ' + str(p[4].lno) + ' : ' + child.val + ' already deaclared'
-          ST.c_error.append(error)
+          # error = 'COMPILATION ERROR : line ' + str(p[4].lno) + ' : ' + child.val + ' already deaclared'
+          ST.error(Error(p[4].lno, rule_name, "compilation error", f'{child.val} already declared'))
       if get_data_type_size(child.type) == -1:
-        error = "COMPILATION ERROR at line " + str(child.lno) + " : data type not defined"
-        ST.c_error.append(error)
+        # error = "COMPILATION ERROR at line " + str(child.lno) + " : data type not defined"
+        ST.error(Error(child.lno, rule_name, "compilation error", f'Datatype {child.type} not defined'))
       SZ = get_data_type_size(child.type)
       curr_list = [child.type, child.val, SZ, curr_offset]
       totalEle = 1
@@ -853,8 +854,8 @@ def p_struct_or_union_specifier(p):
     p[0].ast = build_AST(p,rule_name)
     p0t_node = ST.find(p[0].type)
     if(p0t_node is None):
-      error = "COMPILATION ERROR : at line " + str(p[1].lno) + ", " + p[0].type + " is not a type"
-      ST.c_error.append(error)
+      # error = "COMPILATION ERROR : at line " + str(p[1].lno) + ", " + p[0].type + " is not a type"
+      ST.error(Error(p[1].lno, rule_name, "compilation error", f'{p[0].type} is not a type'))
   else:
     p[0].ast = build_AST(p,rule_name)
 
@@ -891,8 +892,8 @@ def p_struct_declaration(p):
       child.type = p[1].type + ' ' + child.type
     else:
       if('void' in p[1].type.split()):
-        error = "COMPILATION ERROR at line " + str(p[1].lno) + ", variable " + child.val + " cannot have type void" 
-        ST.c_error.append(error)
+        # error = "COMPILATION ERROR at line " + str(p[1].lno) + ", variable " + child.val + " cannot have type void" 
+        ST.error(Error(p[1].lno, rule_name, "compilation error", f'Identifier {child.val} cannot have type void'))
       child.type = p[1].type
   
 
@@ -983,8 +984,8 @@ def p_direct_declarator_2(p):
     p[0].type = ST.curType[-1]
     p1v_node = ST.parent_table.find(p[1].val)
     if p1v_node is not None:
-      error = 'COMPILATION ERROR : near line ' + str(p[1].lno) + ' function already declared'
-      ST.c_error.append(error)
+      # error = 'COMPILATION ERROR : near line ' + str(p[1].lno) + ' function already declared'
+      ST.error(Error(p[1].lno, rule_name, "compilation error", f'Function {p[1].val} already declared'))
     node = Node(name=p[1].val, isFunc=1)
     tempList = []
     for child in p[3].children:
@@ -1019,8 +1020,8 @@ def p_direct_declarator_4(p):
       
   if(p[3] == ')'):
     if ST.parent_table.find(p[1].val):
-      error = 'COMPILATION ERROR : near line ' + str(p[1].lno) + ' function already declared'
-      ST.c_error.append(error)
+      # error = 'COMPILATION ERROR : near line ' + str(p[1].lno) + ' function already declared'
+      ST.error(Error(p[1].lno, rule_name, "compilation error", f'Function {p[1].val} already declared'))
     node = Node(
       name=p[1].val,
       type=ST.curType[-1],
@@ -1103,8 +1104,8 @@ def p_parameter_declaration(p):
     if(p[2].name == 'Declarator'):
       p2v_node = ST.current_table.find(p[2].val)
       if p2v_node is not None:
-        error = str(p.lineno(1)) + 'COMPILATION ERROR : ' + p[2].val + ' parameter already declared' 
-        ST.c_error.append(error)
+        # error = str(p.lineno(1)) + 'COMPILATION ERROR : ' + p[2].val + ' parameter already declared' 
+        ST.error(Error(p.lineno(1), rule_name, "compilation error", f'Parameter {p[2].val} already declared'))
       node = Node(name=p[2].val, type=p[1].type)
       ST.current_table.insert(node)
       if(len(p[2].type) > 0):
@@ -1112,8 +1113,8 @@ def p_parameter_declaration(p):
         node.size = get_data_type_size(node.type)
       else:
         if('void' in p[1].type.split()):
-          error = "COMPILATION ERROR at line " + str(p[1].lno) + ", parameter " + p[2].val + " cannot have type void"
-          ST.c_error.append(error)
+          # error = "COMPILATION ERROR at line " + str(p[1].lno) + ", parameter " + p[2].val + " cannot have type void"
+          ST.error(Error(p[1].lno, rule_name, "compilation error", f'Parameter {p[2].val} cannot have type void'))
         node.size = get_data_type_size(p[1].type)
       if(len(p[2].array) > 0):
         node.array = p[2].array
@@ -1237,8 +1238,8 @@ def p_labeled_statement(p):
     name=""
     if p[1]=="case":
         if p[2].type.upper() not in (TYPE_INTEGER + TYPE_CHAR):
-            error=f"{p.lineno(1)} COMPILATION ERROR: Invalid data-type for case"
-            ST.c_error.append(error)
+            # error=f"{p.lineno(1)} COMPILATION ERROR: Invalid data-type for case"
+            ST.error(Error(p.lineno(1), rule_name, "compilation error", f'Invalid datatype for case. Expected char or int'))
         name = 'CaseStatement'
     elif p[1]=="default":
         name = 'DefaultStatement'
@@ -1438,13 +1439,12 @@ def p_jump_statemen_2(p):
 
     if(len(p) == 3):
       if(ST.curFuncReturnType != 'void'):
-        error = 'COMPILATION ERROR at line ' + str(p.lineno(1)) + ': function return type is not void'
-        ST.c_error.append(error) 
+        # error = 'COMPILATION ERROR at line ' + str(p.lineno(1)) + ': function return type is not void'
+        ST.error(Error(p.lineno(1), rule_name, "compilation error", 'Function return type is not void'))
     else:
       if(p[2].type != '' and ST.curFuncReturnType != p[2].type):
-        print("js2:", p[2].type)
-        error = 'warning at line ' + str(p.lineno(1)) + ': function return type is not ' + p[2].type
-        ST.c_error.append(error)
+        # error = 'warning at line ' + str(p.lineno(1)) + ': function return type is not ' + p[2].type
+        ST.error(Error(p.lineno(1), rule_name, "warning", f'Function return type is not {p[2].type}'))
       
 def p_translation_unit(p):
     '''translation_unit : external_declaration
@@ -1570,7 +1570,8 @@ def p_class_member(p):
 # Error rule for syntax errors
 def p_error(p):
     if(p):
-      print("Syntax error in input at line " + str(p.lineno))
+      ST.error(Error(p.lineno, 'error', 'syntax error', 'Unknown'))
+      # print("Syntax error in input at line " + str(p.lineno))
     # p.lineno(1)
 
 # def runmain(code):
@@ -1620,6 +1621,7 @@ def getArgs():
     parser.add_argument("-input", type=str, required=True, help="Input file")
     parser.add_argument("-o", "--output",  type=str, default="AST", help="Output file")
     parser.add_argument("-v", action='store_true', help="Verbose output")
+    parser.add_argument("-w", action='store_true', help="Warning")
     return parser
 
 if __name__ == "__main__":
@@ -1630,10 +1632,11 @@ if __name__ == "__main__":
         data = file.read()
     tree = parser.parse(data)
     #open('graph1.dot','a').write("\n}")
-    if ST.c_error:
-        print("C ERROR:")
-    for i in range(len(ST.c_error)):
-        print(ST.c_error[i])
+    # if ST.c_error:
+    #     print("C ERROR:")
+    # for i in range(len(ST.c_error)):
+    #     print(ST.c_error[i])
+    ST.display_error(args.w)
     if args.output[-4:] == ".dot":
         args.output = args.output[:-4]
         graph.render(filename=args.output,cleanup=True)
