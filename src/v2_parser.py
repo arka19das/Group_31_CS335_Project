@@ -64,8 +64,8 @@ tokens = lexer.tokens
 ast_node =0
 def build_AST(p, rule_name):
   global ast_node
-  calling_func_name = sys._getframe(1).f_code.co_name
-  calling_rule_name = calling_func_name[2:]
+  #calling_func_name = sys._getframe(1).f_code.co_name
+  #calling_rule_name = calling_func_name[2:]
   length = len(p)
   if(length == 2):
     if(type(p[1]) is Node):
