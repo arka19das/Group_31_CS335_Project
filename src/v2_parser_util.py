@@ -157,6 +157,7 @@ class Node:
 
 @dataclass
 class ScopeTable:
+    name: str = ''
     nodes: list = field(default_factory=list)
 
     def find(self, key):
@@ -173,9 +174,6 @@ class SymbolTable:
         self.curType = []
         self.curFuncReturnType = ''
         self.symbol_table: list[ScopeTable] = []
-        # typedef_list = {}
-        # all_typedef = []
-        self.scope_to_function = {}
         self.currentScope = 0
         self.nextScope = 1
         self.parent = {}
@@ -185,20 +183,20 @@ class SymbolTable:
         self.set()
         
     def set(self):
-        self.symbol_table.append(ScopeTable())
+        self.symbol_table.append(ScopeTable(name='#global'))
         self.parent[0]=0
-        self.scope_to_function[0] = '#global'
 
-    def find_scope(self, key):
-        curscp = self.currentScope
-        while(self.parent[curscp] != curscp):
-            if self.symbol_table[curscp].find(key) is not None:
-                break
-            curscp = self.parent[curscp]
-        if (curscp == 0 and self.symbol_table[curscp].find(key) is None):
-            return -1 
-        else :
-            return curscp
+    # Deprecated
+    # def find_scope(self, key):
+    #     curscp = self.currentScope
+    #     while(self.parent[curscp] != curscp):
+    #         if self.symbol_table[curscp].find(key) is not None:
+    #             break
+    #         curscp = self.parent[curscp]
+    #     if (curscp == 0 and self.symbol_table[curscp].find(key) is None):
+    #         return -1 
+    #     else :
+    #         return curscp
 
     def find(self, key):
         scope = self.currentScope
@@ -210,15 +208,16 @@ class SymbolTable:
                 break
         return node
 
-    def scope_table(self, scope):
-        return self.symbol_table[scope]
+    # Deprecated
+    # def scope_table(self, scope):
+    #     return self.symbol_table[scope]
 
     def push_scope(self):
         self.parent[self.nextScope] = self.currentScope
         self.currentScope = self.nextScope
         self.symbol_table.append(ScopeTable())
         self.nextScope = self.nextScope + 1
-        self.scope_to_function[self.currentScope] = self.scope_to_function[self.parent[self.currentScope]]
+        self.current_table.name = self.parent_table.name
     
     def pop_scope(self):
         self.currentScope = self.parent[self.currentScope]
@@ -231,9 +230,10 @@ class SymbolTable:
     def parent_table(self):
         return self.symbol_table[self.parent[self.currentScope]]
 
-    @property
-    def global_table(self):
-        return self.symbol_table[0]
+    # DeprecationWarning
+    # @property
+    # def global_table(self):
+    #     return self.symbol_table[0]
 
     def error(self, err: Error):
         self.c_error.append(err) 

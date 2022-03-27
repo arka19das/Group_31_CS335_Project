@@ -64,52 +64,52 @@ tokens = lexer.tokens
 ast_node =0
 def build_AST(p, rule_name):
   global ast_node
-  #calling_func_name = sys._getframe(1).f_code.co_name
-  #calling_rule_name = calling_func_name[2:]
-  # length = len(p)
-  # if(length == 2):
-  #   if(type(p[1]) is Node):
-  #     #print(p[1].ast,p[0].name)
-  #     return p[1].ast
-  #   else:
-  #     #print(p[1],p[0].name)
-  #     return p[1]
-  # else:
-  #   ast_node += 1
-  #   parent_an = ast_node
-  #   #open('graph1.dot','a').write("\n" + str(p_count) + "[label=\"" + calling_rule_name.replace('"',"") + "\"]") ## make new vertex in dot file
-  #   graph.node(str(parent_an), str(rule_name))
-  #   for child in range(1,length,1):
-  #     if(type(p[child]) is Node and p[child].ast is None):
-  #       continue
-  #     if(type(p[child]) is not Node):
-  #       if(type(p[child]) is tuple):
-  #         if(ignore_1(p[child][0]) is False):
-  #           graph.edge(str(parent_an), str(p[child][1]))
-  #           #open('graph1.dot','a').write("\n" + str(p_count) + " -> " + str(p[child][1]))
-  #       else:
-  #         if(ignore_1(p[child]) is False):
-  #           ast_node += 1
-  #           #open('graph1.dot','a').write("\n" + str(cur_num) + "[label=\"" + str(p[child]).replace('"',"") + "\"]")
-  #           p[child] = (p[child],ast_node)
-  #           graph.node(str(ast_node), str(p[child][0]))
-  #           graph.edge(str(parent_an), str(p[child][1]))
-  #           #open('graph1.dot','a').write("\n" + str(p_count) + " -> " + str(p[child][1]))
-  #     else:
-  #       if(type(p[child].ast) is tuple):
-  #         if(ignore_1(p[child].ast[0]) is False):
-  #           graph.edge(str(parent_an), str(p[child].ast[1]))  
-  #           #open('graph1.dot','a').write("\n" + str(p_count) + " -> " + str(p[child].ast[1]))
-  #       else:
-  #         if(ignore_1(p[child].ast) is False):
-  #           ast_node += 1
-  #           #open('graph1.dot','a').write("\n" + str(cur_num) + "[label=\"" + str(p[child].ast).replace('"',"") + "\"]")
-  #           p[child].ast = (p[child].ast,ast_node)
-  #           graph.node(str(ast_node), str(p[child].ast[0]))
-  #           graph.edge(str(parent_an), str(p[child].ast[1]))
-  #           #open('graph1.dot','a').write("\n" + str(p_count) + " -> " + str(p[child].ast[1]))
+  calling_func_name = sys._getframe(1).f_code.co_name
+  calling_rule_name = calling_func_name[2:]
+  length = len(p)
+  if(length == 2):
+    if(type(p[1]) is Node):
+      #print(p[1].ast,p[0].name)
+      return p[1].ast
+    else:
+      #print(p[1],p[0].name)
+      return p[1]
+  else:
+    ast_node += 1
+    parent_an = ast_node
+    #open('graph1.dot','a').write("\n" + str(p_count) + "[label=\"" + calling_rule_name.replace('"',"") + "\"]") ## make new vertex in dot file
+    graph.node(str(parent_an), str(rule_name))
+    for child in range(1,length,1):
+      if(type(p[child]) is Node and p[child].ast is None):
+        continue
+      if(type(p[child]) is not Node):
+        if(type(p[child]) is tuple):
+          if(ignore_1(p[child][0]) is False):
+            graph.edge(str(parent_an), str(p[child][1]))
+            # open('graph1.dot','a').write("\n" + str(p_count) + " -> " + str(p[child][1]))
+        else:
+          if(ignore_1(p[child]) is False):
+            ast_node += 1
+            # open('graph1.dot','a').write("\n" + str(cur_num) + "[label=\"" + str(p[child]).replace('"',"") + "\"]")
+            p[child] = (p[child],ast_node)
+            graph.node(str(ast_node), str(p[child][0]))
+            graph.edge(str(parent_an), str(p[child][1]))
+            # open('graph1.dot','a').write("\n" + str(p_count) + " -> " + str(p[child][1]))
+      else:
+        if(type(p[child].ast) is tuple):
+          if(ignore_1(p[child].ast[0]) is False):
+            graph.edge(str(parent_an), str(p[child].ast[1]))  
+            #open('graph1.dot','a').write("\n" + str(p_count) + " -> " + str(p[child].ast[1]))
+        else:
+          if(ignore_1(p[child].ast) is False):
+            ast_node += 1
+            #open('graph1.dot','a').write("\n" + str(cur_num) + "[label=\"" + str(p[child].ast).replace('"',"") + "\"]")
+            p[child].ast = (p[child].ast,ast_node)
+            graph.node(str(ast_node), str(p[child].ast[0]))
+            graph.edge(str(parent_an), str(p[child].ast[1]))
+            #open('graph1.dot','a').write("\n" + str(p_count) + " -> " + str(p[child].ast[1]))
 
-  #   return (rule_name,parent_an)
+    return (rule_name,parent_an)
   pass
 
 # in scope name, 0 denotes #global, 1 denotes loop and 2 denotes if/switch, 3 denotes function    
@@ -297,9 +297,9 @@ def p_postfix_expression_3(p):
           # if cv_node is None:
           #   continue
           # ST.curType = cv_node.type
-          ST.curType = p[3].children[i].type
+          ST.curType.append(p[3].children[i].type)
           
-          if(ST.curType.split()[-1] != arguments.split()[-1]):
+          if(ST.curType[-1].split()[-1] != arguments.split()[-1]):
             # error = "Warning at line " + str(p[1].lno)+ ": Type mismatch in argument " + str(i+1) + " of function call, " + 'actual type : ' + arguments + ', called with : ' + ST.curType
             ST.error(Error(p[1].lno, rule_name, "warning", 
                            f'Type mismatch in argument {i+1} of function call. Expected: {arguments}, Received: {ST.curType}'))
@@ -998,7 +998,7 @@ def p_direct_declarator_2(p):
     node.type = ST.curType[-1-len(tempList)]
     ST.parent_table.insert(node)
     ST.curFuncReturnType = copy.deepcopy(ST.curType[-1-len(tempList)])
-    ST.scope_to_function[ST.currentScope] = p[1].val
+    ST.current_table.name = p[1].val
   
 def p_direct_declarator_3(p):
   '''direct_declarator : direct_declarator LEFT_THIRD_BRACKET constant_expression RIGHT_THIRD_BRACKET'''
@@ -1036,7 +1036,7 @@ def p_direct_declarator_4(p):
     #Modified
     ST.parent_table.insert(node)
     ST.curFuncReturnType = copy.deepcopy(ST.curType[-1])
-    ST.scope_to_function[ST.currentScope] = p[1].val
+    ST.current_table.name = p[1].val
     
 def p_pointer(p):
   '''pointer : MULTIPLY 
@@ -1400,7 +1400,7 @@ def p_for_init_statement(p):
     rule_name = "for_init_statement"
     p[0] = p[1]
     p[0].ast = build_AST(p,rule_name)
-    ST.scope_to_function[ST.currentScope] = "For"
+    ST.current_table.name = "For"
     
 def p_while(p):
   '''while : WHILE'''
@@ -1579,7 +1579,7 @@ def visualize_symbol_table():
   #       if(not key.startswith('struct')):
   #         temp_list[key] = ST.symbol_table[i][key]
   #     json_object = json.dumps(temp_list, indent = 4)
-  for i, scope_table in enumerate(ST.symbol_table):
+  for scope_table in ST.symbol_table:
     if scope_table.nodes: 
       temp_list = []
       for node in scope_table.nodes:
@@ -1588,7 +1588,7 @@ def visualize_symbol_table():
       json_object = json.dumps(temp_list, indent=4) 
 
       with open("symbol_table_output.json", "a") as outfile:
-        outfile.write('In \"' + ST.scope_to_function[i] + "\"")
+        outfile.write('In \"' + scope_table.name + "\"")
         outfile.write(json_object+"\n")
 
 # file = open(sys.argv[1])
@@ -1610,7 +1610,7 @@ def getArgs():
 if __name__ == "__main__":
     args = getArgs().parse_args()
     #open('graph1.dot','w').write("digraph G {")
-    #graph = Digraph(format="dot")
+    graph = Digraph(format="dot")
     with open(str(args.input), "r+") as file:
         data = file.read()
     tree = parser.parse(data)
@@ -1620,11 +1620,11 @@ if __name__ == "__main__":
     # for i in range(len(ST.c_error)):
     #     print(ST.c_error[i])
     ST.display_error(args.w)
-    # if args.output[-4:] == ".dot":
-    #     args.output = args.output[:-4]
-    #     graph.render(filename=args.output,cleanup=True)
-    # else:
-    #     graph.render(filename='ast',cleanup=True)
-    # if args.v:
-    #     pprint.PrettyPrinter(depth=None).pprint(tree)
+    if args.output[-4:] == ".dot":
+        args.output = args.output[:-4]
+        graph.render(filename=args.output,cleanup=True)
+    else:
+        graph.render(filename='ast',cleanup=True)
+    if args.v:
+        pprint.PrettyPrinter(depth=None).pprint(tree)
     visualize_symbol_table() 
