@@ -1400,7 +1400,8 @@ def p_for_init_statement(p):
     rule_name = "for_init_statement"
     p[0] = p[1]
     p[0].ast = build_AST(p,rule_name)
-    ST.current_table.name = "For"
+    ST.parent_table.loop_num += 1
+    ST.current_table.name = f"{ST.parent_table.name}-for-{ST.parent_table.loop_num}"
     
 def p_while(p):
   '''while : WHILE'''
@@ -1628,3 +1629,4 @@ if __name__ == "__main__":
     if args.v:
         pprint.PrettyPrinter(depth=None).pprint(tree)
     visualize_symbol_table() 
+    dump_symbol_table_csv()

@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field, fields
 from typing import List, Any, Union
+import csv
+from pathlib import Path
 
 TYPE_FLOAT = ["FLOAT", "DOUBLE", "LONG DOUBLE"]
 TYPE_INTEGER = [
@@ -139,14 +141,17 @@ class Node:
     level: int = 0
     ast: Any = None
 
-    def to_dict(self):
+    def to_dict(self, verbose:bool = False):
         s = {}
         for field in fields(self):
-          value = getattr(self, field.name)
-          if getattr(self, field.name) != field.default: 
-              if field != 'argumentList' and value == []:
-                  continue
-              s[field.name] = value
+            value = getattr(self, field.name)
+            if verbose:
+                s[field.name] = value   
+            else:
+                if getattr(self, field.name) != field.default: 
+                    if field != 'argumentList' and value == []:
+                        continue
+                    s[field.name] = value
         return s
 
     @property
@@ -159,6 +164,7 @@ class Node:
 class ScopeTable:
     name: str = ''
     nodes: list = field(default_factory=list)
+    loop_num: int = 0
 
     def find(self, key):
         for node in self.nodes:
@@ -335,3 +341,20 @@ def get_data_type_size(type_1):
   
 def ignore_1(s):
     return s in IGNORE_LIST
+
+def dump_symbol_table_csv():
+    node_fields = fields(Node)
+    fieldnames = [field.name for field in node_fields] 
+
+    csv_base_dir = Path("./symbol_table_dump")
+    csv_base_dir.mkdir(exist_ok=True)
+    for csvfile in csv_base_dir.iterdir():
+        csvfile.unlink()
+
+    for scope_table in ST.symbol_table:
+        with open(csv_base_dir / f"{scope_table.name}.csv", "w") as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+
+            for node in scope_table.nodes:
+                writer.writerow(node.to_dict(True))
