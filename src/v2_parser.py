@@ -217,7 +217,8 @@ def p_postfix_expression_3(p):
     if p[2]=='(':
       p[0] = Node(name = 'FunctionCall1',val = p[1].val,lno = p[1].lno,type = p[1].type,children = [p[1]],isFunc=0)
       p[0].ast = build_AST(p,rule_name)
-      p1v_node = ST.global_table.find(p[1].val)
+      # p1v_node = ST.global_table.find(p[1].val)
+      p1v_node = ST.find(p[1].val)
       if p1v_node is None or not p1v_node.isFunc:
         # error = 'COMPILATION ERROR at line ' + str(p[1].lno) + ': no function with name ' + p[1].val + ' declared'
         ST.error(Error(p[1].lno, rule_name, 'compilation error', f'No function declared with name {p[1].val}')) 
@@ -278,7 +279,8 @@ def p_postfix_expression_3(p):
       p[0] = Node(name = 'FunctionCall2',val = p[1].val,lno = p[1].lno,type = p[1].type,children = [],isFunc=0)
       p[0].ast = build_AST(p,rule_name)
       
-      p1v_node = ST.global_table.find(p[1].val)
+      # p1v_node = ST.global_table.find(p[1].val)
+      p1v_node = ST.find(p[1].val)
       if p1v_node is None or p1v_node.isFunc == 0:
         # error = 'COMPILATION ERROR at line :' + str(p[1].lno) + ': no function with name ' + p[1].val + ' declared'
         ST.error(Error(p[1].lno, rule_name, "compilation error", f'No function of name {p[1].val} declared'))
