@@ -213,6 +213,16 @@ class SymbolTable:
     def scope_table(self, scope):
         return self.symbol_table[scope]
 
+    def push_scope(self):
+        self.parent[self.nextScope] = self.currentScope
+        self.currentScope = self.nextScope
+        self.symbol_table.append(ScopeTable())
+        self.nextScope = self.nextScope + 1
+        self.scope_to_function[self.currentScope] = self.scope_to_function[self.parent[self.currentScope]]
+    
+    def pop_scope(self):
+        self.currentScope = self.parent[self.currentScope]
+        
     @property
     def current_table(self):
         return self.symbol_table[self.currentScope]
@@ -238,7 +248,6 @@ ST = SymbolTable()
 
 def is_iden(p):
   p_node = ST.find(p.val)
-  
   if (p_node is not None) and ((p.isFunc == 1) or ('struct' in p.type.split())):
       # error = "Compilation Error at line " +str(p.lno)+ " :Invalid operation on" + p.val
       ST.error(Error(p[1].lno, rule_name, "compilation error", f'Invalid operation on {p.val}'))

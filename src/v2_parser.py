@@ -66,51 +66,51 @@ def build_AST(p, rule_name):
   global ast_node
   #calling_func_name = sys._getframe(1).f_code.co_name
   #calling_rule_name = calling_func_name[2:]
-  length = len(p)
-  if(length == 2):
-    if(type(p[1]) is Node):
-      #print(p[1].ast,p[0].name)
-      return p[1].ast
-    else:
-      #print(p[1],p[0].name)
-      return p[1]
-  else:
-    ast_node += 1
-    parent_an = ast_node
-    #open('graph1.dot','a').write("\n" + str(p_count) + "[label=\"" + calling_rule_name.replace('"',"") + "\"]") ## make new vertex in dot file
-    graph.node(str(parent_an), str(rule_name))
-    for child in range(1,length,1):
-      if(type(p[child]) is Node and p[child].ast is None):
-        continue
-      if(type(p[child]) is not Node):
-        if(type(p[child]) is tuple):
-          if(ignore_1(p[child][0]) is False):
-            graph.edge(str(parent_an), str(p[child][1]))
-            #open('graph1.dot','a').write("\n" + str(p_count) + " -> " + str(p[child][1]))
-        else:
-          if(ignore_1(p[child]) is False):
-            ast_node += 1
-            #open('graph1.dot','a').write("\n" + str(cur_num) + "[label=\"" + str(p[child]).replace('"',"") + "\"]")
-            p[child] = (p[child],ast_node)
-            graph.node(str(ast_node), str(p[child][0]))
-            graph.edge(str(parent_an), str(p[child][1]))
-            #open('graph1.dot','a').write("\n" + str(p_count) + " -> " + str(p[child][1]))
-      else:
-        if(type(p[child].ast) is tuple):
-          if(ignore_1(p[child].ast[0]) is False):
-            graph.edge(str(parent_an), str(p[child].ast[1]))  
-            #open('graph1.dot','a').write("\n" + str(p_count) + " -> " + str(p[child].ast[1]))
-        else:
-          if(ignore_1(p[child].ast) is False):
-            ast_node += 1
-            #open('graph1.dot','a').write("\n" + str(cur_num) + "[label=\"" + str(p[child].ast).replace('"',"") + "\"]")
-            p[child].ast = (p[child].ast,ast_node)
-            graph.node(str(ast_node), str(p[child].ast[0]))
-            graph.edge(str(parent_an), str(p[child].ast[1]))
-            #open('graph1.dot','a').write("\n" + str(p_count) + " -> " + str(p[child].ast[1]))
+  # length = len(p)
+  # if(length == 2):
+  #   if(type(p[1]) is Node):
+  #     #print(p[1].ast,p[0].name)
+  #     return p[1].ast
+  #   else:
+  #     #print(p[1],p[0].name)
+  #     return p[1]
+  # else:
+  #   ast_node += 1
+  #   parent_an = ast_node
+  #   #open('graph1.dot','a').write("\n" + str(p_count) + "[label=\"" + calling_rule_name.replace('"',"") + "\"]") ## make new vertex in dot file
+  #   graph.node(str(parent_an), str(rule_name))
+  #   for child in range(1,length,1):
+  #     if(type(p[child]) is Node and p[child].ast is None):
+  #       continue
+  #     if(type(p[child]) is not Node):
+  #       if(type(p[child]) is tuple):
+  #         if(ignore_1(p[child][0]) is False):
+  #           graph.edge(str(parent_an), str(p[child][1]))
+  #           #open('graph1.dot','a').write("\n" + str(p_count) + " -> " + str(p[child][1]))
+  #       else:
+  #         if(ignore_1(p[child]) is False):
+  #           ast_node += 1
+  #           #open('graph1.dot','a').write("\n" + str(cur_num) + "[label=\"" + str(p[child]).replace('"',"") + "\"]")
+  #           p[child] = (p[child],ast_node)
+  #           graph.node(str(ast_node), str(p[child][0]))
+  #           graph.edge(str(parent_an), str(p[child][1]))
+  #           #open('graph1.dot','a').write("\n" + str(p_count) + " -> " + str(p[child][1]))
+  #     else:
+  #       if(type(p[child].ast) is tuple):
+  #         if(ignore_1(p[child].ast[0]) is False):
+  #           graph.edge(str(parent_an), str(p[child].ast[1]))  
+  #           #open('graph1.dot','a').write("\n" + str(p_count) + " -> " + str(p[child].ast[1]))
+  #       else:
+  #         if(ignore_1(p[child].ast) is False):
+  #           ast_node += 1
+  #           #open('graph1.dot','a').write("\n" + str(cur_num) + "[label=\"" + str(p[child].ast).replace('"',"") + "\"]")
+  #           p[child].ast = (p[child].ast,ast_node)
+  #           graph.node(str(ast_node), str(p[child].ast[0]))
+  #           graph.edge(str(parent_an), str(p[child].ast[1]))
+  #           #open('graph1.dot','a').write("\n" + str(p_count) + " -> " + str(p[child].ast[1]))
 
-    return (rule_name,parent_an)
-
+  #   return (rule_name,parent_an)
+  pass
 
 # in scope name, 0 denotes #global, 1 denotes loop and 2 denotes if/switch, 3 denotes function    
 # add more later
@@ -188,8 +188,7 @@ def p_identifier(p):
         p[0].isFunc = p1_node.isFunc
         p[0].ast = build_AST(p,rule_name)
     else:
-        # error = str(p.lineno(1)) + 'COMPILATION ERROR: IDENTIFIER: ' + str(p[1]) + ' not declared'
-        ST.error(Error(p.lineno[1], rule_name, 'compilation error', f'Identifier {p[1]} not declared'))        
+        ST.error(Error(p.lineno(1), rule_name, 'compilation error', f'Identifier {p[1]} not declared'))        
 
 ########################
 
@@ -217,7 +216,7 @@ def p_postfix_expression_3(p):
     if p[2]=='(':
       p[0] = Node(name = 'FunctionCall1',val = p[1].val,lno = p[1].lno,type = p[1].type,children = [p[1]],isFunc=0)
       p[0].ast = build_AST(p,rule_name)
-      # p1v_node = ST.global_table.find(p[1].val)
+      #p1v_node = ST.global_table.find(p[1].val)
       p1v_node = ST.find(p[1].val)
       if p1v_node is None or not p1v_node.isFunc:
         # error = 'COMPILATION ERROR at line ' + str(p[1].lno) + ': no function with name ' + p[1].val + ' declared'
@@ -281,6 +280,7 @@ def p_postfix_expression_3(p):
       
       # p1v_node = ST.global_table.find(p[1].val)
       p1v_node = ST.find(p[1].val)
+
       if p1v_node is None or p1v_node.isFunc == 0:
         # error = 'COMPILATION ERROR at line :' + str(p[1].lno) + ': no function with name ' + p[1].val + ' declared'
         ST.error(Error(p[1].lno, rule_name, "compilation error", f'No function of name {p[1].val} declared'))
@@ -291,11 +291,14 @@ def p_postfix_expression_3(p):
         i = 0
         for arguments in p1v_node.argumentList:
           ##HAVE TO THINK
-          curVal = p[3].children[i].val
-          cv_node = ST.current_table.find(curVal)
-          if cv_node is None:
-            continue
-          ST.curType = cv_node.type
+          ##MODIFIED
+          #curVal = p[3].children[i].val
+          # cv_node = ST.current_table.find(curVal)
+          # if cv_node is None:
+          #   continue
+          # ST.curType = cv_node.type
+          ST.curType = p[3].children[i].type
+          
           if(ST.curType.split()[-1] != arguments.split()[-1]):
             # error = "Warning at line " + str(p[1].lno)+ ": Type mismatch in argument " + str(i+1) + " of function call, " + 'actual type : ' + arguments + ', called with : ' + ST.curType
             ST.error(Error(p[1].lno, rule_name, "warning", 
@@ -764,10 +767,8 @@ def p_init_declarator(p):
     p[0] = Node(name = 'InitDeclarator',val = '',type = p[1].type,lno = p.lineno(1), children = [p[1],p[3]], array = p[1].array, level=p[1].level)
     p[0].ast = build_AST(p,rule_name)
     if(len(p[1].array) > 0 and (p[3].maxDepth == 0 or p[3].maxDepth > len(p[1].array))):
-      # error = 'COMPILATION ERROR at line ' + str(p.lineno(1)) + ' , invalid initializer'
       ST.error(Error(p.lineno(1), rule_name, "compilation error", 'Invalid Initializer'))
     if(p[1].level != p[3].level):
-      # error = "COMPILATION ERROR at line " + str(p[1].lno) + ", type mismatch" 
       ST.error(Error(p[1].lno, rule_name, "compilation error", 'Type Mismatch'))
 
 def p_storage_class_specifier(p):
@@ -802,12 +803,12 @@ def p_type_specifier_2(p):
   p[0].ast = build_AST(p,rule_name)
 
 def p_struct_or_union_specifier(p):
-  '''struct_or_union_specifier : struct_or_union IDENTIFIER openbrace struct_declaration_list closebrace
-  | struct_or_union openbrace struct_declaration_list closebrace
+  '''struct_or_union_specifier : struct_or_union IDENTIFIER push_scope_lcb struct_declaration_list pop_scope_rcb
+  | struct_or_union push_scope_lcb struct_declaration_list pop_scope_rcb
   | struct_or_union IDENTIFIER
   '''
   # p[0] = build_AST(p)
-  # TODO : check the semicolon thing after closebrace in gramamar
+  # TODO : check the semicolon thing after pop_scope_rcb in gramamar
   # TODO : Manage the size and offset of fields
   rule_name = "struct_or_union_specifier"
   p[0] = Node(name = 'StructOrUnionSpecifier', val = '', type = '', lno = p[1].lno , children = [])
@@ -966,8 +967,8 @@ def p_declarator_1(p):
 def p_direct_declarator_2(p):
   '''direct_declarator : IDENTIFIER
                         | LEFT_BRACKET declarator RIGHT_BRACKET
-                        | direct_declarator lopenparen parameter_type_list RIGHT_BRACKET
-                        | direct_declarator lopenparen identifier_list RIGHT_BRACKET
+                        | direct_declarator push_scope_lb parameter_type_list RIGHT_BRACKET
+                        | direct_declarator push_scope_lb identifier_list RIGHT_BRACKET
   ''' 
   rule_name = "direct_declarator_2"
   if(len(p) == 2):
@@ -1009,14 +1010,16 @@ def p_direct_declarator_3(p):
   
 def p_direct_declarator_4(p):
   '''direct_declarator : direct_declarator LEFT_THIRD_BRACKET RIGHT_THIRD_BRACKET
-                        | direct_declarator lopenparen RIGHT_BRACKET'''
+                        | direct_declarator push_scope_lb RIGHT_BRACKET'''
   rule_name = "direct_declarator_4"
   p[0] = p[1]
   if(p[3] == ')'):
     p[0].ast = build_AST(p,rule_name)
   else:    
     if p[2]=='[':
-      p[0].array = copy.deepcopy(p[1].array)    
+      p[0].array = copy.deepcopy(p[1].array)   
+      if len(p[0].array)>0 :
+        ST.error(Error(p[1].lno, rule_name, "compilation error", f'Array {p[1].val} cannot have variable dimension except first'))
       p[0].array.append(0)
     p[0].ast = build_AST(p,rule_name)  
       
@@ -1182,13 +1185,14 @@ def p_direct_abstract_declarator_1(p):
       
 def p_direct_abstract_declarator_2(p):
   '''direct_abstract_declarator : direct_abstract_declarator LEFT_BRACKET RIGHT_BRACKET'''
+  rule_name = "abstract_declarator_2"
   p[0] = Node(name = 'DirectAbstractDEclarator2', val = p[1].val, type = p[1].type, lno = p[1].lno, children = [])
   p[0].ast = build_AST(p,rule_name)
 
 def p_initializer(p):
     '''initializer : assignment_expression
-                   | openbrace initializer_list closebrace
-                   | openbrace initializer_list COMMA closebrace                                   
+                   | push_scope_lcb initializer_list pop_scope_rcb
+                   | push_scope_lcb initializer_list COMMA pop_scope_rcb                                   
     '''
     rule_name = "initializer"
     if(len(p) == 2):
@@ -1252,10 +1256,10 @@ def p_labeled_statement(p):
     p[0].ast = build_AST(p,rule_name)
 
 def p_compound_statement(p):
-    '''compound_statement : openbrace closebrace
-                          | openbrace statement_list closebrace
-                          | openbrace declaration_list closebrace
-                          | openbrace declaration_list statement_list closebrace
+    '''compound_statement : push_scope_lcb pop_scope_rcb
+                          | push_scope_lcb statement_list pop_scope_rcb
+                          | push_scope_lcb declaration_list pop_scope_rcb
+                          | push_scope_lcb declaration_list statement_list pop_scope_rcb
     '''  
     #TODO : see what to do in in first case
     rule_name = "compound_statement"
@@ -1273,10 +1277,10 @@ def p_compound_statement(p):
       p[0].ast = build_AST(p,rule_name)
 
 def p_new_compound_statement(p):
-  '''new_compound_statement : LEFT_CURLY_BRACKET closebrace
-                        | LEFT_CURLY_BRACKET statement_list closebrace
-                        | LEFT_CURLY_BRACKET declaration_list closebrace
-                        | LEFT_CURLY_BRACKET declaration_list statement_list closebrace
+  '''new_compound_statement : LEFT_CURLY_BRACKET pop_scope_rcb
+                        | LEFT_CURLY_BRACKET statement_list pop_scope_rcb
+                        | LEFT_CURLY_BRACKET declaration_list pop_scope_rcb
+                        | LEFT_CURLY_BRACKET declaration_list statement_list pop_scope_rcb
   '''  
   rule_name = "new_compound_statement"
   if(len(p) == 3):
@@ -1370,10 +1374,10 @@ def p_switch(p):
 def p_iteration_statement(p):
     '''iteration_statement : while LEFT_BRACKET expression RIGHT_BRACKET compound_statement
     | do compound_statement WHILE LEFT_BRACKET expression RIGHT_BRACKET SEMICOLON
-    | for lopenparen for_init_statement expression SEMICOLON expression RIGHT_BRACKET new_compound_statement
-    | for lopenparen for_init_statement expression SEMICOLON RIGHT_BRACKET new_compound_statement
-    | for lopenparen for_init_statement SEMICOLON expression RIGHT_BRACKET new_compound_statement
-    | for lopenparen for_init_statement SEMICOLON RIGHT_BRACKET new_compound_statement
+    | for push_scope_lb for_init_statement expression SEMICOLON expression RIGHT_BRACKET new_compound_statement
+    | for push_scope_lb for_init_statement expression SEMICOLON RIGHT_BRACKET new_compound_statement
+    | for push_scope_lb for_init_statement SEMICOLON expression RIGHT_BRACKET new_compound_statement
+    | for push_scope_lb for_init_statement SEMICOLON RIGHT_BRACKET new_compound_statement
     '''
     # TODO: Scope names for while and do-while
     rule_name = "iteration_statement"
@@ -1490,29 +1494,19 @@ def p_function_definition_2(p):
   p[0] = Node(name = 'FuncDecl',val = p[2].val,type = p[1].type, lno = p.lineno(1), children = [])
   p[0].ast = build_AST(p,rule_name)
 
-def p_openbrace(p):
-  '''openbrace : LEFT_CURLY_BRACKET'''
-  ST.parent[ST.nextScope] = ST.currentScope
-  ST.currentScope = ST.nextScope
-  ST.symbol_table.append(ScopeTable())
-  ST.nextScope = ST.nextScope + 1
-  ST.scope_to_function[ST.currentScope] = ST.scope_to_function[ST.parent[ST.currentScope]]
+def p_push_scope_lcb(p):
+  '''push_scope_lcb : LEFT_CURLY_BRACKET'''
+  ST.push_scope()
   p[0] = p[1]
 
-def p_lopenparen(p):
-  '''lopenparen : LEFT_BRACKET'''
-  ST.parent[ST.nextScope] = ST.currentScope
-  ST.currentScope = ST.nextScope
-  ST.symbol_table.append(ScopeTable())
-  ST.nextScope = ST.nextScope + 1
-  # MODIFIED
-  ST.scope_to_function[ST.currentScope] = ST.scope_to_function[ST.parent[ST.currentScope]]
+def p_push_scope_lb(p):
+  '''push_scope_lb : LEFT_BRACKET'''
+  ST.push_scope()
   p[0] = p[1]
 
-def p_closebrace(p):
-  '''closebrace : RIGHT_CURLY_BRACKET'''
-  #global ST.currentScope
-  ST.currentScope = ST.parent[ST.currentScope]
+def p_pop_scope_rcb(p):
+  '''pop_scope_rcb : RIGHT_CURLY_BRACKET'''
+  ST.pop_scope()
   p[0] = p[1]
 
 def p_inheritance_specifier(p):
@@ -1573,19 +1567,6 @@ def p_class_member(p):
 def p_error(p):
     if(p):
       ST.error(Error(p.lineno, 'error', 'syntax error', 'Unknown'))
-      # print("Syntax error in input at line " + str(p.lineno))
-    # p.lineno(1)
-
-# def runmain(code):
-#   open('graph1.dot','w').write("digraph G {")
-#   parser = yacc.yacc(start = 'translation_unit')
-#   result = parser.parse(code,debug=False)
-#   if ST.c_error:
-#     print("C ERROR:")
-#   for i in range(len(ST.c_error)):
-#         print(ST.c_error[i])
-#   open('graph1.dot','a').write("\n}")
-#   visualize_symbol_table()
   
 def visualize_symbol_table():
   #global scopeName
@@ -1629,7 +1610,7 @@ def getArgs():
 if __name__ == "__main__":
     args = getArgs().parse_args()
     #open('graph1.dot','w').write("digraph G {")
-    graph = Digraph(format="dot")
+    #graph = Digraph(format="dot")
     with open(str(args.input), "r+") as file:
         data = file.read()
     tree = parser.parse(data)
@@ -1639,11 +1620,11 @@ if __name__ == "__main__":
     # for i in range(len(ST.c_error)):
     #     print(ST.c_error[i])
     ST.display_error(args.w)
-    if args.output[-4:] == ".dot":
-        args.output = args.output[:-4]
-        graph.render(filename=args.output,cleanup=True)
-    else:
-        graph.render(filename='ast',cleanup=True)
-    if args.v:
-        pprint.PrettyPrinter(depth=None).pprint(tree)
+    # if args.output[-4:] == ".dot":
+    #     args.output = args.output[:-4]
+    #     graph.render(filename=args.output,cleanup=True)
+    # else:
+    #     graph.render(filename='ast',cleanup=True)
+    # if args.v:
+    #     pprint.PrettyPrinter(depth=None).pprint(tree)
     visualize_symbol_table() 
