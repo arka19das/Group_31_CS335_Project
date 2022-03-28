@@ -1,6 +1,7 @@
 # Yacc example
 import copy
 import json
+import pprint
 import sys
 
 import ply.yacc as yacc
@@ -1718,8 +1719,8 @@ def p_direct_abstract_declarator_2(p):
 
 def p_initializer(p):
     """initializer : assignment_expression
-    | push_scope_lcb initializer_list pop_scope_rcb
-    | push_scope_lcb initializer_list COMMA pop_scope_rcb
+    | LEFT_CURLY_BRACKET initializer_list RIGHT_CURLY_BRACKET
+    | LEFT_CURLY_BRACKET initializer_list COMMA RIGHT_CURLY_BRACKET
     """
     rule_name = "initializer"
     if len(p) == 2:
