@@ -41,8 +41,16 @@ Parser += Semantics + AST
 ./testing_script.sh parse <n>
 ```
 
+### Semantics
+
+```
+# to test nth semantic testcase
+./testing_script.sh semantic <n>
+```
+
 # Current Issues
 
 1. Class
 2. Typedef
 3. Update spec: Empty functions not allowed
+4. Declaration only at beginning of scope
