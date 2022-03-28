@@ -3,7 +3,7 @@
 struct Point {
 	int x; 
 	int y; 
-}
+};
 
 struct Rectangle {
 	struct Point *topRight; 
@@ -22,7 +22,7 @@ long area(struct Rectangle* rect) {
 	return xdist(rect) * ydist(rect);
 }
 
-int main() {
+bool main() {
 	struct Point *p1; 
 	struct Point *p2;
 	struct Rectangle *rect; 

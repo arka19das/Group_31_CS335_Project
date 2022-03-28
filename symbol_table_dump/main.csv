@@ -1,5 +1,0 @@
-name,val,type,lno,size,children,scope,array,max_depth,is_func,parentStruct,argument_list,field_list,level,ast
-a,1,int,0,4,[],0,[],0,0,,,[],0,
-b,,int,0,4,[],0,[],0,0,,,[],0,
-c,,int,0,4,[],0,[],0,0,,,[],0,
-num1,,struct number,0,12,[],0,[],0,0,,,[],0,

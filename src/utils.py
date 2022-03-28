@@ -226,9 +226,11 @@ class SymbolTable:
 
     def display_errors(self, verbose: bool = False):
         for err in self.errors:
-            if err.err_type == "warning" and not verbose:
-                continue
-            self.error_flag = 1
+            if err.err_type == "warning":
+                if not verbose: 
+                    continue
+            else: 
+                self.error_flag = 1
             print(str(err))
 
 
@@ -382,6 +384,8 @@ def ignore_char(ch):
 
 
 def dump_symbol_table_csv(verbose: bool = False):
+    if ST.error_flag:
+        return
     node_fields = fields(Node)
     fieldnames = [field.name for field in node_fields]
     filenames = set()

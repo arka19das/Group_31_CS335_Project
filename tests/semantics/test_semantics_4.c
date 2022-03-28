@@ -3,7 +3,9 @@
 int main() {
   // Equivalence of pointer and array
   int arr[10]; 
+  int val = 123456; 
   int* ptr = &arr[0]; 
+  char* cptr;
 
   if (ptr != arr) {
     return -1;
@@ -19,9 +21,8 @@ int main() {
   }
 
   // Using pointers to change specific bytes of int
-  int val = 123456; 
-  int* iptr = &val;
-  char* cptr = (char*)iptr;
+  ptr = &val;
+  cptr = (char*)ptr;
   cptr++; 
   *cptr = 78; 
 

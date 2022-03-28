@@ -16,6 +16,15 @@ parse() {
         -o ./output/parser/out_graph_"$1".svg
 }
 
+semantic() {
+    [ -d "output/semantic" ] || mkdir -p output/semantic
+    [ -f "src/parsetab.py" ] && rm src/parsetab.py
+    python ./src/parser.py -input ./tests/semantics/test_semantics_"$1".c -w
+    [ -d "output/semantic/symbol_table_dump_$1" ] && rm -rf output/semantic/symbol_table_dump_"$1"
+    [ -d "symbol_table_dump" ] && mv symbol_table_dump ./output/semantic/symbol_table_dump_"$1" || echo "CSV Dump Failed"
+    [ -f "ast.dot" ] && mv ast.dot ./output/semantic/semantic_"$1".dot || echo "AST Not Formed"
+}
+
 usage="./testing_script.sh <lex|parse> <test_number>"
 
 [ -d "output" ] || mkdir output
@@ -27,5 +36,6 @@ fi
 case $1 in 
     "lex") lex "$2" ;;
     "parse") parse "$2" ;;
+    "semantic") semantic "$2" ;;
     *) echo "$usage";;
 esac
