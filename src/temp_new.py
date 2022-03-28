@@ -16,118 +16,82 @@ lexer = Lexer()
 lexer.build()
 tokens = lexer.tokens
 
-# ast_node = 0
-# def build_AST(p, rule_name):
-#     global ast_node
-#     length = len(p)
-#     if length == 2:
-#         if type(p[1]) is Node:
-#             return p[1].ast
-#         else:
-#             return p[1]
-#     else:
-#         ast_node += 1
-#         parent_an = ast_node
-#         graph.node(str(parent_an), str(rule_name))
-#         for child in range(1, length, 1):
-#             if type(p[child]) is Node and p[child].ast is None:
-#                 continue
-#             if type(p[child]) is not Node:
-#                 if type(p[child]) is tuple:
-#                     if ignore_char(p[child][0]) is False:
-#                         graph.edge(str(parent_an), str(p[child][1]))
-#                 else:
-#                     if ignore_char(p[child]) is False:
-#                         ast_node += 1
-#                         p[child] = (p[child], ast_node)
-#                         graph.node(str(ast_node), str(p[child][0]))
-#                         graph.edge(str(parent_an), str(p[child][1]))
-#             else:
-#                 if type(p[child].ast) is tuple:
-#                     if ignore_char(p[child].ast[0]) is False:
-#                         graph.edge(str(parent_an), str(p[child].ast[1]))
-#                 else:
-#                     if ignore_char(p[child].ast) is False:
-#                         ast_node += 1
-#                         p[child].ast = (p[child].ast, ast_node)
-#                         graph.node(str(ast_node), str(p[child].ast[0]))
-#                         graph.edge(str(parent_an), str(p[child].ast[1]))
 
-#         return (rule_name, parent_an)
-#     pass
+cur_num = 0
 
-cur_num =0
-def build_AST(p,rule_name):
-  global cur_num
-#   calling_func_name = sys._getframe(1).f_code.co_name
-#   calling_rule_name = calling_func_name[2:]
-  length = len(p)
-  if(length == 2):
-    if(type(p[1]) is Node):
-      return p[1].ast
+
+def build_AST(p, rule_name):
+    global cur_num
+    length = len(p)
+    if(length == 2):
+        if(type(p[1]) is Node):
+            return p[1].ast
+        else:
+            return p[1]
     else:
-      return p[1]
-  else:
-    cur_num += 1
-    p_count = cur_num
-    open('graph1.dot','a').write("\n" + str(p_count) + "[label=\"" + rule_name + "\"]") ## make new vertex in dot file
-    for child in range(1,length,1):
-      if(type(p[child]) is Node and p[child].ast is None):
-        continue
-      if(type(p[child]) is not Node):
-        if(type(p[child]) is tuple):
-          if(ignore_char(p[child][0]) is False):
-            open('graph1.dot','a').write("\n" + str(p_count) + " -> " + str(p[child][1]))
-        else:
-          if(ignore_char(p[child]) is False):
-            cur_num += 1
-            open('graph1.dot','a').write("\n" + str(cur_num) + "[label=\"" + str(p[child]).replace('"',"") + "\"]")
-            p[child] = (p[child],cur_num)
-            open('graph1.dot','a').write("\n" + str(p_count) + " -> " + str(p[child][1]))
-      else:
-        if(type(p[child].ast) is tuple):
-          if(ignore_char(p[child].ast[0]) is False):
-            open('graph1.dot','a').write("\n" + str(p_count) + " -> " + str(p[child].ast[1]))
-        else:
-          if(ignore_char(p[child].ast) is False):
-            cur_num += 1
-            open('graph1.dot','a').write("\n" + str(cur_num) + "[label=\"" + str(p[child].ast).replace('"',"") + "\"]")
-            p[child].ast = (p[child].ast,cur_num)
-            open('graph1.dot','a').write("\n" + str(p_count) + " -> " + str(p[child].ast[1]))
+        cur_num += 1
+        p_count = cur_num
+        graph.node(str(p_count), str(rule_name))  # make new vertex in dot file
+        for child in range(1, length, 1):
+            if(type(p[child]) is Node and p[child].ast is None):
+                continue
+            if(type(p[child]) is not Node):
+                if(type(p[child]) is tuple):
+                    if(ignore_char(p[child][0]) is False):
+                        graph.edge(str(p_count), str(p[child][1]))
+                else:
+                    if(ignore_char(p[child]) is False):
+                        cur_num += 1
+                        p[child] = (p[child], cur_num)
+                        graph.node(str(cur_num)), str(p[child][0])
+                        graph.edge(str(p_count), str(p[child][1]))
+            else:
+                if(type(p[child].ast) is tuple):
+                    if(ignore_char(p[child].ast[0]) is False):
+                        graph.edge(str(p_count), str(p[child].ast[1]))
+                else:
+                    if(ignore_char(p[child].ast) is False):
+                        cur_num += 1
+                        p[child].ast = (p[child].ast, cur_num)
+                        graph.node(str(cur_num), str(p[child].ast[0]))
+                        graph.edge(str(p_count), str(p[child].ast[1]))
 
-    return (rule_name,p_count)
+        return (rule_name, p_count)
+
+# def build_AST_2(p, p_list, rule_name):
+
 
 def build_AST_2(p, p_list, rule_name):
     global cur_num
-    #length = len(p_list)
     cur_num += 1
     p_count = cur_num
-    open('graph1.dot','a').write("\n" + str(p_count) + "[label=\"" + rule_name + "\"]") ## make new vertex in dot file
+    graph.node(str(p_count), str(rule_name))  # make new vertex in dot file
     for child in p_list:
         if(type(p[child]) is Node and p[child].ast is None):
             continue
         if(type(p[child]) is not Node):
             if(type(p[child]) is tuple):
                 if(ignore_char(p[child][0]) is False):
-                    open('graph1.dot','a').write("\n" + str(p_count) + " -> " + str(p[child][1]))
+                    graph.edge(str(p_count), str(p[child][1]))
             else:
                 if(ignore_char(p[child]) is False):
                     cur_num += 1
-                    open('graph1.dot','a').write("\n" + str(cur_num) + "[label=\"" + str(p[child]).replace('"',"") + "\"]")
-                    p[child] = (p[child],cur_num)
-                    open('graph1.dot','a').write("\n" + str(p_count) + " -> " + str(p[child][1]))
+                    p[child] = (p[child], cur_num)
+                    graph.node(str(cur_num)), str(p[child][0])
+                    graph.edge(str(p_count), str(p[child][1]))
         else:
             if(type(p[child].ast) is tuple):
                 if(ignore_char(p[child].ast[0]) is False):
-                    open('graph1.dot','a').write("\n" + str(p_count) + " -> " + str(p[child].ast[1]))
+                    graph.edge(str(p_count), str(p[child].ast[1]))
             else:
                 if(ignore_char(p[child].ast) is False):
                     cur_num += 1
-                    open('graph1.dot','a').write("\n" + str(cur_num) + "[label=\"" + str(p[child].ast).replace('"',"") + "\"]")
-                    p[child].ast = (p[child].ast,cur_num)
-                    open('graph1.dot','a').write("\n" + str(p_count) + " -> " + str(p[child].ast[1]))
+                    p[child].ast = (p[child].ast, cur_num)
+                    graph.node(str(cur_num), str(p[child].ast[0]))
+                    graph.edge(str(p_count), str(p[child].ast[1]))
 
-    return (rule_name,p_count)
+    return (rule_name, p_count)
+
 
 # in scope name, 0 denotes #global, 1 denotes loop and 2 denotes if/switch, 3 denotes function
 # add more later
@@ -255,7 +219,7 @@ def p_postfix_expression_3(p):
         # p[0].ast = build_AST(p, rule_name)
 
     elif len(p) == 3:
-        if len(p[1].array)>0 and p[1].level>0:
+        if len(p[1].array) > 0 and p[1].level > 0:
             ST.error(
                 Error(
                     p[1].lno,
@@ -272,7 +236,7 @@ def p_postfix_expression_3(p):
             children=[],
         )
         # p[0].ast = build_AST(p, rule_name)
-        p[0].ast = build_AST_2(p,[1],p[2])
+        p[0].ast = build_AST_2(p, [1], p[2])
         check_identifier(p[1])
 
     elif len(p) == 4:
@@ -285,7 +249,7 @@ def p_postfix_expression_3(p):
                 children=[p[1]],
                 is_func=0,
             )
-            p[0].ast = build_AST_2(p,[1],'()')
+            p[0].ast = build_AST_2(p, [1], '()')
             # p[0].ast = build_AST(p, rule_name)
             p1v_node = ST.find(p[1].val)
             if p1v_node is None or not p1v_node.is_func:
@@ -327,8 +291,8 @@ def p_postfix_expression_3(p):
                 type=p[1].type,
                 children=[],
             )
-            p[0].ast = build_AST_2(p,[1,3],p[2])
-            
+            p[0].ast = build_AST_2(p, [1, 3], p[2])
+
             struct_name = p[1].type
             if (struct_name.endswith("*") and p[2][0] == ".") or (
                 not struct_name.endswith("*") and p[2][0] == "->"
@@ -392,7 +356,7 @@ def p_postfix_expression_3(p):
                 is_func=p[1].is_func,
                 parentStruct=p[1].parentStruct,
             )
-            p[0].ast = build_AST_2(p,[1,3],'[]')
+            p[0].ast = build_AST_2(p, [1, 3], '[]')
             # p[0].ast = build_AST(p, rule_name)
             p[0].array = copy.deepcopy(p[1].array[1:])
             p[0].array.append(p[3].val)
@@ -425,7 +389,7 @@ def p_postfix_expression_3(p):
                 children=[],
                 is_func=0,
             )
-            p[0].ast = build_AST_2(p,[1,3],'()')
+            p[0].ast = build_AST_2(p, [1, 3], '()')
             # p[0].ast = build_AST(p, rule_name)
             p1v_node = ST.find(p[1].val)
 
@@ -491,7 +455,7 @@ def p_argument_expression_list(p):
         # heavy doubt
         p[0] = p[1]
         p[0].children.append(p[3])
-        p[0].ast = build_AST_2(p,[1,3],',')
+        p[0].ast = build_AST_2(p, [1, 3], ',')
         # p[0].ast = build_AST(p, rule_name)
 
 
@@ -509,7 +473,7 @@ def p_unary_expression(p):
         # p[0].ast = build_AST(p, rule_name)
     elif len(p) == 3:
         if p[1] == "++" or p[1] == "--":
-            if len(p[2].array)>0 and p[2].level>0:
+            if len(p[2].array) > 0 and p[2].level > 0:
                 ST.error(
                     Error(
                         p[1].lno,
@@ -591,7 +555,7 @@ def p_unary_expression(p):
             children=[p[3]],
         )
         # p[0].ast = build_AST(p, rule_name)
-        p[0].ast = build_AST_2(p, [1,3], p[2])
+        p[0].ast = build_AST_2(p, [1, 3], p[2])
 
 
 def p_unary_operator(p):
@@ -627,7 +591,8 @@ def p_cast_expression(p):
             children=[],
         )
         # p[0].ast = build_AST(p, rule_name)
-        p[0].ast = build_AST_2(p, [2,4],'()')
+        p[0].ast = build_AST_2(p, [2, 4], '()')
+
 
 def p_multipicative_expression(p):
     """multiplicative_expression : cast_expression
@@ -642,7 +607,8 @@ def p_multipicative_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
-        p[0].ast = build_AST_2(p, [1,3], rule_name)
+        p[0].ast = build_AST_2(p, [1, 3], rule_name)
+
 
 def p_additive_expression(p):
     """additive_expression : multiplicative_expression
@@ -656,7 +622,7 @@ def p_additive_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
-        p[0].ast = build_AST_2(p, [1,3], rule_name)
+        p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
 
 def p_shift_expression(p):
@@ -671,7 +637,7 @@ def p_shift_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
-        p[0].ast = build_AST_2(p, [1,3], rule_name)
+        p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
 
 def p_relational_expression(p):
@@ -688,7 +654,7 @@ def p_relational_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
-        p[0].ast = build_AST_2(p, [1,3],rule_name)
+        p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
 
 def p_equality_expresssion(p):
@@ -703,7 +669,7 @@ def p_equality_expresssion(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
-        p[0].ast = build_AST_2(p, [1,3], rule_name)
+        p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
 
 def p_and_expression(p):
@@ -717,7 +683,7 @@ def p_and_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
-        p[0].ast = build_AST_2(p, [1,3],rule_name)
+        p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
 
 def p_exclusive_or_expression(p):
@@ -731,7 +697,7 @@ def p_exclusive_or_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
-        p[0].ast = build_AST_2(p, [1,3], rule_name)
+        p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
 
 def p_inclusive_or_expression(p):
@@ -745,7 +711,7 @@ def p_inclusive_or_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
-        p[0].ast = build_AST_2(p, [1,3],rule_name)
+        p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
 
 def p_logical_and_expression(p):
@@ -759,7 +725,7 @@ def p_logical_and_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
-        p[0].ast = build_AST_2(p, [1,3], rule_name)
+        p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
 
 def p_logical_or_expression(p):
@@ -773,7 +739,7 @@ def p_logical_or_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
-        p[0].ast = build_AST_2(p, [1,3],rule_name)
+        p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
 
 def p_conditional_expression(p):
@@ -791,8 +757,9 @@ def p_conditional_expression(p):
             type="",
             children=[],
         )
-        p[0].ast = build_AST_2(p, [3,5],':')
-        p[0].ast = build_AST_2(p, [1,0],'?')
+        p[0].ast = build_AST_2(p, [3, 5], ':')
+        p[0].ast = build_AST_2(p, [1, 0], '?')
+
 
 def p_assignment_expression(p):
     """assignment_expression : conditional_expression
@@ -811,7 +778,7 @@ def p_assignment_expression(p):
                 type="int",
                 children=[],
             )
-            p[0].ast = build_AST_2(p,[1,3],p[2].val)    
+            p[0].ast = build_AST_2(p, [1, 3], p[2].val)
             # p[0].ast = build_AST(p, rule_name)
             return
         if p[1].type == "-1" or p[3].type == "-1":
@@ -922,7 +889,8 @@ def p_assignment_expression(p):
             level=p[1].level,
         )
         # p[0].ast = build_AST(p, rule_name)
-        p[0].ast = build_AST_2(p,[1,3],p[2].val)
+        p[0].ast = build_AST_2(p, [1, 3], p[2].val)
+
 
 def p_assignment_operator(p):
     """assignment_operator : EQ
@@ -959,7 +927,7 @@ def p_expression(p):
         p[0] = p[1]
         p[0].children.append(p[3])
         # p[0].ast = build_AST_2([p[1],[3]],',');
-    ##FIXME
+    # FIXME
     p[0].ast = build_AST(p, rule_name)
 
 
@@ -1173,6 +1141,7 @@ def p_init_declarator_list(p):
         p[0].ast = build_AST(p, rule_name)
         # p[0].ast = build_AST_2(p,[1,3],',')
 
+
 def p_init_declarator(p):
     """init_declarator : declarator
     | declarator EQ initializer
@@ -1192,7 +1161,7 @@ def p_init_declarator(p):
             array=p[1].array,
             level=p[1].level,
         )
-        p[0].ast = build_AST_2(p,[1,3],'=')
+        p[0].ast = build_AST_2(p, [1, 3], '=')
         if len(p[1].array) > 0 and (
             p[3].max_depth == 0 or p[3].max_depth > len(p[1].array)
         ):
@@ -1504,7 +1473,7 @@ def p_direct_declarator_2(p):
         # p[0].ast = build_AST(p, rule_name)
     else:
         p[0] = p[1]
-        p[0].ast = build_AST_2(p, [1,3],rule_name)
+        p[0].ast = build_AST_2(p, [1, 3], rule_name)
         p[0].children = p
 
     if len(p) == 5 and p[3].name == "ParameterList":
@@ -1986,9 +1955,10 @@ def p_new_compound_statement(p):
             children=[],
             lno=p.lineno(1),
         )
-        ##FIXME
+        # FIXME
         p[0].ast = build_AST(p, rule_name)
-    
+
+
 def p_function_compound_statement(p):
     """function_compound_statement : new_compound_statement"""
     rule_name = "function_compound_statement"
@@ -2227,6 +2197,7 @@ def p_jump_statemen_1(p):
             )
         )
 
+
 def p_jump_statemen_2(p):
     """jump_statement : RETURN SEMICOLON
     | RETURN expression SEMICOLON"""
@@ -2324,8 +2295,9 @@ def p_function_definition_2(p):
         lno=p.lineno(1),
         children=[],
     )
-    p[0].ast = build_AST_2(p, [1,2,3],rule_name)
-    
+    p[0].ast = build_AST_2(p, [1, 2, 3], rule_name)
+
+
 def p_push_scope_lcb(p):
     """push_scope_lcb : LEFT_CURLY_BRACKET"""
     ST.push_scope()
@@ -2438,20 +2410,21 @@ def getArgs():
 
 if __name__ == "__main__":
     args = getArgs().parse_args()
-    # graph = Digraph(format="dot")
-    open('graph1.dot','w').write("digraph G {")
+    graph = Digraph(format="dot")
     with open(str(args.input), "r+") as file:
         data = file.read()
     tree = parser.parse(data)
-    open('graph1.dot','a').write("\n}")
+
     ST.display_errors(args.w)
-    # if args.output[-4:] == ".dot":
-    #     args.output = args.output[:-4]
-    #     graph.render(filename=args.output, cleanup=True)
-    # else:
-    #     graph.render(filename="ast", cleanup=True)
+    if ST.error_flag == 0:
+
+        if args.output[-4:] == ".dot":
+            args.output = args.output[:-4]
+            graph.render(filename=args.output, cleanup=True)
+        else:
+            graph.render(filename="ast", cleanup=True)
     # if args.v:
-    #     pprint.PrettyPrinter(depth=None).pprint(tree)
+        # pprint.PrettyPrinter(depth=None).pprint(tree)
     # visualize_symbol_table()
     dump_symbol_table_csv(args.v)
     # for st in ST.scope_tables:
