@@ -6,6 +6,8 @@ parsetab.py
 *.txt
 *.out
 *.dot
+*.csv
+*.json
 t1
 t2
 t3
