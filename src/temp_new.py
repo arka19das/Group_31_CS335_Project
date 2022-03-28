@@ -43,7 +43,7 @@ def build_AST(p, rule_name):
                     if(ignore_char(p[child]) is False):
                         cur_num += 1
                         p[child] = (p[child], cur_num)
-                        graph.node(str(cur_num)), str(p[child][0])
+                        graph.node(str(cur_num), str(p[child][0]))
                         graph.edge(str(p_count), str(p[child][1]))
             else:
                 if(type(p[child].ast) is tuple):
@@ -77,7 +77,7 @@ def build_AST_2(p, p_list, rule_name):
                 if(ignore_char(p[child]) is False):
                     cur_num += 1
                     p[child] = (p[child], cur_num)
-                    graph.node(str(cur_num)), str(p[child][0])
+                    graph.node(str(cur_num), str(p[child][0]))
                     graph.edge(str(p_count), str(p[child][1]))
         else:
             if(type(p[child].ast) is tuple):
