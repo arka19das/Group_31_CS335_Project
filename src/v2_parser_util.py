@@ -183,6 +183,7 @@ class SymbolTable:
         self.errors: list[Error] = []
         self.subscope_name = ''
         self.set()
+        self.error_flag = 0
 
     def set(self):
         self.scope_tables.append(ScopeTable(name="#global"))
@@ -227,6 +228,7 @@ class SymbolTable:
         for err in self.errors:
             if err.err_type == "warning" and not verbose:
                 continue
+            self.error_flag = 1
             print(str(err))
 
 
@@ -379,7 +381,7 @@ def ignore_char(ch):
     return ch in IGNORE_LIST
 
 
-def dump_symbol_table_csv(verbose:bool = False):
+def dump_symbol_table_csv(verbose: bool = False):
     node_fields = fields(Node)
     fieldnames = [field.name for field in node_fields]
     filenames = set()
@@ -392,7 +394,7 @@ def dump_symbol_table_csv(verbose:bool = False):
     for scope_table in ST.scope_tables:
         # if not scope_table.nodes:
         #     continue
-        name = scope_table.name 
+        name = scope_table.name
         if not verbose:
             name = name.split("_")[0]
         with open(csv_base_dir / f"{name}.csv", "a") as csvfile:
