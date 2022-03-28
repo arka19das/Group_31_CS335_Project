@@ -2385,22 +2385,6 @@ def p_error(p):
         ST.error(Error(p.lineno, "error", "syntax error", "Unknown"))
 
 
-def visualize_symbol_table():
-    with open("symbol_table_output.json", "w") as outfile:
-        outfile.write("")
-    for scope_table in ST.scope_tables:
-        if scope_table.nodes:
-            temp_list = []
-            for node in scope_table.nodes:
-                if not node.name.startswith("struct"):
-                    temp_list += [node.to_dict()]
-            json_object = json.dumps(temp_list, indent=4)
-
-            with open("symbol_table_output.json", "a") as outfile:
-                outfile.write('In "' + scope_table.name + '"')
-                outfile.write(json_object + "\n")
-
-
 # Build the parser
 parser = yacc.yacc(start="translation_unit")
 
@@ -2431,9 +2415,4 @@ if __name__ == "__main__":
             graph.render(filename=args.output, cleanup=True)
         else:
             graph.render(filename="ast", cleanup=True)
-    # if args.v:
-    # pprint.PrettyPrinter(depth=None).pprint(tree)
-    # visualize_symbol_table()
     dump_symbol_table_csv(args.v)
-    # for st in ST.scope_tables:
-    #     pprint.pprint(st)
