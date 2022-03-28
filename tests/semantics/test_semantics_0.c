@@ -28,5 +28,13 @@ int main() {
     sum += i[j] * u[j];
   }
 
+  if (sizeof(sum) == sizeof(i)) {
+    return -1;
+  }
+
+  if (sizeof(i) != sizeof(u)) {
+    return -1;
+  }
+
   return sum;
 }
