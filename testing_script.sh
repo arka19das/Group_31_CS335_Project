@@ -25,7 +25,7 @@ semantic() {
     [ -f "ast.dot" ] && mv ast.dot ./output/semantic/semantic_"$1".dot || echo "AST Not Formed"
 }
 
-usage="./testing_script.sh <lex|parse> <test_number>"
+usage="./testing_script.sh <lex|parse|semantic> <test_number>"
 
 [ -d "output" ] || mkdir output
 
