@@ -1,35 +1,19 @@
 In "#global"[
     {
-        "name": "f",
-        "type": "int",
-        "isFunc": 1,
-        "argumentList": [
-            "int",
-            "char"
-        ]
-    },
-    {
         "name": "main",
         "type": "int",
         "isFunc": 1
     }
 ]
-In "f"[
+In "main"[
+    {
+        "name": "p",
+        "type": "struct Point",
+        "size": 52
+    },
     {
         "name": "x",
         "type": "int",
-        "size": 4
-    },
-    {
-        "name": "y",
-        "type": "char",
-        "size": 1
-    }
-]
-In "main"[
-    {
-        "name": "x",
-        "type": "float",
         "size": 4
     }
 ]
