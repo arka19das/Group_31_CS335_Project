@@ -1,7 +1,7 @@
 import csv
 from dataclasses import dataclass, field, fields
 from pathlib import Path
-from typing import Any, List, Union
+from typing import Any, List, Union, Dict
 
 TYPE_FLOAT = ["FLOAT", "DOUBLE", "LONG DOUBLE"]
 TYPE_INTEGER = [
@@ -158,7 +158,7 @@ class Node:
 class ScopeTable:
     name: str = ""
     nodes: list = field(default_factory=list)
-    subscope_counter: dict[str, int] = field(default_factory=dict)
+    subscope_counter: Dict[str, int] = field(default_factory=dict)
 
     def find(self, key):
         for node in self.nodes:

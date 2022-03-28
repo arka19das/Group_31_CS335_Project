@@ -35,7 +35,7 @@ tokens = lexer.tokens
 #                 continue
 #             if type(p[child]) is not Node:
 #                 if type(p[child]) is tuple:
-#                     if ignore_1(p[child][0]) is False:
+#                     if ignore_char(p[child][0]) is False:
 #                         graph.edge(str(parent_an), str(p[child][1]))
 #                 else:
 #                     if ignore_1(p[child]) is False:
@@ -76,20 +76,20 @@ def build_AST(p,rule_name):
         continue
       if(type(p[child]) is not Node):
         if(type(p[child]) is tuple):
-          if(ignore_1(p[child][0]) is False):
+          if(ignore_char(p[child][0]) is False):
             open('graph1.dot','a').write("\n" + str(p_count) + " -> " + str(p[child][1]))
         else:
-          if(ignore_1(p[child]) is False):
+          if(ignore_char(p[child]) is False):
             cur_num += 1
             open('graph1.dot','a').write("\n" + str(cur_num) + "[label=\"" + str(p[child]).replace('"',"") + "\"]")
             p[child] = (p[child],cur_num)
             open('graph1.dot','a').write("\n" + str(p_count) + " -> " + str(p[child][1]))
       else:
         if(type(p[child].ast) is tuple):
-          if(ignore_1(p[child].ast[0]) is False):
+          if(ignore_char(p[child].ast[0]) is False):
             open('graph1.dot','a').write("\n" + str(p_count) + " -> " + str(p[child].ast[1]))
         else:
-          if(ignore_1(p[child].ast) is False):
+          if(ignore_char(p[child].ast) is False):
             cur_num += 1
             open('graph1.dot','a').write("\n" + str(cur_num) + "[label=\"" + str(p[child].ast).replace('"',"") + "\"]")
             p[child].ast = (p[child].ast,cur_num)
@@ -109,20 +109,20 @@ def build_AST_2(p,rule_name):
             continue
         if(type(p[child]) is not Node):
             if(type(p[child]) is tuple):
-                if(ignore_1(p[child][0]) is False):
+                if(ignore_char(p[child][0]) is False):
                     open('graph1.dot','a').write("\n" + str(p_count) + " -> " + str(p[child][1]))
             else:
-                if(ignore_1(p[child]) is False):
+                if(ignore_char(p[child]) is False):
                     cur_num += 1
                     open('graph1.dot','a').write("\n" + str(cur_num) + "[label=\"" + str(p[child]).replace('"',"") + "\"]")
                     p[child] = (p[child],cur_num)
                     open('graph1.dot','a').write("\n" + str(p_count) + " -> " + str(p[child][1]))
         else:
             if(type(p[child].ast) is tuple):
-                if(ignore_1(p[child].ast[0]) is False):
+                if(ignore_char(p[child].ast[0]) is False):
                     open('graph1.dot','a').write("\n" + str(p_count) + " -> " + str(p[child].ast[1]))
             else:
-                if(ignore_1(p[child].ast) is False):
+                if(ignore_char(p[child].ast) is False):
                     cur_num += 1
                     open('graph1.dot','a').write("\n" + str(cur_num) + "[label=\"" + str(p[child].ast).replace('"',"") + "\"]")
                     p[child].ast = (p[child].ast,cur_num)
@@ -271,7 +271,7 @@ def p_postfix_expression_3(p):
         )
         # p[0].ast = build_AST(p, rule_name)
         p[0].ast = build_AST_2([p[1]], p[2])
-        is_iden(p[1])
+        check_identifier(p[1])
 
     elif len(p) == 4:
         if p[2] == "(":
@@ -423,7 +423,8 @@ def p_postfix_expression_3(p):
                 children=[],
                 isFunc=0,
             )
-            p[0].ast = build_AST(p, rule_name)
+            p[0].ast = build_AST_2([p[1],p[3]],'()')
+            # p[0].ast = build_AST(p, rule_name)
 
             p1v_node = ST.find(p[1].val)
 
@@ -524,7 +525,7 @@ def p_unary_expression(p):
                 type=p[2].type,
                 children=[tempNode, p[2]],
             )
-            is_iden(p[2])
+            check_identifier(p[2])
         elif p[1] == "sizeof":
             # MODIFIED
             p[0] = Node(
