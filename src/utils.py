@@ -181,7 +181,7 @@ class SymbolTable:
         self.looping_depth = 0
         self.switch_depth = 0
         self.errors: list[Error] = []
-        self.subscope_name = ''
+        self.subscope_name = ""
         self.set()
         self.error_flag = 0
 
@@ -204,8 +204,7 @@ class SymbolTable:
         self.currentScope = self.nextScope
         self.nextScope = self.nextScope + 1
 
-        value = self.parent_table.subscope_counter.get(
-            self.subscope_name, 1)
+        value = self.parent_table.subscope_counter.get(self.subscope_name, 1)
         table_name = f"{self.parent_table.name}_{self.subscope_name}{value}"
         self.parent_table.subscope_counter[self.subscope_name] = value + 1
         self.scope_tables.append(ScopeTable(name=table_name))
@@ -227,9 +226,9 @@ class SymbolTable:
     def display_errors(self, verbose: bool = False):
         for err in self.errors:
             if err.err_type == "warning":
-                if not verbose: 
+                if not verbose:
                     continue
-            else: 
+            else:
                 self.error_flag = 1
             print(str(err))
 
@@ -245,7 +244,7 @@ def check_identifier(p):
         ST.error(
             Error(
                 p[1].lno,
-                'Check Identifier',
+                "Check Identifier",
                 "compilation error",
                 f"Invalid operation on {p.val}",
             )

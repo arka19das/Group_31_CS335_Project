@@ -23,8 +23,8 @@ cur_num = 0
 def build_AST(p, rule_name):
     global cur_num
     length = len(p)
-    if(length == 2):
-        if(type(p[1]) is Node):
+    if length == 2:
+        if type(p[1]) is Node:
             return p[1].ast
         else:
             return p[1]
@@ -33,30 +33,31 @@ def build_AST(p, rule_name):
         p_count = cur_num
         graph.node(str(p_count), str(rule_name))  # make new vertex in dot file
         for child in range(1, length, 1):
-            if(type(p[child]) is Node and p[child].ast is None):
+            if type(p[child]) is Node and p[child].ast is None:
                 continue
-            if(type(p[child]) is not Node):
-                if(type(p[child]) is tuple):
-                    if(ignore_char(p[child][0]) is False):
+            if type(p[child]) is not Node:
+                if type(p[child]) is tuple:
+                    if ignore_char(p[child][0]) is False:
                         graph.edge(str(p_count), str(p[child][1]))
                 else:
-                    if(ignore_char(p[child]) is False):
+                    if ignore_char(p[child]) is False:
                         cur_num += 1
                         p[child] = (p[child], cur_num)
                         graph.node(str(cur_num), str(p[child][0]))
                         graph.edge(str(p_count), str(p[child][1]))
             else:
-                if(type(p[child].ast) is tuple):
-                    if(ignore_char(p[child].ast[0]) is False):
+                if type(p[child].ast) is tuple:
+                    if ignore_char(p[child].ast[0]) is False:
                         graph.edge(str(p_count), str(p[child].ast[1]))
                 else:
-                    if(ignore_char(p[child].ast) is False):
+                    if ignore_char(p[child].ast) is False:
                         cur_num += 1
                         p[child].ast = (p[child].ast, cur_num)
                         graph.node(str(cur_num), str(p[child].ast[0]))
                         graph.edge(str(p_count), str(p[child].ast[1]))
 
         return (rule_name, p_count)
+
 
 # def build_AST_2(p, p_list, rule_name):
 
@@ -67,24 +68,24 @@ def build_AST_2(p, p_list, rule_name):
     p_count = cur_num
     graph.node(str(p_count), str(rule_name))  # make new vertex in dot file
     for child in p_list:
-        if(type(p[child]) is Node and p[child].ast is None):
+        if type(p[child]) is Node and p[child].ast is None:
             continue
-        if(type(p[child]) is not Node):
-            if(type(p[child]) is tuple):
-                if(ignore_char(p[child][0]) is False):
+        if type(p[child]) is not Node:
+            if type(p[child]) is tuple:
+                if ignore_char(p[child][0]) is False:
                     graph.edge(str(p_count), str(p[child][1]))
             else:
-                if(ignore_char(p[child]) is False):
+                if ignore_char(p[child]) is False:
                     cur_num += 1
                     p[child] = (p[child], cur_num)
                     graph.node(str(cur_num), str(p[child][0]))
                     graph.edge(str(p_count), str(p[child][1]))
         else:
-            if(type(p[child].ast) is tuple):
-                if(ignore_char(p[child].ast[0]) is False):
+            if type(p[child].ast) is tuple:
+                if ignore_char(p[child].ast[0]) is False:
                     graph.edge(str(p_count), str(p[child].ast[1]))
             else:
-                if(ignore_char(p[child].ast) is False):
+                if ignore_char(p[child].ast) is False:
                     cur_num += 1
                     p[child].ast = (p[child].ast, cur_num)
                     graph.node(str(cur_num), str(p[child].ast[0]))
@@ -249,7 +250,7 @@ def p_postfix_expression_3(p):
                 children=[p[1]],
                 is_func=0,
             )
-            p[0].ast = build_AST_2(p, [1], '()')
+            p[0].ast = build_AST_2(p, [1], "()")
             # p[0].ast = build_AST(p, rule_name)
             p1v_node = ST.find(p[1].val)
             if p1v_node is None or not p1v_node.is_func:
@@ -323,7 +324,7 @@ def p_postfix_expression_3(p):
                     flag = 1
                     p[0].type = curr_list[0]
                     p[0].parentStruct = struct_name
-                    p[0].level = curr_list[0].count('*')
+                    p[0].level = curr_list[0].count("*")
                     if len(curr_list) == 5:
                         p[0].level += len(curr_list[4])
 
@@ -357,7 +358,7 @@ def p_postfix_expression_3(p):
                 is_func=p[1].is_func,
                 parentStruct=p[1].parentStruct,
             )
-            p[0].ast = build_AST_2(p, [1, 3], '[]')
+            p[0].ast = build_AST_2(p, [1, 3], "[]")
             # p[0].ast = build_AST(p, rule_name)
             p[0].array = copy.deepcopy(p[1].array[1:])
             p[0].array.append(p[3].val)
@@ -390,7 +391,7 @@ def p_postfix_expression_3(p):
                 children=[],
                 is_func=0,
             )
-            p[0].ast = build_AST_2(p, [1, 3], '()')
+            p[0].ast = build_AST_2(p, [1, 3], "()")
             # p[0].ast = build_AST(p, rule_name)
             p1v_node = ST.find(p[1].val)
 
@@ -456,7 +457,7 @@ def p_argument_expression_list(p):
         # heavy doubt
         p[0] = p[1]
         p[0].children.append(p[3])
-        p[0].ast = build_AST_2(p, [1, 3], ',')
+        p[0].ast = build_AST_2(p, [1, 3], ",")
         # p[0].ast = build_AST(p, rule_name)
 
 
@@ -589,11 +590,11 @@ def p_cast_expression(p):
             val=p[2].val,
             lno=p[2].lno,
             type=p[2].type,
-            level=p[2].type.count('*'),
+            level=p[2].type.count("*"),
             children=[],
         )
         # p[0].ast = build_AST(p, rule_name)
-        p[0].ast = build_AST_2(p, [2, 4], '()')
+        p[0].ast = build_AST_2(p, [2, 4], "()")
 
 
 def p_multipicative_expression(p):
@@ -759,8 +760,8 @@ def p_conditional_expression(p):
             type="",
             children=[],
         )
-        p[0].ast = build_AST_2(p, [3, 5], ':')
-        p[0].ast = build_AST_2(p, [1, 0], '?')
+        p[0].ast = build_AST_2(p, [3, 5], ":")
+        p[0].ast = build_AST_2(p, [1, 0], "?")
 
 
 def p_assignment_expression(p):
@@ -810,7 +811,9 @@ def p_assignment_expression(p):
                     "Type mismatch in assignment: Pointers of different levels",
                 )
             )
-        elif (p[1].level and len(p[1].array) > 0) and (p[3].level and len(p[3].array) > 0):
+        elif (p[1].level and len(p[1].array) > 0) and (
+            p[3].level and len(p[3].array) > 0
+        ):
             ST.error(
                 Error(
                     p[1].lno,
@@ -1163,7 +1166,7 @@ def p_init_declarator(p):
             array=p[1].array,
             level=p[1].level,
         )
-        p[0].ast = build_AST_2(p, [1, 3], '=')
+        p[0].ast = build_AST_2(p, [1, 3], "=")
         if len(p[1].array) > 0 and (
             p[3].max_depth == 0 or p[3].max_depth > len(p[1].array)
         ):
@@ -1456,7 +1459,7 @@ def p_declarator_1(p):
             ST.curFuncReturnType = ST.curFuncReturnType + " " + p[1].type
         p[0].val = p[2].val
         p[0].array = p[2].array
-        p[0].level = p[1].type.count('*')
+        p[0].level = p[1].type.count("*")
 
 
 def p_direct_declarator_2(p):
@@ -2289,6 +2292,7 @@ def p_external_declaration(p):
 #         )
 #     p[0].ast = build_AST(p, rule_name)
 
+
 def p_function_definition_2(p):
     """function_definition : declaration_specifiers declarator function_compound_statement"""
     rule_name = "function_definition_2"
@@ -2428,7 +2432,7 @@ if __name__ == "__main__":
         else:
             graph.render(filename="ast", cleanup=True)
     # if args.v:
-        # pprint.PrettyPrinter(depth=None).pprint(tree)
+    # pprint.PrettyPrinter(depth=None).pprint(tree)
     # visualize_symbol_table()
     dump_symbol_table_csv(args.v)
     # for st in ST.scope_tables:
