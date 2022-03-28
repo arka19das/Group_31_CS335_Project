@@ -1,0 +1,6 @@
+name,val,type,lno,size,children,scope,array,max_depth,is_func,parentStruct,argument_list,field_list,level,ast
+struct complex,,struct complex,0,8,[],0,[],0,0,,,"[['int', 'imag', 4, 0], ['float', 'real', 4, 4]]",0,
+struct complex *,,struct complex *,0,8,[],0,[],0,0,,,"[['int', 'imag', 4, 0], ['float', 'real', 4, 4]]",0,
+struct number,,struct number,0,12,[],0,[],0,0,,,"[['struct complex', 'comp', 8, 0], ['int', 'integer', 4, 8]]",0,
+struct number *,,struct number *,0,8,[],0,[],0,0,,,"[['struct complex', 'comp', 8, 0], ['int', 'integer', 4, 8]]",0,
+main,,int,0,0,[],0,[],0,1,,[],[],0,

@@ -45,7 +45,8 @@ main()
 {
     long i;
 	unsigned long u;
-
+	int x[100];
+	
 	i = 1;
 	i = -1;
 	i = -1L;
@@ -63,8 +64,9 @@ main()
 	u = (1ll << 32) - 1 & 3;
 	u = (long) ((1ll << 32) - 1) < 0;
 	u = -1u < 0;
-	int x[100];
-	x[0] = 1000;
 	
+	// int x[100];
+	// x[0] = 1000;
+
 	return foo(x);
 }

@@ -1,6 +1,7 @@
+
 int main()
-{
-    int  count, n;
+{   
+    int count,n;
     short *from, *to;
     short a[39], b[39];
 
@@ -31,4 +32,4 @@ int main()
         }
     }
     return 0;
-}
+ }

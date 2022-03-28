@@ -1,4 +1,4 @@
-void Array_sort(int *array , int n)
+void Array_sort(int array[] , int n)
 { 
     // declare some local variables
     int i=0 , j=0 , temp=0;
@@ -16,7 +16,7 @@ void Array_sort(int *array , int n)
         }
     }
 }
-float Find_median(int array[] , int n)
+float Find_median(int array[3] , int n)
 {
     float median=0;
     
@@ -34,8 +34,8 @@ float Find_median(int array[] , int n)
     return median;
 }
 int main()
-{
-    int arr[] = {11,9,8,5,3,1,1,6,10,5,3,1,2};
+{   
+    int arr[15] = {11,9,8,5,3,1,1,6,10,5,3,1,2};
     int i=0, sum=0;
     int n = sizeof(arr)/sizeof(arr[0]);
     while (i<n)
@@ -44,6 +44,6 @@ int main()
         sum += i;
     }
     Array_sort(arr,n);
-    float f =Find_median(arr,n);
+    //float f =Find_median(arr,n);
     return 0;
 }
