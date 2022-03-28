@@ -323,8 +323,9 @@ def p_postfix_expression_3(p):
                     flag = 1
                     p[0].type = curr_list[0]
                     p[0].parentStruct = struct_name
+                    p[0].level = curr_list[0].count('*')
                     if len(curr_list) == 5:
-                        p[0].level = len(curr_list[4])
+                        p[0].level += len(curr_list[4])
 
             if p[0].level == -1:
                 ST.error(
@@ -588,6 +589,7 @@ def p_cast_expression(p):
             val=p[2].val,
             lno=p[2].lno,
             type=p[2].type,
+            level=p[2].type.count('*'),
             children=[],
         )
         # p[0].ast = build_AST(p, rule_name)
@@ -1715,6 +1717,8 @@ def p_type_name(p):
         p[0] = Node(
             name="TypeName", val="", type=p[1].type, lno=p[1].lno, children=[]
         )
+        if p[2].type.endswith("*"):
+            p[0].type = p[0].type + "*" * (p[2].type.count("*"))
     p[0].ast = build_AST(p, rule_name)
 
 
