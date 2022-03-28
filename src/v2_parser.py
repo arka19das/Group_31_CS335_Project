@@ -366,8 +366,8 @@ def p_postfix_expression_3(p):
             else:
                 i = 0
                 for arguments in p1v_node.argumentList:
-                    ##HAVE TO THINK
-                    ##MODIFIED
+                    # HAVE TO THINK
+                    # MODIFIED
                     # curVal = p[3].children[i].val
                     # cv_node = ST.current_table.find(curVal)
                     # if cv_node is None:
@@ -435,7 +435,7 @@ def p_unary_expression(p):
             )
             is_iden(p[2])
         elif p[1] == "sizeof":
-            ##MODIFIED
+            # MODIFIED
             p[0] = Node(
                 name="SizeOf",
                 val=p[2].val,
@@ -487,7 +487,7 @@ def p_unary_expression(p):
             )
         p[0].ast = build_AST(p, rule_name)
     else:
-        ##MODIFIED
+        # MODIFIED
         p[0] = Node(
             name="SizeOf",
             val=p[3].val,
@@ -2267,7 +2267,7 @@ def p_error(p):
 def visualize_symbol_table():
     with open("symbol_table_output.json", "w") as outfile:
         outfile.write("")
-    for scope_table in ST.symbol_table:
+    for scope_table in ST.scope_tables:
         if scope_table.nodes:
             temp_list = []
             for node in scope_table.nodes:
@@ -2302,7 +2302,7 @@ if __name__ == "__main__":
         data = file.read()
     tree = parser.parse(data)
 
-    ST.display_error(args.w)
+    ST.display_errors(args.w)
     if args.output[-4:] == ".dot":
         args.output = args.output[:-4]
         graph.render(filename=args.output, cleanup=True)
@@ -2310,5 +2310,5 @@ if __name__ == "__main__":
         graph.render(filename="ast", cleanup=True)
     if args.v:
         pprint.PrettyPrinter(depth=None).pprint(tree)
-    visualize_symbol_table()
+    # visualize_symbol_table()
     dump_symbol_table_csv()

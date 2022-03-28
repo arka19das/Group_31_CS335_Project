@@ -174,7 +174,7 @@ class SymbolTable:
     def __init__(self):
         self.curType = []
         self.curFuncReturnType = ""
-        self.symbol_table: list[ScopeTable] = []
+        self.scope_tables: list[ScopeTable] = []
         self.currentScope = 0
         self.nextScope = 1
         self.parent = {}
@@ -184,15 +184,15 @@ class SymbolTable:
         self.set()
 
     def set(self):
-        self.symbol_table.append(ScopeTable(name="#global"))
+        self.scope_tables.append(ScopeTable(name="#global"))
         self.parent[0] = 0
 
     def find(self, key):
         scope = self.currentScope
-        node = self.symbol_table[scope].find(key)
+        node = self.scope_tables[scope].find(key)
         while node is None:
             scope = self.parent[scope]
-            node = self.symbol_table[scope].find(key)
+            node = self.scope_tables[scope].find(key)
             if scope == 0:
                 break
         return node
@@ -200,7 +200,7 @@ class SymbolTable:
     def push_scope(self):
         self.parent[self.nextScope] = self.currentScope
         self.currentScope = self.nextScope
-        self.symbol_table.append(ScopeTable())
+        self.scope_tables.append(ScopeTable())
         self.nextScope = self.nextScope + 1
         self.current_table.name = self.parent_table.name
 
@@ -209,16 +209,16 @@ class SymbolTable:
 
     @property
     def current_table(self):
-        return self.symbol_table[self.currentScope]
+        return self.scope_tables[self.currentScope]
 
     @property
     def parent_table(self):
-        return self.symbol_table[self.parent[self.currentScope]]
+        return self.scope_tables[self.parent[self.currentScope]]
 
     def error(self, err: Error):
         self.c_error.append(err)
 
-    def display_error(self, verbose: bool = False):
+    def display_errors(self, verbose: bool = False):
         for err in self.c_error:
             if err.err_type == "warning" and not verbose:
                 continue
@@ -272,7 +272,7 @@ def type_util(op1: Node, op2: Node, op: str):
         temp.type = op1.type
         # temp.level = op1.level
     elif top1.endswith("*") or top2.endswith("*"):
-        ##MODIFIED
+        # MODIFIED
         if top1.endswith("*") and tp2 in TYPE_FLOAT:
             ST.error(
                 Error(
@@ -383,7 +383,7 @@ def dump_symbol_table_csv():
     for csvfile in csv_base_dir.iterdir():
         csvfile.unlink()
 
-    for scope_table in ST.symbol_table:
+    for scope_table in ST.scope_tables:
         with open(csv_base_dir / f"{scope_table.name}.csv", "w") as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
