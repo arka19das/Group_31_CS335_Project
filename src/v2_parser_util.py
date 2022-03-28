@@ -123,14 +123,14 @@ class Node:
     type: str = ""
     lno: int = 0
     size: int = 0
-    children: list = field(default_factory=list)
+    children: List = field(default_factory=list)
     scope: int = 0
-    array: list = field(default_factory=list)
-    maxDepth: int = 0
-    isFunc: int = 0
+    array: List[int] = field(default_factory=list)
+    max_depth: int = 0
+    is_func: int = 0
     parentStruct: str = ""
-    argumentList: Union[None, List[Any]] = None
-    field_list: list = field(default_factory=list)
+    argument_list: Union[None, List[Any]] = None
+    field_list: List = field(default_factory=list)
     level: int = 0
     ast: Any = None
 
@@ -142,7 +142,7 @@ class Node:
                 s[field.name] = value
             else:
                 if getattr(self, field.name) != field.default:
-                    if field != "argumentList" and value == []:
+                    if field != "argument_list" and value == []:
                         continue
                     s[field.name] = value
         return s
@@ -158,7 +158,7 @@ class Node:
 class ScopeTable:
     name: str = ""
     nodes: list = field(default_factory=list)
-    loop_num: int = 0
+    subscope_counter: dict[str, int] = field(default_factory=dict)
 
     def find(self, key):
         for node in self.nodes:
@@ -178,9 +178,10 @@ class SymbolTable:
         self.currentScope = 0
         self.nextScope = 1
         self.parent = {}
-        self.loopingDepth = 0
-        self.switchDepth = 0
-        self.c_error: list[Error] = []
+        self.looping_depth = 0
+        self.switch_depth = 0
+        self.errors: list[Error] = []
+        self.subscope_name = ''
         self.set()
 
     def set(self):
@@ -200,9 +201,13 @@ class SymbolTable:
     def push_scope(self):
         self.parent[self.nextScope] = self.currentScope
         self.currentScope = self.nextScope
-        self.scope_tables.append(ScopeTable())
         self.nextScope = self.nextScope + 1
-        self.current_table.name = self.parent_table.name
+
+        value = self.parent_table.subscope_counter.get(
+            self.subscope_name, 1)
+        table_name = f"{self.parent_table.name}_{self.subscope_name}{value}"
+        self.parent_table.subscope_counter[self.subscope_name] = value + 1
+        self.scope_tables.append(ScopeTable(name=table_name))
 
     def pop_scope(self):
         self.currentScope = self.parent[self.currentScope]
@@ -216,10 +221,10 @@ class SymbolTable:
         return self.scope_tables[self.parent[self.currentScope]]
 
     def error(self, err: Error):
-        self.c_error.append(err)
+        self.errors.append(err)
 
     def display_errors(self, verbose: bool = False):
-        for err in self.c_error:
+        for err in self.errors:
             if err.err_type == "warning" and not verbose:
                 continue
             print(str(err))
@@ -228,10 +233,10 @@ class SymbolTable:
 ST = SymbolTable()
 
 
-def is_iden(p):
+def check_identifier(p):
     p_node = ST.find(p.val)
     if (p_node is not None) and (
-        (p.isFunc == 1) or ("struct" in p.type.split())
+        (p.is_func == 1) or ("struct" in p.type.split())
     ):
         ST.error(
             Error(
@@ -351,8 +356,8 @@ def type_util(op1: Node, op2: Node, op: str):
     if op in ["*", "-", "%"]:
         temp.val = op1.val
 
-    is_iden(op1)
-    is_iden(op2)
+    check_identifier(op1)
+    check_identifier(op2)
     return temp
 
 
@@ -370,13 +375,14 @@ def get_data_type_size(type_1):
     return SIZE_OF_TYPE.get(base_type, -1)
 
 
-def ignore_1(s):
-    return s in IGNORE_LIST
+def ignore_char(ch):
+    return ch in IGNORE_LIST
 
 
-def dump_symbol_table_csv():
+def dump_symbol_table_csv(verbose:bool = False):
     node_fields = fields(Node)
     fieldnames = [field.name for field in node_fields]
+    filenames = set()
 
     csv_base_dir = Path("./symbol_table_dump")
     csv_base_dir.mkdir(exist_ok=True)
@@ -384,9 +390,16 @@ def dump_symbol_table_csv():
         csvfile.unlink()
 
     for scope_table in ST.scope_tables:
-        with open(csv_base_dir / f"{scope_table.name}.csv", "w") as csvfile:
+        # if not scope_table.nodes:
+        #     continue
+        name = scope_table.name 
+        if not verbose:
+            name = name.split("_")[0]
+        with open(csv_base_dir / f"{name}.csv", "a") as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
+            if name not in filenames:
+                writer.writeheader()
+                filenames.add(name)
 
             for node in scope_table.nodes:
                 writer.writerow(node.to_dict(True))
