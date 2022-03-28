@@ -1,2 +1,1 @@
 name,val,type,lno,size,children,scope,array,maxDepth,isFunc,parentStruct,argumentList,field_list,level,ast
-main,,int,0,0,[],0,[],0,1,,[],[],0,

@@ -3,6 +3,8 @@
 __pycache__
 __pycache__/
 parsetab.py
+stress_test
+t.sh
 *.txt
 *.out
 *.dot

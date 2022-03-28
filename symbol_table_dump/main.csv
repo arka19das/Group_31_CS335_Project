@@ -1,1 +1,5 @@
 name,val,type,lno,size,children,scope,array,maxDepth,isFunc,parentStruct,argumentList,field_list,level,ast
+a,,int,0,4,[],0,[],0,0,,,[],0,
+b,,int,0,4,[],0,[],0,0,,,[],0,
+p,,struct c,0,4,[],0,[],0,0,,,[],0,
+arr,,int,0,12,[],0,[3],0,0,,,[],0,
