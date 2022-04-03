@@ -99,6 +99,13 @@ ops_type = {
     "~": TYPE_INTEGER,
     "^": TYPE_INTEGER,
 }
+TMP_VAR_COUNTER = 0
+TMP_LABEL_COUNTER = 0
+TMP_CLOSURE_COUNTER = 0
+
+
+def backpatch():
+    return
 
 
 @dataclass
@@ -132,6 +139,11 @@ class Node:
     argument_list: Union[None, List[Any]] = None
     field_list: List = field(default_factory=list)
     level: int = 0
+    place: str = ""
+    code: str = ""
+    truelist: List[int] = []
+    falselist: List[int] = []
+
     ast: Any = None
 
     def to_dict(self, verbose: bool = False):
@@ -232,15 +244,42 @@ class SymbolTable:
                 self.error_flag = 1
             print(str(err))
 
+    def get_tmp_var(vartype=None) -> str:
+        global TMP_VAR_COUNTER
+        TMP_VAR_COUNTER += 1
+        vname = f"__tmp_var_{TMP_VAR_COUNTER}"
+        if vartype is not None:
+            scope = self.currentScope
+            scope_table = self.scope_tables[scope]
+            node = Node(name=vname, val=vname, type=vartype, children=[], place=vname)
+            scope_table.insert(node)
+            # symTab = get_current_symtab()
+            # symTab.insert(
+            #     {"name": vname, "type": vartype, "is_array": False, "dimensions": []}
+            # )
+        return vname
+
+    def get_tmp_closure(rettype: str, argtypes: list = []) -> str:
+        global TMP_CLOSURE_COUNTER
+        TMP_CLOSURE_COUNTER += 1
+        vname = f"__tmp_closure_{TMP_VAR_COUNTER}"
+        # TODO:incomplete and dont know yet where to use
+        return vname
+
+    def get_tmp_label() -> str:
+        global TMP_LABEL_COUNTER
+        TMP_LABEL_COUNTER += 1
+        # TODO:incomplete and dont know yet where to use
+
+        return f"__tmp_label_{TMP_LABEL_COUNTER}"
+
 
 ST = SymbolTable()
 
 
 def check_identifier(p):
     p_node = ST.find(p.val)
-    if (p_node is not None) and (
-        (p.is_func == 1) or ("struct" in p.type.split())
-    ):
+    if (p_node is not None) and ((p.is_func == 1) or ("struct" in p.type.split())):
         ST.error(
             Error(
                 p[1].lno,

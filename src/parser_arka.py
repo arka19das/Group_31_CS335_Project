@@ -19,6 +19,8 @@ tokens = lexer.tokens
 
 cur_num = 0
 
+code_gen = []
+
 
 def build_AST(p, rule_name):
     global cur_num
@@ -117,35 +119,74 @@ def p_primary_expression(p):
 
 def p_float_constant(p):
     """float_constant : FLOAT_CONSTANT"""
-    p[0] = Node(name="Constant", val=p[1], lno=p.lineno(1), type="float", children=[])
+    p[0] = Node(
+        name="Constant",
+        val=p[1],
+        lno=p.lineno(1),
+        type="float",
+        children=[],
+        place=p[1],
+    )
     rule_name = "float_constant"
     p[0].ast = build_AST(p, rule_name)
 
 
 def p_hex_constant(p):
     """hex_constant : HEX_CONSTANT"""
-    p[0] = Node(name="Constant", val=p[1], lno=p.lineno(1), type="int", children=[])
+    p[0] = Node(
+        name="Constant",
+        val=p[1],
+        lno=p.lineno(1),
+        type="int",
+        children=[],
+        place=p[1],
+        code="",
+    )
     rule_name = "hex_constant"
     p[0].ast = build_AST(p, rule_name)
 
 
 def p_oct_constant(p):
     """oct_constant : OCT_CONSTANT"""
-    p[0] = Node(name="Constant", val=p[1], lno=p.lineno(1), type="int", children=[])
+    p[0] = Node(
+        name="Constant",
+        val=p[1],
+        lno=p.lineno(1),
+        type="int",
+        children=[],
+        place=p[1],
+        code="",
+    )
     rule_name = "oct_constant"
     p[0].ast = build_AST(p, rule_name)
 
 
 def p_int_constant(p):
     """int_constant : INT_CONSTANT"""
-    p[0] = Node(name="Constant", val=p[1], lno=p.lineno(1), type="int", children=[])
+    p[0] = Node(
+        name="Constant",
+        val=p[1],
+        lno=p.lineno(1),
+        type="int",
+        children=[],
+        place=p[1],
+        code="",
+    )
     rule_name = "int_constant"
     p[0].ast = build_AST(p, rule_name)
 
 
 def p_char_constant(p):
     """char_constant : CHAR_CONSTANT"""
-    p[0] = Node(name="Constant", val=p[1], lno=p.lineno(1), type="char", children=[])
+    p[0] = Node(
+        name="Constant",
+        val=p[1],
+        lno=p.lineno(1),
+        type="char",
+        children=[],
+        place=p[1],
+        code="",
+    )
     rule_name = "char_constant"
     p[0].ast = build_AST(p, rule_name)
 
@@ -159,6 +200,8 @@ def p_string_literal(p):
         type="string",
         level=1,
         children=[],
+        place=p[1],
+        code="",
     )
     rule_name = "string_literal"
     p[0].ast = build_AST(p, rule_name)
@@ -172,6 +215,8 @@ def p_identifier(p):
         lno=p.lineno(1),
         type="",
         children=[],
+        place=p[1],
+        code="",
     )
     rule_name = "identifier"
     p1_node = ST.find(p[1])
@@ -219,13 +264,23 @@ def p_postfix_expression_3(p):
                     f"Array {p[1].val} pointer increment",
                 )
             )
+
+        tmp_var = ST.get_tmp_var(p[1].type)
         p[0] = Node(
             name="IncrementOrDecrementExpression",
             val=p[1].val,
             lno=p[1].lno,
             type=p[1].type,
             children=[],
+            place=tmp_var,
         )
+        code_gen.append(f"tmp_var := {p[1].place}")
+
+        if p[2] == "++":
+            code_gen.append(f"{p[1].place} := {p[1].place} + 1")
+        elif p[2] == "--":
+            code_gen.append(f"{p[1].place} := {p[1].place} - 1")
+        # code_gen.append()
         # p[0].ast = build_AST(p, rule_name)
         p[0].ast = build_AST_2(p, [1], p[2])
         check_identifier(p[1])
@@ -257,7 +312,7 @@ def p_postfix_expression_3(p):
                     Error(
                         p[1].lno,
                         rule_name,
-                        "syntax error",
+                        "semantic error",
                         f"Function {p[1].val} called with incorrect number of arguments",
                     )
                 )
@@ -399,7 +454,7 @@ def p_postfix_expression_3(p):
                     Error(
                         p[1].lno,
                         rule_name,
-                        "syntax error",
+                        "semantic error",
                         "Incorrect number of arguments for function call",
                     )
                 )
@@ -1055,7 +1110,7 @@ def p_declaration_specifiers(p):
                 Error(
                     p[1].lno,
                     rule_name,
-                    "syntax error",
+                    "semantic error",
                     f"{p[2].type} not allowed after {p[1].type}",
                 )
             )
@@ -1069,7 +1124,7 @@ def p_declaration_specifiers(p):
                     Error(
                         p[1].lno,
                         rule_name,
-                        "syntax error",
+                        "semantic error",
                         f"{p[2].type} not allowed after {p[1].type}",
                     )
                 )
@@ -1081,7 +1136,7 @@ def p_declaration_specifiers(p):
                 Error(
                     p[1].lno,
                     rule_name,
-                    "syntax error",
+                    "semantic error",
                     f"{p[2].type} not allowed after {p[1].type}",
                 )
             )
@@ -2332,7 +2387,7 @@ def p_class_member(p):
 # Error rule for syntax errors
 def p_error(p):
     if p:
-        ST.error(Error(p.lineno, "error", "syntax error", "Unknown"))
+        ST.error(Error(p.lineno, "error", "semantic/syntax error", "Unknown"))
 
 
 # Build the parser
