@@ -141,8 +141,8 @@ class Node:
     level: int = 0
     place: str = ""
     code: str = ""
-    truelist: List[int] = []
-    falselist: List[int] = []
+    truelist: List = field(default_factory=list)
+    falselist: List = field(default_factory=list)
 
     ast: Any = None
 
@@ -244,7 +244,7 @@ class SymbolTable:
                 self.error_flag = 1
             print(str(err))
 
-    def get_tmp_var(vartype=None) -> str:
+    def get_tmp_var(self, vartype=None) -> str:
         global TMP_VAR_COUNTER
         TMP_VAR_COUNTER += 1
         vname = f"__tmp_var_{TMP_VAR_COUNTER}"
@@ -259,14 +259,16 @@ class SymbolTable:
             # )
         return vname
 
-    def get_tmp_closure(rettype: str, argtypes: list = []) -> str:
+    def get_tmp_closure(self, rettype: str, argtypes: list = []) -> str:
         global TMP_CLOSURE_COUNTER
         TMP_CLOSURE_COUNTER += 1
         vname = f"__tmp_closure_{TMP_VAR_COUNTER}"
         # TODO:incomplete and dont know yet where to use
         return vname
 
-    def get_tmp_label() -> str:
+    def get_tmp_label(
+        self,
+    ) -> str:
         global TMP_LABEL_COUNTER
         TMP_LABEL_COUNTER += 1
         # TODO:incomplete and dont know yet where to use
