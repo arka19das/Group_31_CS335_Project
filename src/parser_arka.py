@@ -294,6 +294,7 @@ def p_postfix_expression_3(p):
                 type=p[1].type,
                 children=[p[1]],
                 is_func=0,
+                place=p[1].place,
             )
             p[0].ast = build_AST_2(p, [1], "()")
             # p[0].ast = build_AST(p, rule_name)
@@ -336,6 +337,7 @@ def p_postfix_expression_3(p):
                 lno=p[1].lno,
                 type=p[1].type,
                 children=[],
+                place=p[1].place,
             )
             p[0].ast = build_AST_2(p, [1, 3], p[2])
 
@@ -402,6 +404,7 @@ def p_postfix_expression_3(p):
                 children=[p[1], p[3]],
                 is_func=p[1].is_func,
                 parentStruct=p[1].parentStruct,
+                place=p[1].place,
             )
             p[0].ast = build_AST_2(p, [1, 3], "[]")
             # p[0].ast = build_AST(p, rule_name)
@@ -435,6 +438,7 @@ def p_postfix_expression_3(p):
                 type=p[1].type,
                 children=[],
                 is_func=0,
+                place=p[1].place,
             )
             p[0].ast = build_AST_2(p, [1, 3], "()")
             # p[0].ast = build_AST(p, rule_name)
@@ -2418,4 +2422,11 @@ if __name__ == "__main__":
             graph.render(filename=args.output, cleanup=True)
         else:
             graph.render(filename="ast", cleanup=True)
+        file = open("3ac.txt", "w")
+
+        # Saving the array in a text file
+        for content in code_gen:
+            file.write(content)
+            file.write("\n")
+        file.close()
     dump_symbol_table_csv(args.v)
