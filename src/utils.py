@@ -266,12 +266,10 @@ class SymbolTable:
         # TODO:incomplete and dont know yet where to use
         return vname
 
-    def get_tmp_label(
-        self,
-    ) -> str:
+    def get_tmp_label(self, dtype) -> str:
         global TMP_LABEL_COUNTER
         TMP_LABEL_COUNTER += 1
-        # TODO:incomplete and dont know yet where to use
+        # TODO:incomplete and dont know yet where to use dtype
 
         return f"__tmp_label_{TMP_LABEL_COUNTER}"
 

@@ -1,3 +1,4 @@
+# TODO: check invalid operation on function and backpatching
 # Yacc example
 import copy
 import json
@@ -126,7 +127,7 @@ def p_float_constant(p):
         name="Constant",
         val=p[1],
         lno=p.lineno(1),
-        type="float",
+        type="const float",
         children=[],
         place=p[1],
     )
@@ -140,7 +141,7 @@ def p_hex_constant(p):
         name="Constant",
         val=p[1],
         lno=p.lineno(1),
-        type="int",
+        type="const int",
         children=[],
         place=p[1],
         code="",
@@ -155,7 +156,7 @@ def p_oct_constant(p):
         name="Constant",
         val=p[1],
         lno=p.lineno(1),
-        type="int",
+        type="const int",
         children=[],
         place=p[1],
         code="",
@@ -170,7 +171,7 @@ def p_int_constant(p):
         name="Constant",
         val=p[1],
         lno=p.lineno(1),
-        type="int",
+        type="const int",
         children=[],
         place=p[1],
         code="",
@@ -185,7 +186,7 @@ def p_char_constant(p):
         name="Constant",
         val=p[1],
         lno=p.lineno(1),
-        type="char",
+        type="const char",
         children=[],
         place=p[1],
         code="",
@@ -200,7 +201,7 @@ def p_string_literal(p):
         name="Constant",
         val=p[1],
         lno=p.lineno(1),
-        type="string",
+        type="const string",
         level=1,
         children=[],
         place=p[1],
