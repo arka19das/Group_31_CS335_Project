@@ -439,7 +439,6 @@ def type_util(op1: Node, op2: Node, op: str):
 
 def get_data_type_size(type_1):
     # DONE: error because it is focusing on  the last word only
-
     if type_1.endswith("*"):
         return 8
     if type_1.startswith("struct"):

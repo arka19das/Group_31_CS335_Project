@@ -288,7 +288,7 @@ def p_postfix_expression_3(p):
             )
 
         # code_gen.append(f"f{tmp_var} := {p[1].place}")
-        # TODO: FLOAT not supported yet and neither are pointers dhang se
+        # DONE: FLOAT not supported yet and neither are pointers dhang se
         if p[2] == "++":
             if p[1].type.endswith("*"):
                 # print(p[1].type[:-1] + "1")
@@ -297,7 +297,7 @@ def p_postfix_expression_3(p):
                         "long+",
                         p[1].place,
                         p[1].place,
-                        get_data_type_size(p[1].type[:-1]),
+                        get_data_type_size(p[1].type[:-2]),
                     ]
                 )
             else:
@@ -2287,6 +2287,7 @@ def p_jump_statemen_2(p):
                 )
             )
     else:
+        print("Yeh ffunction ke baare mei", p[2].type, " HUH ", ST.curFuncReturnType)
         if p[2].type != "" and ST.curFuncReturnType != p[2].type:
             ST.error(
                 Error(
@@ -2358,8 +2359,9 @@ def p_function_definition_2(p):
     """function_definition : declaration_specifiers declarator function_compound_statement"""
     rule_name = "function_definition_2"
     if p[1].type.upper() in PRIMITIVE_TYPES:
-        # print(p[1].type)
         p[1].type = TYPE_EASY[p[1].type.upper()].lower()
+        print(p[1].type)
+
     p[0] = Node(
         name="FuncDecl",
         val=p[2].val,
