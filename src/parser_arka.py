@@ -1,6 +1,7 @@
 # Yacc example
 import copy
 import json
+from locale import currency
 import pprint
 import sys
 
@@ -20,6 +21,8 @@ tokens = lexer.tokens
 cur_num = 0
 
 code_gen = []
+offsets = dict()
+offsets[0] = 0
 
 
 def build_AST(p, rule_name):
@@ -991,8 +994,10 @@ def p_declaration(p):
     rule_name = "declaration"
     if len(p) == 3:
         p[0] = p[1]
+        # print("First one used")
         p[0].ast = build_AST(p, rule_name)
     else:
+
         p[0] = Node(
             name="Declaration",
             val=p[1],
@@ -1005,6 +1010,7 @@ def p_declaration(p):
         if "void" in p[1].type.split():
             flag = 0
         for child in p[2].children:
+
             if child.name == "InitDeclarator":
                 if p[1].type.startswith("typedef"):
                     ST.error(
@@ -1031,6 +1037,7 @@ def p_declaration(p):
                     type=p[1].type,
                     val=child.children[1].val,
                     size=get_data_type_size(p[1].type),
+                    offsets=offsets[ST.currentScope],
                 )
                 ST.current_table.insert(node)
                 totalEle = 1
@@ -1053,6 +1060,9 @@ def p_declaration(p):
                         )
                     )
                 node.size *= totalEle
+                offsets[ST.currentScope] += node.size
+                offsets[ST.currentScope] += (8 - offsets[ST.currentScope] % 8) % 8
+                ## above line maybe necessary to be commented
             else:
                 if ST.current_table.find(child.val):
                     ST.error(
@@ -1068,6 +1078,7 @@ def p_declaration(p):
                     name=child.val,
                     type=p[1].type,
                     size=get_data_type_size(p[1].type),
+                    offset=offsets[ST.currentScope],
                 )
                 ST.current_table.insert(node)
                 totalEle = 1
@@ -1090,6 +1101,8 @@ def p_declaration(p):
                         )
                     )
                 node.size *= totalEle
+                offsets[ST.currentScope] += node.size
+                offsets[ST.currentScope] += (8 - offsets[ST.currentScope] % 8) % 8
 
 
 def p_declaration_specifiers(p):
@@ -2318,12 +2331,16 @@ def p_function_definition_2(p):
 def p_push_scope_lcb(p):
     """push_scope_lcb : LEFT_CURLY_BRACKET"""
     ST.push_scope()
+    # print("YEH hai scope", ST.currentScope)
+    offsets[ST.currentScope] = 0
     p[0] = p[1]
 
 
 def p_push_scope_lb(p):
     """push_scope_lb : LEFT_BRACKET"""
     ST.push_scope()
+    offsets[ST.currentScope] = 0
+
     p[0] = p[1]
 
 

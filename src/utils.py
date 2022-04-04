@@ -143,7 +143,7 @@ class Node:
     code: str = ""
     truelist: List = field(default_factory=list)
     falselist: List = field(default_factory=list)
-
+    offset: int = -1  # TODO:default value for all nodes 0 or 1?
     ast: Any = None
 
     def to_dict(self, verbose: bool = False):
