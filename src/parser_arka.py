@@ -506,6 +506,10 @@ def p_postfix_expression_3(p):
                     # if cv_node is None:
                     #   continue
                     # ST.curType = cv_node.type
+                    if p[3].children[i].type in PRIMITIVE_TYPES:
+                        p[3].children[i].type = TYPE_EASY[
+                            p[3].children[i].type.upper()
+                        ].lower()
                     ST.curType.append(p[3].children[i].type)
 
                     if ST.curType[-1].split()[-1] != arguments.split()[-1]:
@@ -1152,6 +1156,9 @@ def p_declaration_specifiers(p):
     if len(p) == 2:
         p[0] = p[1]
         p[0].ast = build_AST(p, rule_name)
+        if p[1].type.upper() in PRIMITIVE_TYPES:
+            # print(p[1].type)
+            p[1].type = TYPE_EASY[p[1].type.upper()].lower()
         ST.curType.append(p[1].type)
 
     elif len(p) == 3:
@@ -1194,13 +1201,20 @@ def p_declaration_specifiers(p):
             )
 
         ST.curType.pop()
-        ST.curType.append(p[1].type + " " + p[2].type)
+        if (p[1].type + " " + p[2].type).upper() in PRIMITIVE_TYPES:
+            # print(p[1].type)
+            ST.curType.append(TYPE_EASY[(p[1].type + " " + p[2].type).upper()].lower())
+        else:
+            ST.curType.append(p[1].type + " " + p[2].type)
 
         ty = ""
         if len(p[1].type) > 0:
             ty = p[1].type + " " + p[2].type
+            ST.curType.pop()  # added by arka can be bugged
         else:
             ty = p[2].type
+        if ty.upper() in PRIMITIVE_TYPES:
+            ty = TYPE_EASY[ty.upper()].lower()
         ST.curType.append(ty)
         p[0] = Node(
             name=p[1].name + p[2].name,
@@ -1546,6 +1560,9 @@ def p_direct_declarator_2(p):
     | direct_declarator push_scope_lb identifier_list RIGHT_BRACKET
     """
     rule_name = "direct_declarator_2"
+    # print(
+    #     str(len(p)), "p_direct_declarator_2 is called := ", p[1], "\n", ST.curType
+    # )  # "\n", tempList
     if len(p) == 2:
         p[0] = Node(name="ID", val=p[1], type="", lno=p.lineno(1), children=[])
         # p[0].ast = p[1].ast
@@ -2287,7 +2304,7 @@ def p_jump_statemen_2(p):
                 )
             )
     else:
-        print("Yeh ffunction ke baare mei", p[2].type, " HUH ", ST.curFuncReturnType)
+        # print("Yeh ffunction ke baare mei", p[2].type, " HUH ", ST.curFuncReturnType)
         if p[2].type != "" and ST.curFuncReturnType != p[2].type:
             ST.error(
                 Error(
@@ -2360,7 +2377,7 @@ def p_function_definition_2(p):
     rule_name = "function_definition_2"
     if p[1].type.upper() in PRIMITIVE_TYPES:
         p[1].type = TYPE_EASY[p[1].type.upper()].lower()
-        print(p[1].type)
+        # print(p[1].type)
 
     p[0] = Node(
         name="FuncDecl",

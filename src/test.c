@@ -4,7 +4,7 @@ struct st
     int x;
     // struct st *next;
 };
-short f(long long int a)
+long *f(long long int *a)
 {
     return a;
 }

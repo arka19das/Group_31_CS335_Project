@@ -272,6 +272,7 @@ class SymbolTable:
     def display_errors(self, verbose: bool = False):
         for err in self.errors:
             if err.err_type == "warning":
+                print(err)
                 if not verbose:
                     continue
             else:
