@@ -1712,6 +1712,10 @@ def p_parameter_declaration(p):
     | declaration_specifiers
     """
     rule_name = "parameter_declaration"
+    if p[1].type.upper() in PRIMITIVE_TYPES:
+        # print(p[1].type)
+        p[1].type = TYPE_EASY[p[1].type.upper()].lower()
+
     if len(p) == 2:
         p[0] = p[1]
         p[0].ast = build_AST(p, rule_name)
