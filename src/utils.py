@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, List, Union, Dict
 from webbrowser import get
 
+offsets = {}
 TYPE_FLOAT = ["FLOAT", "DOUBLE", "LONG DOUBLE"]
 TYPE_EASY = {
     "VOID": "VOID",
@@ -281,13 +282,26 @@ class SymbolTable:
 
     def get_tmp_var(self, vartype=None, value=0) -> str:
         global TMP_VAR_COUNTER
+        global offsets
         TMP_VAR_COUNTER += 1
         vname = f"__tmp_var_{TMP_VAR_COUNTER}"
         if vartype is not None:
             scope = self.currentScope
             scope_table = self.scope_tables[scope]
-            node = Node(name=vname, val=value, type=vartype, children=[], place=vname)
+            # print(offsets)
+            node = Node(
+                name=vname,
+                val=value,
+                type=vartype,
+                children=[],
+                size=get_data_type_size(vartype),
+                place=vname,
+                offset=offsets[scope],
+            )
             scope_table.insert(node)
+            offsets[scope] += get_data_type_size(vartype)
+            offsets[scope] += (8 - offsets[scope] % 8) % 8
+
             # symTab = get_current_symtab()
             # symTab.insert(
             #     {"name": vname, "type": vartype, "is_array": False, "dimensions": []}

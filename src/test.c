@@ -10,10 +10,12 @@ long *f(long long int *a)
 }
 int main()
 {
+
     short int **p;
     long double *z;
     long double x, y;
     struct st s1;
+    x = (double)x;
     p++;
     p--;
     ++p;

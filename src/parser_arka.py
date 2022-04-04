@@ -12,6 +12,7 @@ from graphviz import Digraph
 
 from scanner import *
 from utils import *
+from utils import offsets
 
 # Get the token map from the lexer.  This is required.
 lexer = Lexer()
@@ -22,7 +23,6 @@ tokens = lexer.tokens
 cur_num = 0
 
 code_gen = []
-offsets = dict()
 offsets[0] = 0
 
 
@@ -624,6 +624,7 @@ def p_unary_expression(p):
                 children=[p[2]],
             )
         elif p[1].val == "&":
+            # TODO:3ac
             p[0] = Node(
                 name="AddressOfVariable",
                 val=p[2].val,
@@ -633,6 +634,7 @@ def p_unary_expression(p):
                 children=[p[2]],
             )
         elif p[1].val == "*":
+            # TODO:3ac
             if not p[2].type.endswith("*"):
                 ST.error(
                     Error(
@@ -650,13 +652,26 @@ def p_unary_expression(p):
                 children=[p[2]],
             )
         elif p[1].val == "-":
+            if p[2].type.upper() not in PRIMITIVE_TYPES:
+                ST.error(
+                    Error(
+                        p[1].lno,
+                        rule_name,
+                        "compilation error",
+                        f"Unary minus is not allowed for  {p[2].type}",
+                    )
+                )
+            tmp_var = ST.get_tmp_var(p[2].type)
+            tmp_var
             p[0] = Node(
                 name="UnaryOperationMinus",
-                val=p[2].val,
+                val=tmp_var,
                 lno=p[2].lno,
                 type=p[2].type,
                 children=[p[2]],
+                place=tmp_var,
             )
+            code_gen.append([p[2].type + "-", tmp_var, "0", p[2].place])
         else:
             p[0] = Node(
                 name="UnaryOperation",
@@ -688,7 +703,14 @@ def p_unary_operator(p):
     | LOGICAL_NOT
     """
     rule_name = "unary_operator"
-    p[0] = Node(name="UnaryOperator", val=p[1], lno=p.lineno(1), type="", children=[])
+    p[0] = Node(
+        name="UnaryOperator",
+        val=p[1],
+        lno=p.lineno(1),
+        type="",
+        children=[],
+        place=p[1],
+    )
     # p[0].ast = build_AST(p, rule_name)
 
 
@@ -702,6 +724,8 @@ def p_cast_expression(p):
         # p[0].ast = build_AST(p, rule_name)
     else:
         # confusion about val
+        # TODO: ERROR HANDLING
+        tmp_var = ST.get_tmp_var(p[2].type)
         p[0] = Node(
             name="TypeCasting",
             val=p[2].val,
@@ -709,6 +733,10 @@ def p_cast_expression(p):
             type=p[2].type,
             level=p[2].type.count("*"),
             children=[],
+            place=tmp_var,
+        )
+        code_gen.append(
+            [f"convert ({p[2].type}, {p[4].type})", p[4].place, " ", tmp_var]
         )
         # p[0].ast = build_AST(p, rule_name)
         p[0].ast = build_AST_2(p, [2, 4], "()")
@@ -1110,7 +1138,7 @@ def p_declaration(p):
                     type=p[1].type,
                     val=child.children[1].val,
                     size=get_data_type_size(p[1].type),
-                    offsets=offsets[ST.currentScope],
+                    offset=offsets[ST.currentScope],
                 )
                 ST.current_table.insert(node)
                 totalEle = 1
