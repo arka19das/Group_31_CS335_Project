@@ -2357,6 +2357,9 @@ def p_external_declaration(p):
 def p_function_definition_2(p):
     """function_definition : declaration_specifiers declarator function_compound_statement"""
     rule_name = "function_definition_2"
+    if p[1].type.upper() in PRIMITIVE_TYPES:
+        # print(p[1].type)
+        p[1].type = TYPE_EASY[p[1].type.upper()].lower()
     p[0] = Node(
         name="FuncDecl",
         val=p[2].val,
