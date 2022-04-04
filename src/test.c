@@ -14,8 +14,13 @@ int main()
     long double *z;
     long double x, y;
     struct st s1;
-    p++,
-        z++;
+    p++;
+    p--;
+    ++p;
+    --p;
+    z--;
+    z++;
+
     x++;
     return 0;
 }

@@ -310,7 +310,7 @@ def p_postfix_expression_3(p):
                         "long+",
                         p[1].place,
                         p[1].place,
-                        -get_data_type_size(p[1].type[:-1]),
+                        -get_data_type_size(p[1].type[:-2]),
                     ]
                 )
             else:
@@ -572,14 +572,48 @@ def p_unary_expression(p):
                     )
                 )
             tempNode = Node(name="", val=p[1], lno=p[2].lno, type="", children="")
+
             p[0] = Node(
                 name="UnaryOperation",
                 val=p[2].val,
                 lno=p[2].lno,
                 type=p[2].type,
                 children=[tempNode, p[2]],
+                place=p[2].place,
             )
             check_identifier(p[2])
+
+            # DONE: FLOAT not supported yet and neither are pointers dhang se
+            if p[1] == "++":
+                if p[2].type.endswith("*"):
+                    code_gen.append(
+                        [
+                            "long+",
+                            p[2].place,
+                            p[2].place,
+                            get_data_type_size(p[2].type[:-2]),
+                        ]
+                    )
+                else:
+                    code_gen.append([p[2].type + "+", p[2].place, p[2].place, 1])
+                # code_gen.append(f"{p[1].place} := {p[1].place} + 1")
+            elif p[1] == "--":
+                if p[2].type.endswith("*"):
+                    code_gen.append(
+                        [
+                            "long+",
+                            p[2].place,
+                            p[2].place,
+                            -get_data_type_size(p[2].type[:-2]),
+                        ]
+                    )
+                else:
+                    code_gen.append([p[2].type + "+", p[2].place, p[2].place, -1])
+                # code_gen.append(f"{p[1].place} := {p[1].place} - 1")
+            #
+            # code_gen.append()
+            # p[0].ast = build_AST(p, rule_name)
+
         elif p[1] == "sizeof":
             # MODIFIED
             p[0] = Node(
@@ -2503,8 +2537,9 @@ if __name__ == "__main__":
         file = open("3ac.txt", "w")
 
         # Saving the array in a text file
-        for content in code_gen:
-            file.write(str(content))
-            file.write("\n")
-        file.close()
+        # for content in code_gen:
+        #     file.write(str(content))
+        #     file.write("\n")
+        # file.close()
+        write_code(code_gen)
     dump_symbol_table_csv(args.v)

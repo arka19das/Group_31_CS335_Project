@@ -456,6 +456,17 @@ def ignore_char(ch):
     return ch in IGNORE_LIST
 
 
+def write_code(code):
+    file = open("3ac.txt", "w")
+
+    # Saving the array in a text file
+    for each_line in code:
+        for words in each_line:
+            file.write(str(words) + "\t")
+        file.write("\n")
+    file.close()
+
+
 def dump_symbol_table_csv(verbose: bool = False):
     if ST.error_flag:
         return
