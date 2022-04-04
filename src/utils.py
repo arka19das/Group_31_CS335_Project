@@ -244,14 +244,14 @@ class SymbolTable:
                 self.error_flag = 1
             print(str(err))
 
-    def get_tmp_var(self, vartype=None) -> str:
+    def get_tmp_var(self, vartype=None, value=0) -> str:
         global TMP_VAR_COUNTER
         TMP_VAR_COUNTER += 1
         vname = f"__tmp_var_{TMP_VAR_COUNTER}"
         if vartype is not None:
             scope = self.currentScope
             scope_table = self.scope_tables[scope]
-            node = Node(name=vname, val=vname, type=vartype, children=[], place=vname)
+            node = Node(name=vname, val=value, type=vartype, children=[], place=vname)
             scope_table.insert(node)
             # symTab = get_current_symtab()
             # symTab.insert(

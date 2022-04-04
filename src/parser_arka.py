@@ -278,12 +278,16 @@ def p_postfix_expression_3(p):
             children=[],
             place=tmp_var,
         )
-        code_gen.append(f"tmp_var := {p[1].place}")
+        code_gen.append(["=", p[1].place, tmp_var])
 
+        # code_gen.append(f"f{tmp_var} := {p[1].place}")
+        #TODO: FLOAT not supported yet
         if p[2] == "++":
-            code_gen.append(f"{p[1].place} := {p[1].place} + 1")
+            code_gen.append(["addi", p[1].place, p[1].place, 1])
+            # code_gen.append(f"{p[1].place} := {p[1].place} + 1")
         elif p[2] == "--":
-            code_gen.append(f"{p[1].place} := {p[1].place} - 1")
+            code_gen.append(["addi", p[1].place, p[1].place, -1])
+            # code_gen.append(f"{p[1].place} := {p[1].place} - 1")
         # code_gen.append()
         # p[0].ast = build_AST(p, rule_name)
         p[0].ast = build_AST_2(p, [1], p[2])
@@ -2444,7 +2448,7 @@ if __name__ == "__main__":
 
         # Saving the array in a text file
         for content in code_gen:
-            file.write(content)
+            file.write(str(content))
             file.write("\n")
         file.close()
     dump_symbol_table_csv(args.v)

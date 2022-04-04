@@ -6,7 +6,7 @@ struct st
 };
 int main()
 {
-    int x, y;
+    float x, y;
     struct st s1;
     x++;
     return 0;
