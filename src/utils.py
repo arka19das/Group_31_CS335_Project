@@ -2,8 +2,41 @@ import csv
 from dataclasses import dataclass, field, fields
 from pathlib import Path
 from typing import Any, List, Union, Dict
+from webbrowser import get
 
 TYPE_FLOAT = ["FLOAT", "DOUBLE", "LONG DOUBLE"]
+TYPE_EASY = {
+    "VOID": "VOID",
+    "CHAR": "CHAR",
+    "SHORT": "SHORT",
+    "FLOAT": "FLOAT",
+    "INT": "INT",
+    "DOUBLE": "DOUBLE",
+    "LONG": "LONG",
+    "SHORT INT": "SHORT",
+    "LONG INT": "LONG",
+    "LONG LONG": "LONG",
+    "LONG LONG INT": "LONG",
+    "LONG DOUBLE": "LONG DOUBLE",
+    "SIGNED CHAR": "CHAR",
+    "SIGNED SHORT": "SHORT",
+    "SIGNED SHORT INT": "SHORT",
+    "SIGNED": "INT",
+    "SIGNED INT": "INT",
+    "SIGNED LONG": "LONG",
+    "SIGNED LONG INT": "LONG",
+    "SIGNED LONG LONG": "LONG",
+    "SIGNED LONG LONG INT": "LONG",
+    "UNSIGNED CHAR": "UNSIGNED CHAR",
+    "UNSIGNED SHORT": "UNSIGNED SHORT",
+    "UNSIGNED SHORT INT": "UNSIGNED SHORT",
+    "UNSIGNED": "UNSIGNED INT",
+    "UNSIGNED INT": "UNSIGNED INT",
+    "UNSIGNED LONG": "UNSIGNED LONG",
+    "UNSIGNED LONG INT": "UNSIGNED LONG",
+    "UNSIGNED LONG LONG": "UNSIGNED LONG",
+    "UNSIGNED LONG LONG INT": "UNSIGNED LONG",
+}
 TYPE_INTEGER = [
     "SHORT",
     "SHORT INT",
@@ -29,6 +62,7 @@ TYPE_INTEGER = [
     "UNSIGNED LONG LONG",
     "UNSIGNED LONG LONG INT",
 ]
+
 
 TYPE_CHAR = [
     "CHAR",
@@ -404,6 +438,7 @@ def type_util(op1: Node, op2: Node, op: str):
 
 
 def get_data_type_size(type_1):
+    # DONE: error because it is focusing on  the last word only
 
     if type_1.endswith("*"):
         return 8
@@ -412,8 +447,8 @@ def get_data_type_size(type_1):
         if node is None:
             return -1
         return ST.find(type_1).size
-
-    base_type = type_1.split()[-1].upper()
+    # base_type = type_1.split()[-1].upper()
+    base_type = type_1.upper().strip(" ")
     return SIZE_OF_TYPE.get(base_type, -1)
 
 

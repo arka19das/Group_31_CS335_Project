@@ -278,20 +278,46 @@ def p_postfix_expression_3(p):
             children=[],
             place=tmp_var,
         )
-        code_gen.append(["=", p[1].place, tmp_var])
+        p[0].ast = build_AST_2(p, [1], p[2])
+        check_identifier(p[1])
+        if p[1].type.endswith("*"):
+            code_gen.append(["8=", p[1].place, tmp_var])
+        else:
+            code_gen.append(
+                [str(get_data_type_size(p[1].type)) + "=", p[1].place, tmp_var]
+            )
 
         # code_gen.append(f"f{tmp_var} := {p[1].place}")
-        #TODO: FLOAT not supported yet
+        # TODO: FLOAT not supported yet and neither are pointers dhang se
         if p[2] == "++":
-            code_gen.append(["addi", p[1].place, p[1].place, 1])
+            if p[1].type.endswith("*"):
+                # print(p[1].type[:-1] + "1")
+                code_gen.append(
+                    [
+                        "long+",
+                        p[1].place,
+                        p[1].place,
+                        get_data_type_size(p[1].type[:-1]),
+                    ]
+                )
+            else:
+                code_gen.append([p[1].type + "+", p[1].place, p[1].place, 1])
             # code_gen.append(f"{p[1].place} := {p[1].place} + 1")
         elif p[2] == "--":
-            code_gen.append(["addi", p[1].place, p[1].place, -1])
+            if p[1].type.endswith("*"):
+                code_gen.append(
+                    [
+                        "long+",
+                        p[1].place,
+                        p[1].place,
+                        -get_data_type_size(p[1].type[:-1]),
+                    ]
+                )
+            else:
+                code_gen.append([p[1].type + "+", p[1].place, p[1].place, -1])
             # code_gen.append(f"{p[1].place} := {p[1].place} - 1")
         # code_gen.append()
         # p[0].ast = build_AST(p, rule_name)
-        p[0].ast = build_AST_2(p, [1], p[2])
-        check_identifier(p[1])
 
     elif len(p) == 4:
         if p[2] == "(":
@@ -997,7 +1023,11 @@ def p_declaration(p):
     # global typedef_list
     # global all_typedef
     rule_name = "declaration"
+    if p[1].type.upper() in PRIMITIVE_TYPES:
+        # print(p[1].type)
+        p[1].type = TYPE_EASY[p[1].type.upper()].lower()
     if len(p) == 3:
+
         p[0] = p[1]
         # print("First one used")
         p[0].ast = build_AST(p, rule_name)

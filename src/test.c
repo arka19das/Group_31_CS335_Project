@@ -6,8 +6,11 @@ struct st
 };
 int main()
 {
-    float x, y;
+    short int *p;
+    long double *z;
+    long double x, y;
     struct st s1;
+    z++;
     x++;
     return 0;
 }
