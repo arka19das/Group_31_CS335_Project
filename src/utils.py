@@ -363,7 +363,7 @@ def type_util(op1: Node, op2: Node, op: str):
     tp1 = op1.base_type
     tp2 = op2.base_type
 
-    if top1.count("*") > 0 and top2.count("*") > 0:
+    if op1.level > 0 and op2.level > 0:
         if op == "==" or op == "-" or op == "!=":
             if op1.level != op2.level:
                 ST.error(
@@ -396,8 +396,8 @@ def type_util(op1: Node, op2: Node, op: str):
         temp.type = op1.type
         temp.level = op1.level
 
-    elif top1.count("*") > 0 or top2.count("*") > 0:
-        if top1.count("*") > 0 and tp2 in TYPE_FLOAT:
+    elif op1.level > 0 or op2.level > 0:
+        if op1.level > 0 and tp2 in TYPE_FLOAT:
             ST.error(
                 Error(
                     -1,
@@ -408,7 +408,7 @@ def type_util(op1: Node, op2: Node, op: str):
             )
             temp.type = op1.type
             temp.level = op1.level
-        elif top1.count("*") > 0:
+        elif op1.level > 0:
             if op not in ["+", "-"]:
                 ST.error(
                     Error(
@@ -420,7 +420,7 @@ def type_util(op1: Node, op2: Node, op: str):
                 )
             temp.type = op1.type
             temp.level = op1.level
-        elif top2.count("*") > 0 and tp1 in TYPE_FLOAT:
+        elif op2.level > 0 and tp1 in TYPE_FLOAT:
             ST.error(
                 Error(
                     -1,
@@ -431,7 +431,7 @@ def type_util(op1: Node, op2: Node, op: str):
             )
             temp.type = op2.type
             temp.level = op2.level
-        elif top2.count("*") > 0:
+        elif op2.level > 0:
             if op not in ["+", "-"]:
                 ST.error(
                     Error(
@@ -446,6 +446,7 @@ def type_util(op1: Node, op2: Node, op: str):
             temp.level = op2.level
 
     elif top1.startswith("struct") or top2.startswith("struct"):
+
         ST.error(
             Error(
                 -1,
@@ -459,6 +460,24 @@ def type_util(op1: Node, op2: Node, op: str):
         return temp
 
     else:
+        temp_1 = op1.type.split(" ")
+        temp_2 = op2.type.split(" ")
+        tp1 = ""
+        tp2 = ""
+        for i in range(len(temp_1)):
+            if temp_1[i] == "*":
+                break
+            tp1 += temp_1[i].upper()
+            tp1 += " "
+
+        for i in range(len(temp_2)):
+            if temp_2[i] == "*":
+                break
+            tp2 += temp_2[i].upper()
+            tp2 += " "
+
+        tp1 = tp1[:-1]
+        tp2 = tp2[:-1]
         if tp1 not in ops_type[op] or tp2 not in ops_type[op]:
             ST.error(
                 Error(
@@ -481,6 +500,7 @@ def type_util(op1: Node, op2: Node, op: str):
                 )
             )
             temp.type = op1.type
+
         elif size2 > size1:
             ST.error(
                 Error(

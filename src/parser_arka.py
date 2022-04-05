@@ -2347,6 +2347,21 @@ def p_selection_statement(p):
                 lno=p.lineno(1),
             )
     else:
+        e_type = TYPE_EASY[p[3].type.upper()].lower()
+        if (
+            e_type == "float"
+            or e_type == "double"
+            or e_type == "void"
+            or e_type == "long double"
+        ):
+            ST.error(
+                Error(
+                    p.lineno(1),
+                    rule_name,
+                    "compilation error",
+                    f"Switch doesn't support '{p[3].type}' expression type",
+                )
+            )
         p[0] = Node(
             name="SwitchStatement",
             val="",
