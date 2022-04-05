@@ -755,9 +755,9 @@ def p_multipicative_expression(p):
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
         print(p[0])
-        print(p[1])
-        print(p[2])
-        print(p[3])
+        # print(p[1])
+        # print(p[2])
+        # print(p[3])
 
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
