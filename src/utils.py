@@ -198,7 +198,8 @@ class Node:
     def base_type(self):
         if not self.type:
             return self.type
-        return self.type.split()[-1].upper()
+        # return self.type.split()[-1].upper()
+        return self.type.upper()
 
 
 @dataclass
@@ -348,6 +349,7 @@ def type_util(op1: Node, op2: Node, op: str):
         type="int",
         children=[],
     )
+    # print(temp)
     if op1.type == "" or op2.type == "":
         temp.type = "int"  # default
         return temp
@@ -443,9 +445,10 @@ def type_util(op1: Node, op2: Node, op: str):
 
     if temp.type == "char":
         temp.type = "int"
-
-    if op in ["*", "-", "%"]:
-        temp.val = op1.val
+    if temp.type == "unsigned char":
+        temp.type == "unsigned int"
+    # if op in ["*", "-", "%"]:
+    #     temp.val = op1.val
 
     check_identifier(op1)
     check_identifier(op2)

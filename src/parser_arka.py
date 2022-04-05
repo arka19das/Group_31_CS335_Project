@@ -2,7 +2,6 @@
 # Yacc example
 import copy
 import json
-from locale import currency
 import pprint
 import sys
 
@@ -127,7 +126,7 @@ def p_float_constant(p):
         name="Constant",
         val=p[1],
         lno=p.lineno(1),
-        type="const float",
+        type="float",
         children=[],
         place=p[1],
     )
@@ -141,7 +140,7 @@ def p_hex_constant(p):
         name="Constant",
         val=p[1],
         lno=p.lineno(1),
-        type="const int",
+        type="int",
         children=[],
         place=p[1],
         code="",
@@ -156,7 +155,7 @@ def p_oct_constant(p):
         name="Constant",
         val=p[1],
         lno=p.lineno(1),
-        type="const int",
+        type="int",
         children=[],
         place=p[1],
         code="",
@@ -171,7 +170,7 @@ def p_int_constant(p):
         name="Constant",
         val=p[1],
         lno=p.lineno(1),
-        type="const int",
+        type="int",
         children=[],
         place=p[1],
         code="",
@@ -186,7 +185,7 @@ def p_char_constant(p):
         name="Constant",
         val=p[1],
         lno=p.lineno(1),
-        type="const char",
+        type="char",
         children=[],
         place=p[1],
         code="",
@@ -201,7 +200,7 @@ def p_string_literal(p):
         name="Constant",
         val=p[1],
         lno=p.lineno(1),
-        type="const string",
+        type="string",
         level=1,
         children=[],
         place=p[1],
@@ -671,7 +670,7 @@ def p_unary_expression(p):
                 children=[p[2]],
                 place=tmp_var,
             )
-            code_gen.append([p[2].type + "-", tmp_var, "0", p[2].place])
+            code_gen.append([p[2].type + "_uminus", tmp_var, "0", p[2].place])
         else:
             p[0] = Node(
                 name="UnaryOperation",
@@ -755,6 +754,11 @@ def p_multipicative_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
+        print(p[0])
+        print(p[1])
+        print(p[2])
+        print(p[3])
+
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
 
@@ -914,6 +918,7 @@ def p_assignment_expression(p):
     | unary_expression assignment_operator assignment_expression
     """
     rule_name = "assignment_expression"
+    # print(p[0], "\n", p[1])
     if len(p) == 2:
         p[0] = p[1]
         # p[0].ast = build_AST(p, rule_name)

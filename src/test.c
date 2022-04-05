@@ -13,15 +13,15 @@ int main()
 
     short int **p;
     long double *z;
-    long double x, y;
+    long int x, y, z1;
     struct st s1;
-    x = (double)x;
-    p++;
-    p--;
-    ++p;
-    --p;
-    z--;
-    z++;
+    z1 = x * y;
+    // p++;
+    // p--;
+    // ++p;
+    // --p;
+    // z--;
+    // z++;
 
     x++;
     return 0;
