@@ -5,6 +5,8 @@ from typing import Any, List, Union, Dict
 from webbrowser import get
 
 offsets = {}
+code_gen = []
+
 TYPE_FLOAT = ["FLOAT", "DOUBLE", "LONG DOUBLE"]
 TYPE_EASY = {
     "VOID": "VOID",
@@ -341,13 +343,16 @@ def check_identifier(p):
 
 
 def type_util(op1: Node, op2: Node, op: str):
+    # TODO: code_gen for type_conversion implicit
     rule_name = "type_util"
+    tmp_var = ST.get_tmp_var()
     temp = Node(
         name=op + "Operation",
         val=op1.val + op + op2.val,
         lno=op1.lno,
         type="int",
         children=[],
+        place=tmp_var,
     )
     if op1.type == "" or op2.type == "":
         temp.type = "int"  # default

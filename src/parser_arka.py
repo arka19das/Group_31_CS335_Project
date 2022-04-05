@@ -11,7 +11,7 @@ from graphviz import Digraph
 
 from scanner import *
 from utils import *
-from utils import offsets
+from utils import offsets, code_gen
 
 # Get the token map from the lexer.  This is required.
 lexer = Lexer()
@@ -21,7 +21,6 @@ tokens = lexer.tokens
 
 cur_num = 0
 
-code_gen = []
 offsets[0] = 0
 
 
@@ -615,13 +614,30 @@ def p_unary_expression(p):
 
         elif p[1] == "sizeof":
             # MODIFIED
+            tmp_var = ST.get_tmp_var("int")
+
             p[0] = Node(
                 name="SizeOf",
-                val=p[2].val,
+                val=tmp_var,
                 lno=p[2].lno,
                 type="int",
                 children=[p[2]],
+                place=tmp_var,
             )
+
+            # p[0].ast = build_AST(p, rule_name)
+            # print(p[3])
+            type_size = get_data_type_size(p[2].type)
+            if type_size == -1:
+                ST.error(
+                    Error(
+                        p.lineno(1),
+                        rule_name,
+                        "Syntax error",
+                        f"Size of doesn't exist for '{p[2].type}' type",
+                    )
+                )
+            code_gen.append(["4=", tmp_var, type_size])
         elif p[1].val == "&":
             # TODO:3ac
             p[0] = Node(
@@ -682,14 +698,28 @@ def p_unary_expression(p):
         p[0].ast = build_AST(p, rule_name)
     else:
         # MODIFIED
+        tmp_var = ST.get_tmp_var("int")
         p[0] = Node(
             name="SizeOf",
-            val=p[3].val,
+            val=tmp_var,
             lno=p[3].lno,
             type="int",
             children=[p[3]],
+            place=tmp_var,
         )
         # p[0].ast = build_AST(p, rule_name)
+        # print(p[3])
+        type_size = get_data_type_size(p[3].type)
+        if type_size == -1:
+            ST.error(
+                Error(
+                    p.lineno(1),
+                    rule_name,
+                    "Syntax error",
+                    f"Size of doesn't exist for '{p[3].type}' type",
+                )
+            )
+        code_gen.append(["4=", tmp_var, type_size])
         p[0].ast = build_AST_2(p, [1, 3], p[2])
 
 
@@ -758,7 +788,15 @@ def p_multipicative_expression(p):
         # print(p[1])
         # print(p[2])
         # print(p[3])
-
+        tmp_var1 = p[1].place
+        tmp_var3 = p[3].place
+        if p[1].type != p[0].type:
+            tmp_var1 = ST.get_tmp_var(p[0].type)
+            code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
+        if p[3].type != p[0].type:
+            tmp_var3 = ST.get_tmp_var(p[0].type)
+            code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
+        code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
 
@@ -774,6 +812,15 @@ def p_additive_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
+        tmp_var1 = p[1].place
+        tmp_var3 = p[3].place
+        if p[1].type != p[0].type:
+            tmp_var1 = ST.get_tmp_var(p[0].type)
+            code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
+        if p[3].type != p[0].type:
+            tmp_var3 = ST.get_tmp_var(p[0].type)
+            code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
+        code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
 
@@ -789,6 +836,15 @@ def p_shift_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
+        tmp_var1 = p[1].place
+        tmp_var3 = p[3].place
+        if p[1].type != p[0].type:
+            tmp_var1 = ST.get_tmp_var(p[0].type)
+            code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
+        if p[3].type != p[0].type:
+            tmp_var3 = ST.get_tmp_var(p[0].type)
+            code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
+        code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
 
@@ -806,6 +862,15 @@ def p_relational_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
+        tmp_var1 = p[1].place
+        tmp_var3 = p[3].place
+        if p[1].type != p[0].type:
+            tmp_var1 = ST.get_tmp_var(p[0].type)
+            code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
+        if p[3].type != p[0].type:
+            tmp_var3 = ST.get_tmp_var(p[0].type)
+            code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
+        code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
 
@@ -821,6 +886,15 @@ def p_equality_expresssion(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
+        tmp_var1 = p[1].place
+        tmp_var3 = p[3].place
+        if p[1].type != p[0].type:
+            tmp_var1 = ST.get_tmp_var(p[0].type)
+            code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
+        if p[3].type != p[0].type:
+            tmp_var3 = ST.get_tmp_var(p[0].type)
+            code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
+        code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
 
@@ -835,6 +909,15 @@ def p_and_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
+        tmp_var1 = p[1].place
+        tmp_var3 = p[3].place
+        if p[1].type != p[0].type:
+            tmp_var1 = ST.get_tmp_var(p[0].type)
+            code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
+        if p[3].type != p[0].type:
+            tmp_var3 = ST.get_tmp_var(p[0].type)
+            code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
+        code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
 
@@ -849,6 +932,15 @@ def p_exclusive_or_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
+        tmp_var1 = p[1].place
+        tmp_var3 = p[3].place
+        if p[1].type != p[0].type:
+            tmp_var1 = ST.get_tmp_var(p[0].type)
+            code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
+        if p[3].type != p[0].type:
+            tmp_var3 = ST.get_tmp_var(p[0].type)
+            code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
+        code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
 
@@ -863,6 +955,15 @@ def p_inclusive_or_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
+        tmp_var1 = p[1].place
+        tmp_var3 = p[3].place
+        if p[1].type != p[0].type:
+            tmp_var1 = ST.get_tmp_var(p[0].type)
+            code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
+        if p[3].type != p[0].type:
+            tmp_var3 = ST.get_tmp_var(p[0].type)
+            code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
+        code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
 
@@ -877,6 +978,15 @@ def p_logical_and_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
+        tmp_var1 = p[1].place
+        tmp_var3 = p[3].place
+        if p[1].type != p[0].type:
+            tmp_var1 = ST.get_tmp_var(p[0].type)
+            code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
+        if p[3].type != p[0].type:
+            tmp_var3 = ST.get_tmp_var(p[0].type)
+            code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
+        code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
 
@@ -891,6 +1001,15 @@ def p_logical_or_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
+        tmp_var1 = p[1].place
+        tmp_var3 = p[3].place
+        if p[1].type != p[0].type:
+            tmp_var1 = ST.get_tmp_var(p[0].type)
+            code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
+        if p[3].type != p[0].type:
+            tmp_var3 = ST.get_tmp_var(p[0].type)
+            code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
+        code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
 
@@ -910,6 +1029,7 @@ def p_conditional_expression(p):
             children=[],
         )
         p[0].ast = build_AST_2(p, [3, 5], ":")
+        # TODO:Ternary operator
         p[0].ast = build_AST_2(p, [1, 0], "?")
 
 
@@ -1220,6 +1340,7 @@ def p_declaration_specifiers(p):
     | type_qualifier declaration_specifiers
     """
     rule_name = "declaration_specifiers"
+
     if len(p) == 2:
         p[0] = p[1]
         p[0].ast = build_AST(p, rule_name)
@@ -1548,13 +1669,22 @@ def p_specifier_qualifier_list(p):
     | type_qualifier
     """
     rule_name = "specifier_qualifier_list"
-    p[0] = Node(
-        name="SpecifierQualifierList",
-        val="",
-        type=p[1].type,
-        lno=p[1].lno,
-        children=[],
-    )
+    if len(p) == 2:
+        p[0] = Node(
+            name="SpecifierQualifierList",
+            val="",
+            type=p[1].type,
+            lno=p[1].lno,
+            children=[],
+        )
+    if len(p) == 3:
+        p[0] = Node(
+            name="SpecifierQualifierList",
+            val="",
+            type=p[1].type + " " + p[2].type,
+            lno=p[1].lno,
+            children=[],
+        )
     p[0].ast = build_AST(p, rule_name)
 
 
@@ -1873,9 +2003,11 @@ def p_type_name(p):
     """
     rule_name = "type_name"
     if len(p) == 2:
+        # print(p[1])
         p[0] = p[1]
         p[0].name = "TypeName"
     else:
+        # print(p[1], p[2])
         p[0] = Node(name="TypeName", val="", type=p[1].type, lno=p[1].lno, children=[])
         if p[2].type.endswith("*"):
             p[0].type = p[0].type + "*" * (p[2].type.count("*"))
