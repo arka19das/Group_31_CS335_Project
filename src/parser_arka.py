@@ -2573,8 +2573,10 @@ def p_switch(p):
 def p_iteration_statement(p):
     """iteration_statement : while while_M1 LEFT_BRACKET expression RIGHT_BRACKET while_M2 compound_statement while_M3
     | do do_M1 compound_statement WHILE do_M2 LEFT_BRACKET expression RIGHT_BRACKET do_M3 SEMICOLON
-    | for push_scope_lb for_init_statement FM1 expression_statement FM2 RIGHT_BRACKET new_compound_statement FM3
-    | for push_scope_lb for_init_statement FM1 expression_statement FM4 expression FM5 RIGHT_BRACKET FM6  new_compound_statement FM7
+    | for push_scope_lb for_init_statement FM1 expression SEMICOLON FM2 RIGHT_BRACKET new_compound_statement FM3
+    | for push_scope_lb for_init_statement FM1 SEMICOLON  RIGHT_BRACKET new_compound_statement FM8
+    | for push_scope_lb for_init_statement FM1 expression SEMICOLON FM4 expression FM5 RIGHT_BRACKET FM6  new_compound_statement FM7
+    | for push_scope_lb for_init_statement FM1 SEMICOLON FM9 expression FM10 RIGHT_BRACKET FM11  new_compound_statement FM12
     """
     # TODO: Scope names for while and do-while
     rule_name = "iteration_statement"
@@ -2667,29 +2669,48 @@ def p_FM1(p):
     l1 = ST.get_tmp_label()
     l2 = ST.get_tmp_label()
     l3 = ST.get_tmp_label()
+    l4 = ST.get_tmp_label()
     contStack.append(l1)
     brkStack.append(l2)
     code_gen.append(["label", l1, ":", ""])
-    p[0] = [l1, l2, l3]
+    p[0] = [l1, l2, l3, l4]
 
 
 def p_FM2(p):
     """FM2 :"""
     # print(p[-1].place, p[-2])
-    code_gen.append(["ifgoto", p[-1].place, "eq 0", p[-2][1]])
+    code_gen.append(["beq", p[-2].place, "0", p[-3][1]])
+
+def p_FM8(p):
+    """FM8 :"""
+    # print(p[-5])
+    code_gen.append(["goto", "", "", p[-4][0]])
+    code_gen.append(["label", p[-4][1], ":", ""])
+    contStack.pop()
+    brkStack.pop()
+    
 
 
 def p_FM4(p):
     """FM4 :"""
     # print(p[-2])
-    code_gen.append(["ifgoto", p[-1].place, "eq 0", p[-2][1]])
+    code_gen.append(["beq", p[-2].place, "0", p[-3][1]])
+    code_gen.append(["goto", "", "", p[-3][2]])
+    code_gen.append(['label',p[-3][3], ":","" ])
+
+def p_FM9(p):
+    """FM9 :"""
+    # print(p[-2])
+    #code_gen.append(["beq", p[-2].place, "0", p[-3][1]])
     code_gen.append(["goto", "", "", p[-2][2]])
+    code_gen.append(['label',p[-2][3], ":","" ])
 
 
 def p_FM3(p):
     """FM3 :"""
     # print(p[-5])
-    code_gen.append(["label", p[-5][1], ":", ""])
+    code_gen.append(["goto", "", "", p[-6][0]])
+    code_gen.append(["label", p[-6][1], ":", ""])
     contStack.pop()
     brkStack.pop()
 
@@ -2697,18 +2718,40 @@ def p_FM3(p):
 def p_FM5(p):
     """FM5 :"""
     # print(p[-4])
-    code_gen.append(["goto", "", "", p[-4][0]])
+    code_gen.append(["goto", "", "", p[-5][0]])
 
 
 def p_FM6(p):
     """FM6 :"""
     # print(p[-6])
-    code_gen.append(["label", p[-6][2], ":", ""])
+    code_gen.append(["label", p[-7][2], ":", ""])
 
 
 def p_FM7(p):
     """FM7 :"""
     # print(p[-8])
+    code_gen.append(["goto", "", "", p[-9][3]])
+    code_gen.append(["label", p[-9][1], ":", ""])
+    brkStack.pop()
+    contStack.pop()
+
+
+def p_FM10(p):
+    """FM10 :"""
+    # print(p[-4])
+    code_gen.append(["goto", "", "", p[-4][0]])
+
+
+def p_FM11(p):
+    """FM11 :"""
+    # print(p[-6])
+    code_gen.append(["label", p[-6][2], ":", ""])
+
+
+def p_FM12(p):
+    """FM12 :"""
+    # print(p[-8])
+    code_gen.append(["goto", "", "", p[-8][3]])
     code_gen.append(["label", p[-8][1], ":", ""])
     brkStack.pop()
     contStack.pop()
