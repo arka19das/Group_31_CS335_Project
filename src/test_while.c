@@ -1,10 +1,7 @@
 int main()
 {
-    long x;
-    if (x > 0)
-    {
-        x++;
-    }
-
+    int x;
+    long y;
+    x += y;
     return 0;
 }

@@ -1159,12 +1159,40 @@ def p_assignment_expression(p):
 
         p[0] = Node(
             name="AssignmentOperation",
-            val="",
+            val=p[1].val,
             type=p[1].type,
             lno=p[1].lno,
             children=[],
             level=p[1].level,
         )
+        temp_node = p[3]
+
+        if p[2].val != "=":
+            _op = p[2].val[:-1]
+            temp_node = type_util(p[1], p[3], _op)
+            tmp_var1 = p[1].place
+            tmp_var3 = p[3].place
+            if p[1].type != temp_node.type:
+                tmp_var1 = ST.get_tmp_var(temp_node.type)
+                code_gen.append(
+                    [p[1].type + "2" + temp_node.type, tmp_var1, p[1].place]
+                )
+            if p[3].type != temp_node.type:
+                tmp_var3 = ST.get_tmp_var(p[0].type)
+                code_gen.append(
+                    [p[3].type + "2" + temp_node.type, tmp_var3, p[3].place]
+                )
+            code_gen.append([temp_node.type + _op, temp_node.place, tmp_var1, tmp_var3])
+            # print(temp_node)
+
+        if p[0].type != temp_node.type:
+            temp_node1 = ST.get_tmp_var(p[0].type)
+            code_gen.append([temp_node.type + "2" + p[0].type, temp_node1, p[1].place])
+            code_gen.append([p[0].type + "=", p[1].place, temp_node1, ""])
+
+        else:
+            code_gen.append([temp_node.type + "=", p[1].place, temp_node.place, ""])
+
         # p[0].ast = build_AST(p, rule_name)
         p[0].ast = build_AST_2(p, [1, 3], p[2].val)
 
@@ -2378,6 +2406,8 @@ def p_selection_statement(p):
                 children=[],
                 lno=p.lineno(1),
             )
+            code_gen.append(["label", p[5][0], ":", ""])
+
         else:
             # ST.subscope_name = "if"
             p[0] = Node(
@@ -2387,7 +2417,7 @@ def p_selection_statement(p):
                 children=[],
                 lno=p.lineno(1),
             )
-        code_gen.append(["label", p[5][1], ":", ""])
+            code_gen.append(["label", p[5][1], ":", ""])
     else:
         # e_type = TYPE_EASY[p[3].type.upper()].lower()
         # if (
