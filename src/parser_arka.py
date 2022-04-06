@@ -915,6 +915,7 @@ def p_and_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
+        p[0].type = "int"  ##forced
         tmp_var1 = p[1].place
         tmp_var3 = p[3].place
         if p[1].type != p[0].type:
@@ -940,6 +941,7 @@ def p_exclusive_or_expression(p):
         p[0] = type_util(p[1], p[3], _op)
         tmp_var1 = p[1].place
         tmp_var3 = p[3].place
+
         if p[1].type != p[0].type:
             tmp_var1 = ST.get_tmp_var(p[0].type)
             code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
@@ -975,26 +977,37 @@ def p_inclusive_or_expression(p):
 
 def p_logical_and_expression(p):
     """logical_and_expression : inclusive_or_expression
-    | logical_and_expression LOGICAL_AND_OP inclusive_or_expression
+    | logical_and_expression and_m1 LOGICAL_AND_OP inclusive_or_expression and_m2
     """
     if len(p) == 2:
         p[0] = p[1]
         # p[0].ast = build_AST(p, rule_name)
     else:
-        rule_name = p[2]
-        _op = p[2][0] if p[2] is tuple else p[2]
-        p[0] = type_util(p[1], p[3], _op)
-        p[0].type = int  ##forced
+        rule_name = p[3]
+        _op = p[3][0] if p[3] is tuple else p[3]
+        p[0] = type_util(p[1], p[4], _op)
         tmp_var1 = p[1].place
-        tmp_var3 = p[3].place
+        tmp_var3 = p[4].place
         if p[1].type != p[0].type:
             tmp_var1 = ST.get_tmp_var(p[0].type)
             code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
-        if p[3].type != p[0].type:
+        if p[4].type != p[0].type:
             tmp_var3 = ST.get_tmp_var(p[0].type)
-            code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
+            code_gen.append([p[4].type + "2" + p[0].type, tmp_var3, p[4].place])
         code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
-        p[0].ast = build_AST_2(p, [1, 3], rule_name)
+        p[0].ast = build_AST_2(p, [1, 4], rule_name)
+
+
+def p_and_m1():
+    """and_m1 :"""
+    label1 = ST.get_tmp_label()
+    code_gen.append(["beq", p[-1].place, "0", label1])
+    p[0] = [label1]
+
+
+def p_and_m2():
+    """and_m2 :"""
+    code_gen.append(["label", p[-3][0], ":", ""])
 
 
 def p_logical_or_expression(p):
@@ -1010,6 +1023,7 @@ def p_logical_or_expression(p):
         p[0] = type_util(p[1], p[3], _op)
         tmp_var1 = p[1].place
         tmp_var3 = p[3].place
+
         if p[1].type != p[0].type:
             tmp_var1 = ST.get_tmp_var(p[0].type)
             code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
