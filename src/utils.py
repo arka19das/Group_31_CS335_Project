@@ -329,7 +329,8 @@ class SymbolTable:
     def get_tmp_label(self) -> str:
         global TMP_LABEL_COUNTER
         TMP_LABEL_COUNTER += 1
-        return f"__tmp_label_{TMP_LABEL_COUNTER}"
+        # return f"__tmp_label_{TMP_LABEL_COUNTER}"
+        return f"__label_{TMP_LABEL_COUNTER}"
 
 
 ST = SymbolTable()
@@ -354,7 +355,7 @@ def type_util(op1: Node, op2: Node, op: str):
     tmp_var = ST.get_tmp_var()
     temp = Node(
         name=op + "Operation",
-        val=op1.val + op + op2.val,
+        val=tmp_var,
         lno=op1.lno,
         type="int",
         children=[],
@@ -583,10 +584,13 @@ def write_code(code):
 
     # Saving the array in a text file
     for each_line in code:
-        for words in each_line:
-            file.write(str(words) + "\t")
         if each_line[0] != "label":
-            file.write("\n")
+            file.write("\t")
+            for words in each_line:
+                file.write(str(words) + "\t")
+        else:
+            file.write(each_line[1] + "\t" + each_line[2])
+        file.write("\n")
     file.close()
 
 

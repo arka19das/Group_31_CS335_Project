@@ -915,6 +915,7 @@ def p_and_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
+        p[0].type = "int"  ##forced
         tmp_var1 = p[1].place
         tmp_var3 = p[3].place
         if p[1].type != p[0].type:
@@ -940,6 +941,7 @@ def p_exclusive_or_expression(p):
         p[0] = type_util(p[1], p[3], _op)
         tmp_var1 = p[1].place
         tmp_var3 = p[3].place
+
         if p[1].type != p[0].type:
             tmp_var1 = ST.get_tmp_var(p[0].type)
             code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
@@ -975,48 +977,73 @@ def p_inclusive_or_expression(p):
 
 def p_logical_and_expression(p):
     """logical_and_expression : inclusive_or_expression
-    | logical_and_expression LOGICAL_AND_OP inclusive_or_expression
+    | logical_and_expression and_m1 LOGICAL_AND_OP inclusive_or_expression and_m2
     """
     if len(p) == 2:
         p[0] = p[1]
         # p[0].ast = build_AST(p, rule_name)
     else:
-        rule_name = p[2]
-        _op = p[2][0] if p[2] is tuple else p[2]
-        p[0] = type_util(p[1], p[3], _op)
+        rule_name = p[3]
+        _op = p[3][0] if p[3] is tuple else p[3]
+        p[0] = type_util(p[1], p[4], _op)
         tmp_var1 = p[1].place
-        tmp_var3 = p[3].place
+        tmp_var3 = p[4].place
         if p[1].type != p[0].type:
             tmp_var1 = ST.get_tmp_var(p[0].type)
             code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
-        if p[3].type != p[0].type:
+        if p[4].type != p[0].type:
             tmp_var3 = ST.get_tmp_var(p[0].type)
-            code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
+            code_gen.append([p[4].type + "2" + p[0].type, tmp_var3, p[4].place])
         code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
-        p[0].ast = build_AST_2(p, [1, 3], rule_name)
+        p[0].ast = build_AST_2(p, [1, 4], rule_name)
+
+
+def p_and_m1(p):
+    """and_m1 :"""
+    label1 = ST.get_tmp_label()
+    code_gen.append(["beq", p[-1].place, "0", label1])
+    p[0] = [label1]
+
+
+def p_and_m2(p):
+    """and_m2 :"""
+    code_gen.append(["label", p[-3][0], ":", ""])
 
 
 def p_logical_or_expression(p):
     """logical_or_expression : logical_and_expression
-    | logical_or_expression LOGICAL_OR_OP logical_and_expression
+    | logical_or_expression or_m1 LOGICAL_OR_OP logical_and_expression or_m2
     """
     if len(p) == 2:
         p[0] = p[1]
         # p[0].ast = build_AST(p, rule_name)
     else:
-        rule_name = p[2]
-        _op = p[2][0] if p[2] is tuple else p[2]
-        p[0] = type_util(p[1], p[3], _op)
+        rule_name = p[3]
+        _op = p[3][0] if p[3] is tuple else p[3]
+        p[0] = type_util(p[1], p[4], _op)
         tmp_var1 = p[1].place
-        tmp_var3 = p[3].place
+        tmp_var3 = p[4].place
+
         if p[1].type != p[0].type:
             tmp_var1 = ST.get_tmp_var(p[0].type)
             code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
-        if p[3].type != p[0].type:
+        if p[4].type != p[0].type:
             tmp_var3 = ST.get_tmp_var(p[0].type)
-            code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
+            code_gen.append([p[4].type + "2" + p[0].type, tmp_var3, p[4].place])
         code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
+
+
+def p_or_m1(p):
+    """or_m1 :"""
+    label1 = ST.get_tmp_label()
+    code_gen.append(["bne", p[-1].place, "0", label1])
+    p[0] = [label1]
+
+
+def p_or_m2(p):
+    """or_m2 :"""
+    code_gen.append(["label", p[-3][0], ":", ""])
 
 
 def p_conditional_expression(p):
@@ -1159,12 +1186,40 @@ def p_assignment_expression(p):
 
         p[0] = Node(
             name="AssignmentOperation",
-            val="",
+            val=p[1].val,
             type=p[1].type,
             lno=p[1].lno,
             children=[],
             level=p[1].level,
         )
+        temp_node = p[3]
+
+        if p[2].val != "=":
+            _op = p[2].val[:-1]
+            temp_node = type_util(p[1], p[3], _op)
+            tmp_var1 = p[1].place
+            tmp_var3 = p[3].place
+            if p[1].type != temp_node.type:
+                tmp_var1 = ST.get_tmp_var(temp_node.type)
+                code_gen.append(
+                    [p[1].type + "2" + temp_node.type, tmp_var1, p[1].place]
+                )
+            if p[3].type != temp_node.type:
+                tmp_var3 = ST.get_tmp_var(p[0].type)
+                code_gen.append(
+                    [p[3].type + "2" + temp_node.type, tmp_var3, p[3].place]
+                )
+            code_gen.append([temp_node.type + _op, temp_node.place, tmp_var1, tmp_var3])
+            # print(temp_node)
+
+        if p[0].type != temp_node.type:
+            temp_node1 = ST.get_tmp_var(p[0].type)
+            code_gen.append([temp_node.type + "2" + p[0].type, temp_node1, p[1].place])
+            code_gen.append([p[0].type + "=", p[1].place, temp_node1, ""])
+
+        else:
+            code_gen.append([temp_node.type + "=", p[1].place, temp_node.place, ""])
+
         # p[0].ast = build_AST(p, rule_name)
         p[0].ast = build_AST_2(p, [1, 3], p[2].val)
 
@@ -2364,12 +2419,12 @@ def p_expression_statement(p):
 
 
 def p_selection_statement(p):
-    """selection_statement : if LEFT_BRACKET expression RIGHT_BRACKET compound_statement
-    | if LEFT_BRACKET expression RIGHT_BRACKET compound_statement else compound_statement
+    """selection_statement : if LEFT_BRACKET expression  RIGHT_BRACKET if_M1 compound_statement
+    | if LEFT_BRACKET expression RIGHT_BRACKET if_M1 compound_statement else if_M2 compound_statement
     | switch LEFT_BRACKET expression RIGHT_BRACKET Switch_M2 compound_statement Switch_M3"""
     rule_name = "selection_statement"
     if p[1] == "if":
-        if len(p) == 6:
+        if len(p) == 7:
             # ST.subscope_name = "if"
             p[0] = Node(
                 name="IfStatment",
@@ -2378,6 +2433,8 @@ def p_selection_statement(p):
                 children=[],
                 lno=p.lineno(1),
             )
+            code_gen.append(["label", p[5][0], ":", ""])
+
         else:
             # ST.subscope_name = "if"
             p[0] = Node(
@@ -2387,6 +2444,7 @@ def p_selection_statement(p):
                 children=[],
                 lno=p.lineno(1),
             )
+            code_gen.append(["label", p[5][1], ":", ""])
     else:
         # e_type = TYPE_EASY[p[3].type.upper()].lower()
         # if (
@@ -2415,6 +2473,20 @@ def p_selection_statement(p):
         # print(p[6])
 
     p[0].ast = build_AST(p, rule_name)
+
+
+def p_if_M1(p):
+    """if_M1 :"""
+    label1 = ST.get_tmp_label()
+    label2 = ST.get_tmp_label()
+    code_gen.append(["beq", p[-2].place, "0", label1])
+    p[0] = [label1, label2]
+
+
+def p_if_M2(p):
+    """if_M2 :"""
+    code_gen.append(["goto", "", "", p[-3][1]])
+    code_gen.append(["label", p[-3][0], ":", ""])
 
 
 def p_Switch_M2(p):
