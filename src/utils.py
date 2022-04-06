@@ -2,10 +2,12 @@ import csv
 from dataclasses import dataclass, field, fields
 from pathlib import Path
 from typing import Any, List, Union, Dict
-from webbrowser import get
 
 offsets = {}
 code_gen = []
+contStack = []
+brkStack = []
+
 
 TYPE_FLOAT = ["FLOAT", "DOUBLE", "LONG DOUBLE"]
 TYPE_EASY = {
@@ -318,11 +320,9 @@ class SymbolTable:
         # TODO:incomplete and dont know yet where to use
         return vname
 
-    def get_tmp_label(self, dtype) -> str:
+    def get_tmp_label(self) -> str:
         global TMP_LABEL_COUNTER
         TMP_LABEL_COUNTER += 1
-        # TODO:incomplete and dont know yet where to use dtype
-
         return f"__tmp_label_{TMP_LABEL_COUNTER}"
 
 

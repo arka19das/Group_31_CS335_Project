@@ -11,7 +11,7 @@ from graphviz import Digraph
 
 from scanner import *
 from utils import *
-from utils import offsets, code_gen
+from utils import offsets, code_gen, contStack, brkStack
 
 # Get the token map from the lexer.  This is required.
 lexer = Lexer()
@@ -20,6 +20,7 @@ tokens = lexer.tokens
 
 
 cur_num = 0
+
 
 offsets[0] = 0
 
@@ -1288,7 +1289,7 @@ def p_declaration(p):
                 node.size *= totalEle
                 offsets[ST.currentScope] += node.size
                 offsets[ST.currentScope] += (8 - offsets[ST.currentScope] % 8) % 8
-                ## above line maybe necessary to be commented
+                # above line maybe necessary to be commented
             else:
                 if ST.current_table.find(child.val):
                     ST.error(
@@ -2401,10 +2402,8 @@ def p_switch(p):
 def p_iteration_statement(p):
     """iteration_statement : while LEFT_BRACKET expression RIGHT_BRACKET compound_statement
     | do compound_statement WHILE LEFT_BRACKET expression RIGHT_BRACKET SEMICOLON
-    | for push_scope_lb for_init_statement expression SEMICOLON expression RIGHT_BRACKET new_compound_statement
-    | for push_scope_lb for_init_statement expression SEMICOLON RIGHT_BRACKET new_compound_statement
-    | for push_scope_lb for_init_statement SEMICOLON expression RIGHT_BRACKET new_compound_statement
-    | for push_scope_lb for_init_statement SEMICOLON RIGHT_BRACKET new_compound_statement
+    | for push_scope_lb for_init_statement FM1 expression_statement FM2 RIGHT_BRACKET new_compound_statement FM3
+    | for push_scope_lb for_init_statement FM1 expression_statement FM4 expression FM5 RIGHT_BRACKET FM6  new_compound_statement FM7
     """
     # TODO: Scope names for while and do-while
     rule_name = "iteration_statement"
@@ -2431,6 +2430,58 @@ def p_iteration_statement(p):
         p[0].ast = build_AST(p, rule_name)
 
     ST.looping_depth -= 1
+
+
+def p_FM1(p):
+    """FM1 :"""
+    l1 = ST.get_tmp_label()
+    l2 = ST.get_tmp_label()
+    l3 = ST.get_tmp_label()
+    contStack.append(l1)
+    brkStack.append(l2)
+    code_gen.append(["label", "", "", l1])
+    p[0] = [l1, l2, l3]
+
+
+def p_FM2(p):
+    """FM2 :"""
+    # print(p[-1].place, p[-2])
+    code_gen.append(["ifgoto", p[-1].place, "eq 0", p[-2][1]])
+
+
+def p_FM4(p):
+    """FM4 :"""
+    # print(p[-2])
+    code_gen.append(["ifgoto", p[-1].place, "eq 0", p[-2][1]])
+    code_gen.append(["goto", "", "", p[-2][2]])
+
+
+def p_FM3(p):
+    """FM3 :"""
+    # print(p[-5])
+    code_gen.append(["label", "", "", p[-5][1]])
+    contStack.pop()
+    brkStack.pop()
+
+
+def p_FM5(p):
+    """FM5 :"""
+    # print(p[-4])
+    code_gen.append(["goto", "", "", p[-4][0]])
+
+
+def p_FM6(p):
+    """FM6 :"""
+    # print(p[-6])
+    code_gen.append(["label", "", "", p[-6][2]])
+
+
+def p_FM7(p):
+    """FM7 :"""
+    # print(p[-8])
+    code_gen.append(["label", "", "", p[-8][1]])
+    brkStack.pop()
+    contStack.pop()
 
 
 def p_for_init_statement(p):
