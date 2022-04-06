@@ -2364,12 +2364,12 @@ def p_expression_statement(p):
 
 
 def p_selection_statement(p):
-    """selection_statement : if LEFT_BRACKET expression RIGHT_BRACKET compound_statement
-    | if LEFT_BRACKET expression RIGHT_BRACKET compound_statement else compound_statement
+    """selection_statement : if LEFT_BRACKET expression  RIGHT_BRACKET if_M1 compound_statement
+    | if LEFT_BRACKET expression RIGHT_BRACKET if_M1 compound_statement else if_M2 compound_statement
     | switch LEFT_BRACKET expression RIGHT_BRACKET Switch_M2 compound_statement Switch_M3"""
     rule_name = "selection_statement"
     if p[1] == "if":
-        if len(p) == 6:
+        if len(p) == 7:
             # ST.subscope_name = "if"
             p[0] = Node(
                 name="IfStatment",
@@ -2387,6 +2387,7 @@ def p_selection_statement(p):
                 children=[],
                 lno=p.lineno(1),
             )
+        code_gen.append(["label", p[5][1], ":", ""])
     else:
         # e_type = TYPE_EASY[p[3].type.upper()].lower()
         # if (
@@ -2415,6 +2416,20 @@ def p_selection_statement(p):
         # print(p[6])
 
     p[0].ast = build_AST(p, rule_name)
+
+
+def p_if_M1(p):
+    """if_M1 :"""
+    label1 = ST.get_tmp_label()
+    label2 = ST.get_tmp_label()
+    code_gen.append(["beq", p[-2].place, "0", label1])
+    p[0] = [label1, label2]
+
+
+def p_if_M2(p):
+    """if_M2 :"""
+    code_gen.append(["goto", "", "", p[-3][1]])
+    code_gen.append(["label", p[-3][0], ":", ""])
 
 
 def p_Switch_M2(p):

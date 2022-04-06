@@ -1,10 +1,10 @@
 int main()
 {
-    long *x;
-    do
+    long x;
+    if (x > 0)
     {
-        x--;
-        continue;
-    } while (x);
+        x++;
+    }
+
     return 0;
 }
