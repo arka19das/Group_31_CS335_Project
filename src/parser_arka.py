@@ -984,6 +984,7 @@ def p_logical_and_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
+        p[0].type = int  ##forced
         tmp_var1 = p[1].place
         tmp_var3 = p[3].place
         if p[1].type != p[0].type:
