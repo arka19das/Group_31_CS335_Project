@@ -2148,9 +2148,10 @@ def p_statement(p):
         type="",
         children=[],
         lno=p.lineno(1),
-        label=p[1].label,
-        expr=p[1].expr,
     )
+    if isinstance(p[1], Node):
+        p[0].label = p[1].label
+        p[0].expr = p[1].expr
     p[0].ast = build_AST(p, rule_name)
 
 
@@ -2498,8 +2499,8 @@ def p_switch(p):
 
 
 def p_iteration_statement(p):
-    """iteration_statement : while LEFT_BRACKET expression RIGHT_BRACKET compound_statement
-    | do compound_statement WHILE LEFT_BRACKET expression RIGHT_BRACKET SEMICOLON
+    """iteration_statement : while while_M1 LEFT_BRACKET expression RIGHT_BRACKET while_M2 compound_statement while_M3
+    | do do_M1 compound_statement WHILE do_M2 LEFT_BRACKET expression RIGHT_BRACKET do_M3 SEMICOLON
     | for push_scope_lb for_init_statement FM1 expression_statement FM2 RIGHT_BRACKET new_compound_statement FM3
     | for push_scope_lb for_init_statement FM1 expression_statement FM4 expression FM5 RIGHT_BRACKET FM6  new_compound_statement FM7
     """
@@ -2528,6 +2529,65 @@ def p_iteration_statement(p):
         p[0].ast = build_AST(p, rule_name)
 
     ST.looping_depth -= 1
+
+
+def p_while_M1(p):
+    """while_M1 :"""
+    l1 = ST.get_tmp_label()
+    l2 = ST.get_tmp_label()  ## non useful
+    l3 = ST.get_tmp_label()
+    contStack.append(l1)
+    brkStack.append(l3)
+    code_gen.append(["goto", "", "", l1])
+    p[0] = [l1, l2, l3]
+
+
+def p_while_M2(p):
+    """while_M2 :"""
+    code_gen.append(["beq", p[-2].place, "0", p[-4][2]])
+    code_gen.append(["goto", "", "", p[-4][1]])  ## non useful
+    code_gen.append(["label", p[-4][1], ":", ""])  ## non useful
+
+
+def p_while_M3(p):
+    """while_M3 :"""
+    # print(p[-8])
+
+    code_gen.append(["goto", "", "", p[-6][0]])
+    code_gen.append(["label", p[-6][2], ":", ""])
+    brkStack.pop()
+    contStack.pop()
+
+
+def p_do_M1(p):
+    """do_M1 :"""
+    l1 = ST.get_tmp_label()
+    l2 = ST.get_tmp_label()  ## non useful
+    l3 = ST.get_tmp_label()
+    contStack.append(l2)
+    brkStack.append(l3)
+    code_gen.append(["label", l1, ":", ""])
+    # print(brkStack)
+    # print(contStack)
+    p[0] = [l1, l2, l3]
+
+
+def p_do_M2(p):
+    """do_M2 :"""
+    # print(p[-8])
+
+    code_gen.append(["label", p[-3][1], ":", ""])
+
+
+def p_do_M3(p):
+    """do_M3 :"""
+    code_gen.append(["beq", p[-2].place, "0", p[-7][2]])
+    code_gen.append(["goto", "", "", p[-7][0]])  ## non useful
+    code_gen.append(["label", p[-7][2], ":", ""])  ## non useful
+    # print(1, brkStack)
+    # print(1, contStack)
+    brkStack.pop()
+    contStack.pop()
 
 
 def p_FM1(p):
@@ -2627,9 +2687,11 @@ def p_jump_statemen_1(p):
     | CONTINUE SEMICOLON
     | BREAK SEMICOLON"""
     rule_name = "jump_statement_1"
+
     p[0] = Node(name="JumpStatement", val="", type="", lno=p.lineno(1), children=[])
     p[0].ast = build_AST(p, rule_name)
     temp = p[1][0] if isinstance(p[1], tuple) else p[1]
+
     if temp == "continue" and ST.looping_depth == 0:
         ST.error(
             Error(
@@ -2639,6 +2701,8 @@ def p_jump_statemen_1(p):
                 "continue not inside loop",
             )
         )
+    elif temp == "continue":
+        code_gen.append(["goto", "", "", contStack[-1]])
     elif temp == "break" and ST.looping_depth == 0 and ST.switch_depth == 0:
         ST.error(
             Error(
@@ -2648,6 +2712,8 @@ def p_jump_statemen_1(p):
                 "break not inside switch/loop",
             )
         )
+    elif temp == "break":
+        code_gen.append(["goto", "", "", brkStack[-1]])
 
 
 def p_jump_statemen_2(p):

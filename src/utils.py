@@ -585,7 +585,7 @@ def write_code(code):
     for each_line in code:
         for words in each_line:
             file.write(str(words) + "\t")
-        if True:  # each_line[0] != "label":
+        if each_line[0] != "label":
             file.write("\n")
     file.close()
 
