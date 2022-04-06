@@ -3,7 +3,45 @@ from dataclasses import dataclass, field, fields
 from pathlib import Path
 from typing import Any, List, Union, Dict
 
+offsets = {}
+code_gen = []
+contStack = []
+brkStack = []
+
+
 TYPE_FLOAT = ["FLOAT", "DOUBLE", "LONG DOUBLE"]
+TYPE_EASY = {
+    "VOID": "VOID",
+    "CHAR": "CHAR",
+    "SHORT": "SHORT",
+    "FLOAT": "FLOAT",
+    "INT": "INT",
+    "DOUBLE": "DOUBLE",
+    "LONG": "LONG",
+    "SHORT INT": "SHORT",
+    "LONG INT": "LONG",
+    "LONG LONG": "LONG",
+    "LONG LONG INT": "LONG",
+    "LONG DOUBLE": "LONG DOUBLE",
+    "SIGNED CHAR": "CHAR",
+    "SIGNED SHORT": "SHORT",
+    "SIGNED SHORT INT": "SHORT",
+    "SIGNED": "INT",
+    "SIGNED INT": "INT",
+    "SIGNED LONG": "LONG",
+    "SIGNED LONG INT": "LONG",
+    "SIGNED LONG LONG": "LONG",
+    "SIGNED LONG LONG INT": "LONG",
+    "UNSIGNED CHAR": "UNSIGNED CHAR",
+    "UNSIGNED SHORT": "UNSIGNED SHORT",
+    "UNSIGNED SHORT INT": "UNSIGNED SHORT",
+    "UNSIGNED": "UNSIGNED INT",
+    "UNSIGNED INT": "UNSIGNED INT",
+    "UNSIGNED LONG": "UNSIGNED LONG",
+    "UNSIGNED LONG INT": "UNSIGNED LONG",
+    "UNSIGNED LONG LONG": "UNSIGNED LONG",
+    "UNSIGNED LONG LONG INT": "UNSIGNED LONG",
+}
 TYPE_INTEGER = [
     "SHORT",
     "SHORT INT",
@@ -29,6 +67,7 @@ TYPE_INTEGER = [
     "UNSIGNED LONG LONG",
     "UNSIGNED LONG LONG INT",
 ]
+
 
 TYPE_CHAR = [
     "CHAR",
@@ -99,6 +138,13 @@ ops_type = {
     "~": TYPE_INTEGER,
     "^": TYPE_INTEGER,
 }
+TMP_VAR_COUNTER = 0
+TMP_LABEL_COUNTER = 0
+TMP_CLOSURE_COUNTER = 0
+
+
+def backpatch():
+    return
 
 
 @dataclass
@@ -132,6 +178,17 @@ class Node:
     argument_list: Union[None, List[Any]] = None
     field_list: List = field(default_factory=list)
     level: int = 0
+    place: str = ""
+    code: str = ""
+    truelist: List = field(default_factory=list)
+    falselist: List = field(default_factory=list)
+    continuelist: List = field(default_factory=list)
+    breaklist: List = field(default_factory=list)
+    nextlist: List = field(default_factory=list)
+    expr: List = field(default_factory=list)
+    label: List = field(default_factory=list)
+
+    offset: int = -1  # TODO:default value for all nodes 0 or 1?
     ast: Any = None
 
     def to_dict(self, verbose: bool = False):
@@ -151,7 +208,8 @@ class Node:
     def base_type(self):
         if not self.type:
             return self.type
-        return self.type.split()[-1].upper()
+        # return self.type.split()[-1].upper()
+        return self.type.upper()
 
 
 @dataclass
@@ -226,11 +284,52 @@ class SymbolTable:
     def display_errors(self, verbose: bool = False):
         for err in self.errors:
             if err.err_type == "warning":
+                print(err)
                 if not verbose:
                     continue
             else:
                 self.error_flag = 1
             print(str(err))
+
+    def get_tmp_var(self, vartype=None, value=0) -> str:
+        global TMP_VAR_COUNTER
+        global offsets
+        TMP_VAR_COUNTER += 1
+        vname = f"__tmp_var_{TMP_VAR_COUNTER}"
+        if vartype is not None:
+            scope = self.currentScope
+            scope_table = self.scope_tables[scope]
+            # print(offsets)
+            node = Node(
+                name=vname,
+                val=value,
+                type=vartype,
+                children=[],
+                size=get_data_type_size(vartype),
+                place=vname,
+                offset=offsets[scope],
+            )
+            scope_table.insert(node)
+            offsets[scope] += get_data_type_size(vartype)
+            offsets[scope] += (8 - offsets[scope] % 8) % 8
+
+            # symTab = get_current_symtab()
+            # symTab.insert(
+            #     {"name": vname, "type": vartype, "is_array": False, "dimensions": []}
+            # )
+        return vname
+
+    def get_tmp_closure(self, rettype: str, argtypes: list = []) -> str:
+        global TMP_CLOSURE_COUNTER
+        TMP_CLOSURE_COUNTER += 1
+        vname = f"__tmp_closure_{TMP_VAR_COUNTER}"
+        # TODO:incomplete and dont know yet where to use
+        return vname
+
+    def get_tmp_label(self) -> str:
+        global TMP_LABEL_COUNTER
+        TMP_LABEL_COUNTER += 1
+        return f"__tmp_label_{TMP_LABEL_COUNTER}"
 
 
 ST = SymbolTable()
@@ -238,9 +337,7 @@ ST = SymbolTable()
 
 def check_identifier(p):
     p_node = ST.find(p.val)
-    if (p_node is not None) and (
-        (p.is_func == 1) or ("struct" in p.type.split())
-    ):
+    if (p_node is not None) and ((p.is_func == 1) or ("struct" in p.type.split())):
         ST.error(
             Error(
                 p[1].lno,
@@ -252,65 +349,141 @@ def check_identifier(p):
 
 
 def type_util(op1: Node, op2: Node, op: str):
+    # TODO: code_gen for type_conversion implicit
     rule_name = "type_util"
+    tmp_var = ST.get_tmp_var()
     temp = Node(
         name=op + "Operation",
         val=op1.val + op + op2.val,
         lno=op1.lno,
         type="int",
         children=[],
+        place=tmp_var,
     )
     if op1.type == "" or op2.type == "":
         temp.type = "int"  # default
         return temp
+
     top1 = str(op1.type)
     top2 = str(op2.type)
     tp1 = op1.base_type
     tp2 = op2.base_type
 
-    if top1.endswith("*") and top2.endswith("*"):
+    if op1.level > 0 and op2.level > 0:
+        if op == "==" or op == "-" or op == "!=":
+            if op1.level != op2.level:
+                ST.error(
+                    Error(
+                        -1,
+                        rule_name,
+                        "compilation error",
+                        f"Invalid operation {op} on pointers of different levels",
+                    )
+                )
+
+            if op1.base_type != op2.base_type:
+                ST.error(
+                    Error(
+                        -1,
+                        rule_name,
+                        "compilation error",
+                        f"Invalid operation {op} on pointers of different types",
+                    )
+                )
+        else:
+            ST.error(
+                Error(
+                    -1,
+                    rule_name,
+                    "compilation error",
+                    f"Invalid operation {op} on pointers",
+                )
+            )
+        temp.type = op1.type
+        temp.level = op1.level
+
+    elif op1.level > 0 or op2.level > 0:
+        if op1.level > 0 and tp2 in TYPE_FLOAT:
+            ST.error(
+                Error(
+                    -1,
+                    rule_name,
+                    "compilation error",
+                    f"Incompatible data type {op} operator",
+                )
+            )
+            temp.type = op1.type
+            temp.level = op1.level
+        elif op1.level > 0:
+            if op not in ["+", "-"]:
+                ST.error(
+                    Error(
+                        -1,
+                        rule_name,
+                        "compilation error",
+                        f"Invalid operation {op} on pointers",
+                    )
+                )
+            temp.type = op1.type
+            temp.level = op1.level
+        elif op2.level > 0 and tp1 in TYPE_FLOAT:
+            ST.error(
+                Error(
+                    -1,
+                    rule_name,
+                    "compilation error",
+                    f"Incompatible data type {op} operator",
+                )
+            )
+            temp.type = op2.type
+            temp.level = op2.level
+        elif op2.level > 0:
+            if op not in ["+", "-"]:
+                ST.error(
+                    Error(
+                        -1,
+                        rule_name,
+                        "compilation error",
+                        f"Invalid operation {op} on pointers",
+                    )
+                )
+
+            temp.type = op2.type
+            temp.level = op2.level
+
+    elif top1.startswith("struct") or top2.startswith("struct"):
+
         ST.error(
             Error(
                 -1,
                 rule_name,
                 "compilation error",
-                "Cannot cast pointer to pointer",
+                f"Incompatible data type {op} operator",
             )
         )
-        temp.type = op1.type
-        # temp.level = op1.level
-    elif top1.endswith("*") or top2.endswith("*"):
-        # MODIFIED
-        if top1.endswith("*") and tp2 in TYPE_FLOAT:
-            ST.error(
-                Error(
-                    -1,
-                    rule_name,
-                    "compilation error",
-                    f"Incompatible data type {op} operator",
-                )
-            )
-            temp.type = op1.type
-            temp.level = op1.level
-        elif top1.endswith("*"):
-            temp.type = op1.type
-            temp.level = op1.level
-        elif top2.endswith("*") and tp1 in TYPE_FLOAT:
-            ST.error(
-                Error(
-                    -1,
-                    rule_name,
-                    "compilation error",
-                    f"Incompatible data type {op} operator",
-                )
-            )
-            temp.type = op2.type
-            temp.level = op2.level
-        elif top2.endswith("*"):
-            temp.type = op2.type
-            temp.level = op2.level
+        typ = op1.type if top1.startswith("struct") else op2.type
+        temp.type = typ
+        return temp
 
     else:
+        temp_1 = op1.type.split(" ")
+        temp_2 = op2.type.split(" ")
+        tp1 = ""
+        tp2 = ""
+        for i in range(len(temp_1)):
+            if temp_1[i] == "*":
+                break
+            tp1 += temp_1[i].upper()
+            tp1 += " "
+
+        for i in range(len(temp_2)):
+            if temp_2[i] == "*":
+                break
+            tp2 += temp_2[i].upper()
+            tp2 += " "
+
+        tp1 = tp1[:-1]
+        tp2 = tp2[:-1]
         if tp1 not in ops_type[op] or tp2 not in ops_type[op]:
             ST.error(
                 Error(
@@ -333,6 +506,7 @@ def type_util(op1: Node, op2: Node, op: str):
                 )
             )
             temp.type = op1.type
+
         elif size2 > size1:
             ST.error(
                 Error(
@@ -356,16 +530,38 @@ def type_util(op1: Node, op2: Node, op: str):
     if temp.type == "char":
         temp.type = "int"
 
-    if op in ["*", "-", "%"]:
-        temp.val = op1.val
+    # if op in ["*", "-", "%"]:
+    #     temp.val = op1.val
+    # check_identifier(op1)
+    # check_identifier(op2)
 
-    check_identifier(op1)
-    check_identifier(op2)
+    p_node = ST.find(op1.val)
+    if (p_node is not None) and (op1.is_func == 1):
+        ST.error(
+            Error(
+                op1.lno,
+                "Check Identifier",
+                "compilation error",
+                f"Invalid operation on {op1.val}",
+            )
+        )
+
+    p_node = ST.find(op2.val)
+    if (p_node is not None) and (op2.is_func == 1):
+        ST.error(
+            Error(
+                op2.lno,
+                "Check Identifier",
+                "compilation error",
+                f"Invalid operation on {op2.val}",
+            )
+        )
+
     return temp
 
 
 def get_data_type_size(type_1):
-
+    # DONE: error because it is focusing on  the last word only
     if type_1.endswith("*"):
         return 8
     if type_1.startswith("struct"):
@@ -373,13 +569,25 @@ def get_data_type_size(type_1):
         if node is None:
             return -1
         return ST.find(type_1).size
-
-    base_type = type_1.split()[-1].upper()
+    # base_type = type_1.split()[-1].upper()
+    base_type = type_1.upper().strip(" ")
     return SIZE_OF_TYPE.get(base_type, -1)
 
 
 def ignore_char(ch):
     return ch in IGNORE_LIST
+
+
+def write_code(code):
+    file = open("3ac.txt", "w")
+
+    # Saving the array in a text file
+    for each_line in code:
+        for words in each_line:
+            file.write(str(words) + "\t")
+        if each_line[0] != "label":
+            file.write("\n")
+    file.close()
 
 
 def dump_symbol_table_csv(verbose: bool = False):
