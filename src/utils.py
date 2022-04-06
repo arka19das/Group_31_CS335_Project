@@ -182,6 +182,12 @@ class Node:
     code: str = ""
     truelist: List = field(default_factory=list)
     falselist: List = field(default_factory=list)
+    continuelist: List = field(default_factory=list)
+    breaklist: List = field(default_factory=list)
+    nextlist: List = field(default_factory=list)
+    expr: List = field(default_factory=list)
+    label: List = field(default_factory=list)
+
     offset: int = -1  # TODO:default value for all nodes 0 or 1?
     ast: Any = None
 
@@ -579,7 +585,8 @@ def write_code(code):
     for each_line in code:
         for words in each_line:
             file.write(str(words) + "\t")
-        file.write("\n")
+        if True:  # each_line[0] != "label":
+            file.write("\n")
     file.close()
 
 

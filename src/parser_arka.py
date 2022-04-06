@@ -1,9 +1,14 @@
 # TODO: check invalid operation on function and backpatching
+# TODO: small error,, in repeated cases unable to display line number
 # Yacc example
+from cmath import exp
 import copy
 import json
 import pprint
 import sys
+from xml.sax import default_parser_list
+
+from numpy import var
 
 import ply.yacc as yacc
 import pydot
@@ -785,7 +790,7 @@ def p_multipicative_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
-        print(p[0])
+        # print(p[0])
         # print(p[1])
         # print(p[2])
         # print(p[3])
@@ -1042,6 +1047,7 @@ def p_assignment_expression(p):
     # print(p[0], "\n", p[1])
     if len(p) == 2:
         p[0] = p[1]
+
         # p[0].ast = build_AST(p, rule_name)
     else:
         if p[1].type == "" or p[3].type == "":
@@ -1051,6 +1057,7 @@ def p_assignment_expression(p):
                 lno=p[1].lno,
                 type="int",
                 children=[],
+                place=p[1].place,
             )
             p[0].ast = build_AST_2(p, [1, 3], p[2].val)
             # p[0].ast = build_AST(p, rule_name)
@@ -2135,34 +2142,58 @@ def p_statement(p):
     | jump_statement
     """
     rule_name = "statement"
-    p[0] = Node(name="Statement", val="", type="", children=[], lno=p.lineno(1))
+    p[0] = Node(
+        name="Statement",
+        val="",
+        type="",
+        children=[],
+        lno=p.lineno(1),
+        label=p[1].label,
+        expr=p[1].expr,
+    )
     p[0].ast = build_AST(p, rule_name)
 
 
 def p_labeled_statement(p):
     """labeled_statement : IDENTIFIER COLON statement
-    | CASE constant_expression COLON statement
-    | DEFAULT COLON statement"""
+    | Switch_M CASE constant_expression COLON statement
+    | Switch_M DEFAULT COLON statement"""
     rule_name = "labeled_statement"
     name = ""
-    if p[1] == "case":
-        if p[2].type.upper() not in (TYPE_INTEGER + TYPE_CHAR):
+    if p[2] == "case":
+        if p[3].type.upper() not in (TYPE_INTEGER + TYPE_CHAR) or (
+            not p[3].name.startswith("Constant")
+        ):
             ST.error(
                 Error(
-                    p.lineno(1),
+                    p.lineno(2),
                     rule_name,
                     "compilation error",
-                    f"Invalid datatype for case. Expected char or int",
+                    f"Invalid datatype {p[3].type} for case. Expected char or int constant",
                 )
             )
+
+        # print(p[3])
         name = "CaseStatement"
-    elif p[1] == "default":
+
+    elif p[2] == "default":
         name = "DefaultStatement"
     else:
         name = "LabeledStatement"
     p[0] = Node(name=name, val="", type="", children=[], lno=p.lineno(1))
-
+    if p[2] == "case":
+        p[0].expr.append(p[3].val)
+    elif p[2] == "default":
+        p[0].expr.append("")
+    p[0].label.append(p[1])
     p[0].ast = build_AST(p, rule_name)
+
+
+def p_Switch_M(p):
+    """Switch_M :"""
+    tmp_label = ST.get_tmp_label()
+    code_gen.append(["label", tmp_label, ":", ""])
+    p[0] = tmp_label
 
 
 def p_compound_statement(p):
@@ -2180,11 +2211,10 @@ def p_compound_statement(p):
             type="",
             lno=p.lineno(1),
             children=[],
+            label=[],
+            expr=[],
         )
-    elif len(p) == 4:
-        p[0] = p[2]
-        p[0].name = "CompoundStatement"
-        p[0].ast = build_AST(p, rule_name)
+
     elif len(p) == 4:
         p[0] = Node(
             name="CompoundStatement",
@@ -2192,6 +2222,8 @@ def p_compound_statement(p):
             type="",
             children=[],
             lno=p.lineno(1),
+            label=p[2].label,
+            expr=p[2].expr,
         )
         p[0].ast = build_AST(p, rule_name)
     else:
@@ -2201,6 +2233,8 @@ def p_compound_statement(p):
             type="",
             children=[],
             lno=p.lineno(1),
+            label=p[1].label + p[2].label,
+            expr=p[1].expr + p[2].expr,
         )
         p[0].ast = build_AST(p, rule_name)
 
@@ -2292,8 +2326,10 @@ def p_statement_list(p):
     rule_name = "statement_list"
     if len(p) == 2:
         p[0] = p[1]
+
         p[0].ast = build_AST(p, rule_name)
     else:
+
         p[0] = Node(name="StatementList", val="", type="", children=[], lno=p.lineno(1))
         p[0].ast = build_AST(p, rule_name)
         if p[1].name != "StatmentList":
@@ -2301,6 +2337,9 @@ def p_statement_list(p):
         else:
             p[0].children = p[1].children
         p[0].children.append(p[2])
+        p[0].label = p[1].label + p[2].label
+        p[0].expr = p[1].expr + p[2].expr
+        # print("3", p[1].expr)
 
 
 def p_expression_statement(p):
@@ -2326,7 +2365,7 @@ def p_expression_statement(p):
 def p_selection_statement(p):
     """selection_statement : if LEFT_BRACKET expression RIGHT_BRACKET compound_statement
     | if LEFT_BRACKET expression RIGHT_BRACKET compound_statement else compound_statement
-    | switch LEFT_BRACKET expression RIGHT_BRACKET compound_statement"""
+    | switch LEFT_BRACKET expression RIGHT_BRACKET Switch_M2 compound_statement Switch_M3"""
     rule_name = "selection_statement"
     if p[1] == "if":
         if len(p) == 6:
@@ -2348,13 +2387,15 @@ def p_selection_statement(p):
                 lno=p.lineno(1),
             )
     else:
-        e_type = TYPE_EASY[p[3].type.upper()].lower()
-        if (
-            e_type == "float"
-            or e_type == "double"
-            or e_type == "void"
-            or e_type == "long double"
-        ):
+        # e_type = TYPE_EASY[p[3].type.upper()].lower()
+        # if (
+        #     e_type == "float"
+        #     or e_type == "double"
+        #     or e_type == "void"
+        #     or e_type == "long double"
+        # ):
+
+        if TYPE_EASY[p[3].type.upper()] not in TYPE_INTEGER + TYPE_CHAR:
             ST.error(
                 Error(
                     p.lineno(1),
@@ -2370,8 +2411,65 @@ def p_selection_statement(p):
             children=[],
             lno=p.lineno(1),
         )
+        # print(p[6])
 
     p[0].ast = build_AST(p, rule_name)
+
+
+def p_Switch_M2(p):
+    """Switch_M2 :"""
+    # print(p[-2])
+    label1 = ST.get_tmp_label()
+    code_gen.append(["goto", "", "", label1])
+    label2 = ST.get_tmp_label()
+    brkStack.append(label2)
+    p[0] = [label1, label2]
+
+
+def p_Switch_M3(p):
+    """Switch_M3 :"""
+    # print(p[-2])
+    # print(p[-4])
+    code_gen.append(
+        ["goto", "", "", p[-2][1]]
+    )  ### after all cases break from switch case
+
+    code_gen.append(["label", p[-2][0], ":", ""])
+    flag = False
+    default_array = None
+    # print(p[-1].expr)
+    if len(set(p[-1].expr)) < len(p[-1].expr):
+        ST.error(
+            Error(
+                "undefined",
+                "Switch case Labels",
+                "compilation error",
+                f"Switch case has repeated labels",
+            )
+        )
+    tmp_var = p[-4].place
+
+    if p[-4].type[-4:] == "char":
+
+        tmp_var = ST.get_tmp_var("int")
+        code_gen.append([p[-4].type + "2int", tmp_var, p[-4].place])
+    for i in range(0, len(p[-1].expr)):
+        case = p[-1].expr[i]
+        if case == "":
+            flag = True
+            default_array = ["goto", "", "", p[-1].label[i]]
+        else:
+            if case[0] == "'":
+                case = str(ord(case[1:-1]))
+
+            ## TODO: difference when p[-4] is long or unsigned long
+            # if p[-4].type=="unsigned long" or p[-4].type=="long":
+
+            code_gen.append(["beq", tmp_var, case, p[-1].label[i]])
+    if flag:
+        code_gen.append(default_array)
+    brkStack.pop()
+    code_gen.append(["label", p[-2][1], ":", ""])
 
 
 def p_if(p):
@@ -2439,7 +2537,7 @@ def p_FM1(p):
     l3 = ST.get_tmp_label()
     contStack.append(l1)
     brkStack.append(l2)
-    code_gen.append(["label", "", "", l1])
+    code_gen.append(["label", l1, ":", ""])
     p[0] = [l1, l2, l3]
 
 
@@ -2459,7 +2557,7 @@ def p_FM4(p):
 def p_FM3(p):
     """FM3 :"""
     # print(p[-5])
-    code_gen.append(["label", "", "", p[-5][1]])
+    code_gen.append(["label", p[-5][1], ":", ""])
     contStack.pop()
     brkStack.pop()
 
@@ -2473,13 +2571,13 @@ def p_FM5(p):
 def p_FM6(p):
     """FM6 :"""
     # print(p[-6])
-    code_gen.append(["label", "", "", p[-6][2]])
+    code_gen.append(["label", p[-6][2], ":", ""])
 
 
 def p_FM7(p):
     """FM7 :"""
     # print(p[-8])
-    code_gen.append(["label", "", "", p[-8][1]])
+    code_gen.append(["label", p[-8][1], ":", ""])
     brkStack.pop()
     contStack.pop()
 
