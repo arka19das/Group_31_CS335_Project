@@ -3,12 +3,7 @@
 # Yacc example
 from cmath import exp
 import copy
-from csv import field_size_limit
-import json
-import pprint
-import sys
-from xml.sax import default_parser_list
-
+import re
 from numpy import var
 
 import ply.yacc as yacc
@@ -17,7 +12,7 @@ from graphviz import Digraph
 
 from scanner import *
 from utils import *
-from utils import offsets, code_gen, contStack, brkStack
+from utils import offsets, code_gen, contStack, brkStack, funcstack
 
 # Get the token map from the lexer.  This is required.
 lexer = Lexer()
@@ -520,6 +515,7 @@ def p_postfix_expression_3(p):
                     )
 
                 p[0].place = v3
+                p[0].addr = v2
 
             elif len(p[0].array) > 0:
                 p[0].index = temp_var
@@ -1915,6 +1911,7 @@ def p_direct_declarator_2(p):
     # print(
     #     str(len(p)), "p_direct_declarator_2 is called := ", p[1], "\n", ST.curType
     # )  # "\n", tempList
+    # print(p[1])
     if len(p) == 2:
         p[0] = Node(name="ID", val=p[1], type="", lno=p.lineno(1), children=[])
         # p[0].ast = p[1].ast
@@ -1950,6 +1947,8 @@ def p_direct_declarator_2(p):
         ST.parent_table.insert(node)
         ST.curFuncReturnType = copy.deepcopy(ST.curType[-1 - len(tempList)])
         ST.current_table.name = p[1].val
+        code_gen.append(["funcstart", p[1].val, "", ""])
+        funcstack.append(p[1].val)
 
 
 def p_direct_declarator_3(p):
@@ -2000,11 +1999,15 @@ def p_direct_declarator_4(p):
                     f"Function {p[1].val} already declared",
                 )
             )
+            return
         node = Node(name=p[1].val, type=ST.curType[-1], is_func=1, argument_list=[])
         # Modified
         ST.parent_table.insert(node)
         ST.curFuncReturnType = copy.deepcopy(ST.curType[-1])
         ST.current_table.name = p[1].val
+
+        code_gen.append(["funcstart", p[1].val, "", ""])
+        funcstack.append(p[1].val)
 
 
 def p_pointer(p):
@@ -2112,6 +2115,7 @@ def p_parameter_declaration(p):
                     f"Parameter {p[2].val} already declared",
                 )
             )
+
         node = Node(name=p[2].val, type=p[1].type)
         ST.current_table.insert(node)
         if len(p[2].type) > 0:
@@ -2940,6 +2944,7 @@ def p_jump_statemen_2(p):
                     "Function return type is not void",
                 )
             )
+        code_gen.append(["return0", "", "", ""])
     else:
         # print("Yeh ffunction ke baare mei", p[2].type, " HUH ", ST.curFuncReturnType)
         if p[2].type != "" and ST.curFuncReturnType != p[2].type:
@@ -2951,6 +2956,8 @@ def p_jump_statemen_2(p):
                     f"Function return type is not {p[2].type}",
                 )
             )
+
+        code_gen.append([f"return{get_data_type_size(p[2].type)}", p[2].place, "", ""])
 
 
 def p_translation_unit(p):
@@ -3010,8 +3017,10 @@ def p_external_declaration(p):
 
 
 def p_function_definition_2(p):
-    """function_definition : declaration_specifiers declarator function_compound_statement"""
+    """function_definition : declaration_specifiers declarator  function_compound_statement"""
     rule_name = "function_definition_2"
+    # print(p[1])
+    # print(p[3])
     if p[1].type.upper() in PRIMITIVE_TYPES:
         p[1].type = TYPE_EASY[p[1].type.upper()].lower()
         # print(p[1].type)
@@ -3024,6 +3033,15 @@ def p_function_definition_2(p):
         children=[],
     )
     p[0].ast = build_AST_2(p, [1, 2, 3], rule_name)
+    code_gen.append(["endfunc", "", "", ""])
+    # funcstack.pop()
+
+
+# def p_func_m1(p):
+#     """func_m1 :"""
+#     label = ST.get_tmp_label()
+#     code_gen.append(["label", label, ":", ""])
+#     funcstack.append(label)
 
 
 def p_push_scope_lcb(p):

@@ -7,6 +7,7 @@ offsets = {}
 code_gen = []
 contStack = []
 brkStack = []
+funcstack = []
 
 
 TYPE_FLOAT = ["FLOAT", "DOUBLE", "LONG DOUBLE"]
@@ -189,6 +190,7 @@ class Node:
     label: List = field(default_factory=list)
     index: str = ""
     offset: int = -1  # TODO:default value for all nodes 0 or 1?
+    addr: str = ""
     ast: Any = None
 
     def to_dict(self, verbose: bool = False):
