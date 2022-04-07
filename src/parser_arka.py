@@ -1001,13 +1001,13 @@ def p_logical_and_expression(p):
 def p_and_m1(p):
     """and_m1 :"""
     label1 = ST.get_tmp_label()
-    code_gen.append(["beq", p[-1].place, "0", label1])
-    p[0] = [label1]
+    # code_gen.append(["beq", p[-1].place, "0", label1])
+    # p[0] = [label1]
 
 
 def p_and_m2(p):
     """and_m2 :"""
-    code_gen.append(["label", p[-3][0], ":", ""])
+    # code_gen.append(["label", p[-3][0], ":", ""])
 
 
 def p_logical_or_expression(p):
@@ -1032,18 +1032,19 @@ def p_logical_or_expression(p):
             code_gen.append([p[4].type + "2" + p[0].type, tmp_var3, p[4].place])
         code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
+        # code_gen.append(["label", p[2][0], ":", ""])
 
 
 def p_or_m1(p):
     """or_m1 :"""
-    label1 = ST.get_tmp_label()
-    code_gen.append(["bne", p[-1].place, "0", label1])
-    p[0] = [label1]
+    # label1 = ST.get_tmp_label()
+    # code_gen.append(["bne", p[-1].place, "0", label1])
+    # p[0] = [label1]
 
 
 def p_or_m2(p):
     """or_m2 :"""
-    code_gen.append(["label", p[-3][0], ":", ""])
+    # code_gen.append(["label", p[-3][0], ":", ""])
 
 
 def p_conditional_expression(p):
@@ -2681,6 +2682,7 @@ def p_FM2(p):
     # print(p[-1].place, p[-2])
     code_gen.append(["beq", p[-2].place, "0", p[-3][1]])
 
+
 def p_FM8(p):
     """FM8 :"""
     # print(p[-5])
@@ -2688,7 +2690,6 @@ def p_FM8(p):
     code_gen.append(["label", p[-4][1], ":", ""])
     contStack.pop()
     brkStack.pop()
-    
 
 
 def p_FM4(p):
@@ -2696,14 +2697,15 @@ def p_FM4(p):
     # print(p[-2])
     code_gen.append(["beq", p[-2].place, "0", p[-3][1]])
     code_gen.append(["goto", "", "", p[-3][2]])
-    code_gen.append(['label',p[-3][3], ":","" ])
+    code_gen.append(["label", p[-3][3], ":", ""])
+
 
 def p_FM9(p):
     """FM9 :"""
     # print(p[-2])
-    #code_gen.append(["beq", p[-2].place, "0", p[-3][1]])
+    # code_gen.append(["beq", p[-2].place, "0", p[-3][1]])
     code_gen.append(["goto", "", "", p[-2][2]])
-    code_gen.append(['label',p[-2][3], ":","" ])
+    code_gen.append(["label", p[-2][3], ":", ""])
 
 
 def p_FM3(p):
