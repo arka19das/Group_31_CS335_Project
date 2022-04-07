@@ -449,6 +449,7 @@ def p_postfix_expression_3(p):
             p[0].array = copy.deepcopy(p[1].array[1:])
             p[0].array.append(p[3].val)
             p[0].level = p[1].level - 1
+            print(p[0].array)
             if p[0].level == -1:
                 ST.error(
                     Error(
@@ -473,7 +474,31 @@ def p_postfix_expression_3(p):
 
                 temp_var = ST.get_tmp_var("int")
                 code_gen.append([p[3].type + "2int", temp_var, p[3].place])
+            d = len(p[1].array) - 1 - p[0].level
+            v1 = ST.get_tmp_var("int")
+            code_gen.append(["int*", v1, p[1].index, p[1].array[d - 1]])
+            code_gen.append(["int+", temp_var, v1, p[3].place])
 
+            if p[0].level == 0 and len(p[0].array) > 0:
+                # v1=ST.get_tmp_var('int')
+                code_gen.append(["int*", v1, temp_var, get_data_type_size(p[0].type)])
+                v2 = ST.get_tmp_var("long")
+                code_gen.append(["addr", v2, p[0].place, ""])
+                code_gen.append(["long+", v2, v1, v2])
+                type1 = p[0].type.strip(" *")
+                v3 = ST.get_tmp_var(type1)
+                print(type1)
+                if type1.upper() in PRIMITIVE_TYPES:
+                    code_gen.append([f"{get_data_type_size(type1)}load", v3, v2, ""])
+                else:
+                    code_gen.append(
+                        [f"{get_data_type_size(type1)}non_primitive_load", v3, v2, ""]
+                    )
+
+                p[0].place = v3
+
+            elif len(p[0].array) > 0:
+                p[0].index = temp_var
         else:
             p[0] = Node(
                 name="FunctionCall2",

@@ -187,7 +187,7 @@ class Node:
     nextlist: List = field(default_factory=list)
     expr: List = field(default_factory=list)
     label: List = field(default_factory=list)
-
+    index: str = ""
     offset: int = -1  # TODO:default value for all nodes 0 or 1?
     ast: Any = None
 
