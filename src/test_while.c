@@ -6,7 +6,7 @@ int main()
     unsigned long int arr[3][2][4];
     // x += y;
 
-    arr[1][2][3];
+    long *x = arr[1][2];
 
     // if ((x > 2 || x < 1) || x > 1)
     // {

@@ -449,7 +449,7 @@ def p_postfix_expression_3(p):
             p[0].array = copy.deepcopy(p[1].array[1:])
             p[0].array.append(p[3].val)
             p[0].level = p[1].level - 1
-            print(p[0].array)
+            # print(p[0].array)
             if p[0].level == -1:
                 ST.error(
                     Error(
@@ -485,7 +485,7 @@ def p_postfix_expression_3(p):
                 v2 = ST.get_tmp_var("long")
                 code_gen.append(["addr", v2, p[0].place, ""])
                 code_gen.append(["long+", v2, v1, v2])
-                type1 = p[0].type.strip(" *")
+                type1 = p[0].type.strip(" *")  # TODO: BUGGED
                 v3 = ST.get_tmp_var(type1)
                 print(type1)
                 if type1.upper() in PRIMITIVE_TYPES:
