@@ -3,6 +3,7 @@
 # Yacc example
 from cmath import exp
 import copy
+from csv import field_size_limit
 import json
 import pprint
 import sys
@@ -391,6 +392,7 @@ def p_postfix_expression_3(p):
                         f"Invalid operator on {struct_name}",
                     )
                 )
+                return
             if not struct_name.startswith("struct"):
                 ST.error(
                     Error(
@@ -401,9 +403,9 @@ def p_postfix_expression_3(p):
                     )
                 )
                 return
-
             struct_node = ST.find(struct_name)
             flag = 0
+            print(struct_node.field_list)
             for curr_list in struct_node.field_list:
                 if curr_list[1] == p[3][0]:
                     flag = 1
@@ -412,16 +414,37 @@ def p_postfix_expression_3(p):
                     p[0].level = curr_list[0].count("*")
                     if len(curr_list) == 5:
                         p[0].level += len(curr_list[4])
+                    if p[0].level <= -1:
+                        ST.error(
+                            Error(
+                                p[1].lno,
+                                rule_name,
+                                "compilation error",
+                                f"Incorrect number of dimensions for {p[1].val}",
+                            )
+                        )
+                        return  ## IS RETURN ACTUALLY REQUIRED --ADDED BY ARKA
+                    tmp = ST.get_tmp_var("long")
+                    type1 = curr_list[0]
+                    tmp2 = ST.get_tmp_var(curr_list[0])
+                    code_gen.append(["addr", tmp, p[1].place, ""])
+                    if curr_list[3] > 0:
+                        code_gen.append(["long_+", tmp, curr_list[3], tmp])
+                    if type1.upper() in PRIMITIVE_TYPES:
+                        code_gen.append(
+                            [f"{get_data_type_size(type1)}load", tmp2, tmp, ""]
+                        )
+                    else:
+                        code_gen.append(
+                            [
+                                f"{get_data_type_size(type1)}non_primitive_load",
+                                tmp2,
+                                tmp,
+                                "",
+                            ]
+                        )
+                    p[0].place = tmp2
 
-            if p[0].level == -1:
-                ST.error(
-                    Error(
-                        p[1].lno,
-                        rule_name,
-                        "compilation error",
-                        f"Incorrect number of dimensions for {p[1].val}",
-                    )
-                )
             if flag == 0:
                 ST.error(
                     Error(
@@ -487,6 +510,7 @@ def p_postfix_expression_3(p):
                 code_gen.append(["long+", v2, v1, v2])
                 type1 = p[0].type.strip(" *")  # TODO: BUGGED
                 v3 = ST.get_tmp_var(type1)
+                # agar isko stack pe liya to p[0].place ko v3 me store krne se gayab hojayega
                 print(type1)
                 if type1.upper() in PRIMITIVE_TYPES:
                     code_gen.append([f"{get_data_type_size(type1)}load", v3, v2, ""])
@@ -685,6 +709,9 @@ def p_unary_expression(p):
                 level=p[1].level + 1,
                 children=[p[2]],
             )
+            temp_var = ST.get_tmp_var(p[2].type + " *")
+            code_gen.append(["addr", temp_var, p[2].place, ""])
+            p[0].place = temp_var
         elif p[1].val == "*":
             # TODO:3ac
             if not p[2].type.endswith("*"):
@@ -703,6 +730,26 @@ def p_unary_expression(p):
                 type=p[2].type[: len(p[2].type) - 2],
                 children=[p[2]],
             )
+            temp_var = ST.get_tmp_var(p[2].type[:-2])
+            ## yahan aajao
+            type1 = p[2].type[:-2]
+            if type1.upper() in PRIMITIVE_TYPES:
+                code_gen.append(
+                    [f"{get_data_type_size(type1)}load", temp_var, p[2].place, ""]
+                )
+            else:
+                code_gen.append(
+                    [
+                        f"{get_data_type_size(type1)}non_primitive_load",
+                        temp_var,
+                        p[2].place,
+                        "",
+                    ]
+                )
+            p[0].place = temp_var
+
+            p[0].place = temp_var
+
         elif p[1].val == "-":
             if p[2].type.upper() not in PRIMITIVE_TYPES:
                 ST.error(
@@ -1104,11 +1151,14 @@ def p_assignment_expression(p):
     """
     rule_name = "assignment_expression"
     # print(p[0], "\n", p[1])
+    # print("BANDAR       ", p[1])
+
     if len(p) == 2:
         p[0] = p[1]
 
         # p[0].ast = build_AST(p, rule_name)
     else:
+
         if p[1].type == "" or p[3].type == "":
             p[0] = Node(
                 name="AssignmentOperation",
@@ -1244,14 +1294,24 @@ def p_assignment_expression(p):
             code_gen.append([temp_node.type + _op, temp_node.place, tmp_var1, tmp_var3])
             # print(temp_node)
 
-        if p[0].type != temp_node.type:
-            temp_node1 = ST.get_tmp_var(p[0].type)
-            code_gen.append([temp_node.type + "2" + p[0].type, temp_node1, p[1].place])
-            code_gen.append([p[0].type + "=", p[1].place, temp_node1, ""])
+            if p[0].type != temp_node.type:
+                temp_node1 = ST.get_tmp_var(p[0].type)
+                code_gen.append(
+                    [temp_node.type + "2" + p[0].type, temp_node1, p[1].place]
+                )
+                code_gen.append([p[0].type + "=", p[1].place, temp_node1, ""])
 
+            else:
+                code_gen.append([temp_node.type + "=", p[1].place, temp_node.place, ""])
         else:
-            code_gen.append([temp_node.type + "=", p[1].place, temp_node.place, ""])
-
+            if p[0].type != temp_node.type:
+                temp_node1 = ST.get_tmp_var(p[0].type)
+                code_gen.append(
+                    [temp_node.type + "2" + p[0].type, temp_node1, p[3].place]
+                )
+                code_gen.append([p[0].type + "=", p[1].place, temp_node1, ""])
+            else:
+                code_gen.append([temp_node.type + "=", p[1].place, temp_node.place, ""])
         # p[0].ast = build_AST(p, rule_name)
         p[0].ast = build_AST_2(p, [1, 3], p[2].val)
 
