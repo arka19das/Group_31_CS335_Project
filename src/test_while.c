@@ -7,5 +7,8 @@ int main()
     {
         x += 3;
     }
+    int arr[3];
+    float t;
+    arr[t];
     return 0;
 }

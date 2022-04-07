@@ -458,7 +458,8 @@ def p_postfix_expression_3(p):
                         f"Incorrect number of dimensions specified for {p[1].val}",
                     )
                 )
-            if p[3].type.upper() not in TYPE_INTEGER:
+            temp_var = p[3].place
+            if p[3].type.upper() not in TYPE_INTEGER + TYPE_CHAR:
                 ST.error(
                     Error(
                         p[3].lno,
@@ -467,6 +468,11 @@ def p_postfix_expression_3(p):
                         "Array Index is of incompatible type",
                     )
                 )
+            elif p[3].type.upper()[-3:] != "INT":
+                # int long unisgnedint,unsigned long,unsigned short,short,char, unsigned_char
+
+                temp_var = ST.get_tmp_var("int")
+                code_gen.append([p[3].type + "2int", temp_var, p[3].place])
 
         else:
             p[0] = Node(
@@ -1059,7 +1065,7 @@ def p_conditional_expression(p):
             name="ConditionalOperation",
             val="",
             lno=p[1].lno,
-            type="",
+            type=p[4].type,
             children=[],
         )
         p[0].ast = build_AST_2(p, [3, 5], ":")
