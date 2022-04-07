@@ -622,3 +622,15 @@ def dump_symbol_table_csv(verbose: bool = False):
 
             for node in scope_table.nodes:
                 writer.writerow(node.to_dict(True))
+
+
+node1 = Node(name="printf", type="int", val="", is_func=1, lno=-1)
+node2 = Node(name="scanf", type="int", val="", is_func=1, lno=-1)
+
+pre_append_array = [node1, node2]
+
+
+def pre_append_to_table():
+    for node in pre_append_array:
+        ST.scope_tables[0].insert(node)
+    print(ST.scope_tables[0])

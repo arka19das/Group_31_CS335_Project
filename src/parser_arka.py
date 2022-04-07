@@ -342,6 +342,7 @@ def p_postfix_expression_3(p):
                         f"No function declared with name {p[1].val}",
                     )
                 )
+                return
             elif len(p1v_node.argument_list) != 0:
                 ST.error(
                     Error(
@@ -351,6 +352,8 @@ def p_postfix_expression_3(p):
                         f"Function {p[1].val} called with incorrect number of arguments",
                     )
                 )
+                return
+            code_gen.append(["call", p[1].val, "", ""])
 
         else:
             if not p[1].name.startswith("Dot"):
@@ -423,8 +426,8 @@ def p_postfix_expression_3(p):
                     type1 = curr_list[0]
                     tmp2 = ST.get_tmp_var(curr_list[0])
                     code_gen.append(["addr", tmp, p[1].place, ""])
-                    if curr_list[3] > 0:
-                        code_gen.append(["long_+", tmp, curr_list[3], tmp])
+                    # if curr_list[3] > 0:
+                    code_gen.append(["long_+", tmp, curr_list[3], tmp])
                     if type1.upper() in PRIMITIVE_TYPES:
                         code_gen.append(
                             [f"{get_data_type_size(type1)}load", tmp2, tmp, ""]
@@ -439,6 +442,7 @@ def p_postfix_expression_3(p):
                             ]
                         )
                     p[0].place = tmp2
+                    p[0].addr = tmp
 
             if flag == 0:
                 ST.error(
@@ -542,6 +546,7 @@ def p_postfix_expression_3(p):
                         f"No function of name {p[1].val} declared",
                     )
                 )
+                return
             elif len(p1v_node.argument_list) != len(p[3].children):
                 ST.error(
                     Error(
@@ -551,6 +556,7 @@ def p_postfix_expression_3(p):
                         "Incorrect number of arguments for function call",
                     )
                 )
+                return
             else:
                 i = 0
                 for arguments in p1v_node.argument_list:
@@ -576,7 +582,9 @@ def p_postfix_expression_3(p):
                                 f"Type mismatch in argument {i+1} of function call. Expected: {arguments}, Received: {ST.curType}",
                             )
                         )
+                        return
                     i += 1
+                code_gen.append(["call", p[1].val, "", ""])
 
 
 def p_argument_expression_list(p):
@@ -723,7 +731,7 @@ def p_unary_expression(p):
                 name="PointerVariable",
                 val=p[2].val,
                 lno=p[2].lno,
-                type=p[2].type[: len(p[2].type) - 2],
+                type=p[2].type[:-2],
                 children=[p[2]],
             )
             temp_var = ST.get_tmp_var(p[2].type[:-2])
@@ -744,7 +752,7 @@ def p_unary_expression(p):
                 )
             p[0].place = temp_var
 
-            p[0].place = temp_var
+            p[0].addr = p[2].place
 
         elif p[1].val == "-":
             if p[2].type.upper() not in PRIMITIVE_TYPES:
@@ -1228,9 +1236,10 @@ def p_assignment_expression(p):
                                 "Incorrect number of dimensions",
                             )
                         )
+                        return
 
         p1_node = ST.find(p[1].val)
-        if (p1_node is not None) and ((p[1].is_func == 1)):
+        if (p1_node is not None) and ((p[1].is_func >= 1)):
             ST.error(
                 Error(
                     p[1].lno,
@@ -1239,9 +1248,9 @@ def p_assignment_expression(p):
                     f"Invalid operation on {p[1].val}",
                 )
             )
-
+            return
         p3_node = ST.find(p[3].val)
-        if (p3_node is not None) and ((p[3].is_func == 1)):
+        if (p3_node is not None) and ((p[3].is_func >= 1)):
             ST.error(
                 Error(
                     p[1].lno,
@@ -1250,6 +1259,7 @@ def p_assignment_expression(p):
                     f"Invalid operation on {p[3].val}",
                 )
             )
+            return
 
         if p[2].val != "=":
             if ("struct" in p[1].type.split()) or ("struct" in p[3].type.split()):
@@ -1261,7 +1271,7 @@ def p_assignment_expression(p):
                         f"Invalid operation on {p[1].val}",
                     )
                 )
-
+                return
         p[0] = Node(
             name="AssignmentOperation",
             val=p[1].val,
@@ -1295,19 +1305,39 @@ def p_assignment_expression(p):
                 code_gen.append(
                     [temp_node.type + "2" + p[0].type, temp_node1, p[1].place]
                 )
-                code_gen.append([p[0].type + "=", p[1].place, temp_node1, ""])
-
+                if len(p[1].array) == 0 and p[1].name != "Pointer":
+                    code_gen.append([p[0].type + "=", p[1].place, temp_node1, ""])
+                else:
+                    code_gen.append([p[0].type + "=", p[1].place, temp_node1, "*"])
             else:
-                code_gen.append([temp_node.type + "=", p[1].place, temp_node.place, ""])
+                if len(p[1].array) == 0 and p[1].name != "Pointer":
+                    code_gen.append(
+                        [temp_node.type + "=", p[1].place, temp_node.place, ""]
+                    )
+                else:
+                    code_gen.append(
+                        [temp_node.type + "=", p[1].place, temp_node.place, "*"]
+                    )
+
         else:
             if p[0].type != temp_node.type:
                 temp_node1 = ST.get_tmp_var(p[0].type)
                 code_gen.append(
                     [temp_node.type + "2" + p[0].type, temp_node1, p[3].place]
                 )
-                code_gen.append([p[0].type + "=", p[1].place, temp_node1, ""])
+                if len(p[1].array) == 0 and p[1].name != "Pointer":
+                    code_gen.append([p[0].type + "=", p[1].place, temp_node1, ""])
+                else:
+                    code_gen.append([p[0].type + "=", p[1].place, temp_node1, "*"])
             else:
-                code_gen.append([temp_node.type + "=", p[1].place, temp_node.place, ""])
+                if len(p[1].array) == 0 and p[1].name != "Pointer":
+                    code_gen.append(
+                        [temp_node.type + "=", p[1].place, temp_node.place, ""]
+                    )
+                else:
+                    code_gen.append(
+                        [temp_node.type + "=", p[1].place, temp_node.place, "*"]
+                    )
         # p[0].ast = build_AST(p, rule_name)
         p[0].ast = build_AST_2(p, [1, 3], p[2].val)
 
@@ -1439,8 +1469,52 @@ def p_declaration(p):
                 node.size *= totalEle
                 offsets[ST.currentScope] += node.size
                 offsets[ST.currentScope] += (8 - offsets[ST.currentScope] % 8) % 8
+
+                if p[1].type != child.children[1].type:
+
+                    temp_node1 = ST.get_tmp_var(p[1].type)
+                    code_gen.append(
+                        [
+                            child.children[1].type + "2" + p[1].type,
+                            temp_node1,
+                            child.children[1].place,
+                        ]
+                    )
+                    if len(p[1].array) == 0 and p[1].name != "Pointer":
+                        code_gen.append(
+                            [p[1].type + "=", child.children[0].place, temp_node1, ""]
+                        )
+                    else:
+                        code_gen.append(
+                            [p[1].type + "=", child.children[0].place, temp_node1, "*"]
+                        )
+                else:
+                    # print(child.children)
+                    if len(p[1].array) == 0 and p[1].name != "Pointer":
+                        code_gen.append(
+                            [
+                                p[1].type + "=",
+                                child.children[0].place,
+                                child.children[1].place,
+                                "",
+                            ]
+                        )
+                    else:
+                        code_gen.append(
+                            [
+                                p[1].type + "=",
+                                child.children[0].place,
+                                child.children[1].place,
+                                "*",
+                            ]
+                        )
                 # above line maybe necessary to be commented
             else:
+                if (
+                    ST.current_table.find(child.val)
+                    and ST.current_table.find(child.val).is_func > 0
+                ):
+                    continue
                 if ST.current_table.find(child.val):
                     ST.error(
                         Error(
@@ -1913,7 +1987,10 @@ def p_direct_declarator_2(p):
     # )  # "\n", tempList
     # print(p[1])
     if len(p) == 2:
-        p[0] = Node(name="ID", val=p[1], type="", lno=p.lineno(1), children=[])
+        p[0] = Node(
+            name="ID", val=p[1], type="", lno=p.lineno(1), children=[], place=p[1]
+        )
+        p[0].name = "ID"
         # p[0].ast = p[1].ast
         p[0].ast = build_AST(p, rule_name)
     elif len(p) == 4:
@@ -1947,7 +2024,7 @@ def p_direct_declarator_2(p):
         ST.parent_table.insert(node)
         ST.curFuncReturnType = copy.deepcopy(ST.curType[-1 - len(tempList)])
         ST.current_table.name = p[1].val
-        code_gen.append(["funcstart", p[1].val, "", ""])
+        # code_gen.append(["funcstart", p[1].val, "", ""])
         funcstack.append(p[1].val)
 
 
@@ -2006,7 +2083,7 @@ def p_direct_declarator_4(p):
         ST.curFuncReturnType = copy.deepcopy(ST.curType[-1])
         ST.current_table.name = p[1].val
 
-        code_gen.append(["funcstart", p[1].val, "", ""])
+        # code_gen.append(["funcstart", p[1].val, "", ""])
         funcstack.append(p[1].val)
 
 
@@ -2704,19 +2781,19 @@ def p_iteration_statement(p):
 def p_while_M1(p):
     """while_M1 :"""
     l1 = ST.get_tmp_label()
-    l2 = ST.get_tmp_label()  ## non useful
+    # l2 = ST.get_tmp_label()  ## non useful
     l3 = ST.get_tmp_label()
     contStack.append(l1)
     brkStack.append(l3)
-    code_gen.append(["goto", "", "", l1])
-    p[0] = [l1, l2, l3]
+    code_gen.append(["label", l1, ":", ""])
+    p[0] = [l1, l3]
 
 
 def p_while_M2(p):
     """while_M2 :"""
-    code_gen.append(["beq", p[-2].place, "0", p[-4][2]])
-    code_gen.append(["goto", "", "", p[-4][1]])  ## non useful
-    code_gen.append(["label", p[-4][1], ":", ""])  ## non useful
+    code_gen.append(["beq", p[-2].place, "0", p[-4][1]])
+    # code_gen.append(["goto", "", "", p[-4][1]])  ## non useful
+    # code_gen.append(["label", p[-4][1], ":", ""])  ## non useful
 
 
 def p_while_M3(p):
@@ -2724,7 +2801,7 @@ def p_while_M3(p):
     # print(p[-8])
 
     code_gen.append(["goto", "", "", p[-6][0]])
-    code_gen.append(["label", p[-6][2], ":", ""])
+    code_gen.append(["label", p[-6][1], ":", ""])
     brkStack.pop()
     contStack.pop()
 
@@ -3017,7 +3094,7 @@ def p_external_declaration(p):
 
 
 def p_function_definition_2(p):
-    """function_definition : declaration_specifiers declarator  function_compound_statement"""
+    """function_definition : declaration_specifiers declarator funcmark1 function_compound_statement"""
     rule_name = "function_definition_2"
     # print(p[1])
     # print(p[3])
@@ -3032,9 +3109,14 @@ def p_function_definition_2(p):
         lno=p.lineno(1),
         children=[],
     )
-    p[0].ast = build_AST_2(p, [1, 2, 3], rule_name)
+    p[0].ast = build_AST_2(p, [1, 2, 4], rule_name)
     code_gen.append(["endfunc", "", "", ""])
     # funcstack.pop()
+
+
+def p_funcmark1(p):
+    """funcmark1 :"""
+    code_gen.append(["funcstart", p[-1].val, "", ""])
 
 
 # def p_func_m1(p):
@@ -3145,6 +3227,7 @@ if __name__ == "__main__":
     graph = Digraph(format="dot")
     with open(str(args.input), "r+") as file:
         data = file.read()
+    pre_append_to_table()
     tree = parser.parse(data)
 
     ST.display_errors(args.w)
