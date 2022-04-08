@@ -130,6 +130,7 @@ def p_float_constant(p):
         type="float",
         children=[],
         place=p[1],
+        lhs=1
     )
     rule_name = "float_constant"
     p[0].ast = build_AST(p, rule_name)
@@ -148,6 +149,8 @@ def p_hex_constant(p):
         children=[],
         place=p[1],
         code="",
+        lhs=1
+
     )
     rule_name = "hex_constant"
     p[0].ast = build_AST(p, rule_name)
@@ -171,6 +174,7 @@ def p_oct_constant(p):
         children=[],
         place=p[1],
         code="",
+        lhs=1
     )
     temp = re.findall("[0-7]+", p[1][1:])
     p[0].val = int(temp[0], 8)
@@ -194,6 +198,7 @@ def p_int_constant(p):
         children=[],
         place=p[1],
         code="",
+        lhs=1 
     )
     temp = re.findall("[0-9]+", p[1])
     p[0].val = temp[0]
@@ -216,6 +221,7 @@ def p_char_constant(p):
         children=[],
         place=p[1],
         code="",
+        lhs=1
     )
     rule_name = "char_constant"
     p[0].ast = build_AST(p, rule_name)
@@ -232,6 +238,7 @@ def p_string_literal(p):
         children=[],
         place=p[1],
         code="",
+        lhs=1
     )
     rule_name = "string_literal"
     p[0].ast = build_AST(p, rule_name)
@@ -306,6 +313,8 @@ def p_postfix_expression_3(p):
             type=p[1].type,
             children=[],
             place=tmp_var,
+            level=p[1].level,
+            lhs=1
         )
         p[0].ast = build_AST_2(p, [1], p[2])
         check_identifier(p[1])
@@ -357,6 +366,7 @@ def p_postfix_expression_3(p):
                 children=[p[1]],
                 is_func=0,
                 place=p[1].place,
+                lhs=1
             )
             p[0].ast = build_AST_2(p, [1], "()")
             # p[0].ast = build_AST(p, rule_name)
@@ -553,7 +563,6 @@ def p_postfix_expression_3(p):
                 code_gen.append(["int*", v1, p[1].index, p[1].array[0]])
                 code_gen.append(["int+", v1, v1, temp_var])
             # if p[0].level == 0 and len(p[0].array) > 0:
-            print(d)
             if len(p[0].array) == 0:
                 # v1=ST.get_tmp_var('int')
                 code_gen.append(["int*", v1, v1, get_data_type_size(p[0].type)])
@@ -588,6 +597,7 @@ def p_postfix_expression_3(p):
                 children=[],
                 is_func=0,
                 place=p[1].place,
+                lhs=1
             )
             p[0].ast = build_AST_2(p, [1, 3], "()")
             # p[0].ast = build_AST(p, rule_name)
@@ -699,6 +709,8 @@ def p_unary_expression(p):
                 type=p[2].type,
                 children=[tempNode, p[2]],
                 place=p[2].place,
+                level=p[2].level,
+                lhs=1
             )
             check_identifier(p[2])
 
@@ -744,6 +756,7 @@ def p_unary_expression(p):
                 type="int",
                 children=[p[2]],
                 place=tmp_var,
+                lhs=1
             )
 
             # p[0].ast = build_AST(p, rule_name)
@@ -767,6 +780,7 @@ def p_unary_expression(p):
                 type=p[2].type + " *",
                 level=p[1].level + 1,
                 children=[p[2]],
+                lhs=1
             )
             temp_var = ST.get_tmp_var(p[2].type + " *")
             p[0].place = temp_var
@@ -831,6 +845,7 @@ def p_unary_expression(p):
                 type=p[2].type,
                 children=[p[2]],
                 place=tmp_var,
+                lhs=1
             )
             code_gen.append([p[2].type + "_uminus", tmp_var, "0", p[2].place])
         else:
@@ -840,6 +855,7 @@ def p_unary_expression(p):
                 lno=p[2].lno,
                 type=p[2].type,
                 children=[],
+                lhs=1
             )
         p[0].ast = build_AST(p, rule_name)
     else:
@@ -852,6 +868,7 @@ def p_unary_expression(p):
             type="int",
             children=[p[3]],
             place=tmp_var,
+            lhs=1
         )
         # p[0].ast = build_AST(p, rule_name)
         type_size = get_data_type_size(p[3].type)
@@ -1215,6 +1232,9 @@ def p_assignment_expression(p):
         # p[0].ast = build_AST(p, rule_name)
     else:
         ###TO-DO Lvalue check to be done
+        
+        if p[1].lhs ==1:
+            ST.error(Error(p[1].lno, rule_name, "syntax error", "Left side of assignment cannot be expression"))            
         if p[1].type == "" or p[3].type == "":
             p[0] = Node(
                 name="AssignmentOperation",
@@ -1252,6 +1272,15 @@ def p_assignment_expression(p):
                         f"Struct {p[3].type}, {p[1].type} are of different types",
                     )
                 )
+        elif p[1].level and len(p[1].array) > 0:
+            ST.error(
+                Error(
+                    p[1].lno,
+                    rule_name,
+                    "compilation error",
+                    f"Invalid operation on array pointer {p[1].val}",
+                )
+            )
         if p[1].level != p[3].level:
             ST.error(
                 Error(
@@ -1261,17 +1290,17 @@ def p_assignment_expression(p):
                     "Type mismatch in assignment: Pointers of different levels",
                 )
             )
-        elif (p[1].level and len(p[1].array) > 0) and (
-            p[3].level and len(p[3].array) > 0
-        ):
-            ST.error(
-                Error(
-                    p[1].lno,
-                    rule_name,
-                    "compilation error",
-                    "Invalid array assignment",
-                )
-            )
+        # elif (p[1].level and len(p[1].array) > 0) and (
+        #     p[3].level and len(p[3].array) > 0
+        # ):
+        #     ST.error(
+        #         Error(
+        #             p[1].lno,
+        #             rule_name,
+        #             "compilation error",
+        #             "Invalid array assignment",
+        #         )
+        #     )
         elif p[1].type.split()[-1] != p[3].type.split()[-1]:
             ST.error(
                 Error(
@@ -1435,6 +1464,7 @@ def p_expression(p):
     else:
         p[0] = p[1]
         p[0].children.append(p[3])
+        p[0].lhs=1
         # p[0].ast = build_AST_2([p[1],[3]],',');
     # FIXME
     p[0].ast = build_AST(p, rule_name)

@@ -190,6 +190,7 @@ class Node:
     label: List = field(default_factory=list)
     index: str = ""
     offset: int = -1  # TODO:default value for all nodes 0 or 1?
+    lhs:int = 0
     addr: str = ""
     ast: Any = None
 

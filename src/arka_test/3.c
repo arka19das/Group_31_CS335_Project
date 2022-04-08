@@ -1,0 +1,41 @@
+int main()
+{   
+    int count,n;
+    short *from, *to;
+    short a[39], b[39];
+
+    from = a;
+    to = b;
+    count = 39;
+    n = (count + 7) / 8;
+    switch (count % 8) {
+    case 0: do { *to++ = *from++;
+    case 7:      *to++ = *from++;
+    case 6:      *to++ = *from++;
+    case 5:      *to++ = *from++;
+    case 4:      *to++ = *from++;
+    case 3:      *to++ = *from++;
+    case 2:      *to++ = *from++;
+    case 1:      *to++ = *from++;
+            } while (--n > 0);
+    case 13: for(n = 0; n < 39; n++) {
+            a[n] = n;
+            // b[n] = 0;
+         }
+    default : if(*to++ == *from++){
+                break;
+            }
+            else{
+                if(*to++ != *from++){
+                    n++;
+                }
+                if(*to++ >= *from++){
+                    n--;
+                }
+                else{
+                    *from++;
+                }
+            }
+    }
+    return 0;
+}
