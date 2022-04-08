@@ -423,8 +423,10 @@ def p_postfix_expression_3(p):
                         )
                         return  ## IS RETURN ACTUALLY REQUIRED --ADDED BY ARKA
                     tmp = ST.get_tmp_var("long")
+                    p[0].addr = tmp
                     type1 = curr_list[0]
                     tmp2 = ST.get_tmp_var(curr_list[0])
+                    p[0].place = tmp2
                     code_gen.append(["addr", tmp, p[1].place, ""])
                     # if curr_list[3] > 0:
                     code_gen.append(["long_+", tmp, curr_list[3], tmp])
@@ -441,8 +443,6 @@ def p_postfix_expression_3(p):
                                 "",
                             ]
                         )
-                    p[0].place = tmp2
-                    p[0].addr = tmp
 
             if flag == 0:
                 ST.error(
@@ -509,6 +509,9 @@ def p_postfix_expression_3(p):
                 code_gen.append(["long+", v2, v1, v2])
                 type1 = p[0].type.strip(" *")  # TODO: BUGGED
                 v3 = ST.get_tmp_var(type1)
+                p[0].place = v3
+                p[0].addr = v2
+
                 # agar isko stack pe liya to p[0].place ko v3 me store krne se gayab hojayega
                 print(type1)
                 if type1.upper() in PRIMITIVE_TYPES:
@@ -517,9 +520,6 @@ def p_postfix_expression_3(p):
                     code_gen.append(
                         [f"{get_data_type_size(type1)}non_primitive_load", v3, v2, ""]
                     )
-
-                p[0].place = v3
-                p[0].addr = v2
 
             elif len(p[0].array) > 0:
                 p[0].index = temp_var
@@ -714,8 +714,8 @@ def p_unary_expression(p):
                 children=[p[2]],
             )
             temp_var = ST.get_tmp_var(p[2].type + " *")
-            code_gen.append(["addr", temp_var, p[2].place, ""])
             p[0].place = temp_var
+            code_gen.append(["addr", temp_var, p[2].place, ""])
         elif p[1].val == "*":
             # TODO:3ac
             if not p[2].type.endswith("*"):
@@ -735,6 +735,8 @@ def p_unary_expression(p):
                 children=[p[2]],
             )
             temp_var = ST.get_tmp_var(p[2].type[:-2])
+            p[0].place = temp_var
+
             ## yahan aajao
             type1 = p[2].type[:-2]
             if type1.upper() in PRIMITIVE_TYPES:
@@ -750,7 +752,6 @@ def p_unary_expression(p):
                         "",
                     ]
                 )
-            p[0].place = temp_var
 
             p[0].addr = p[2].place
 
@@ -796,7 +797,6 @@ def p_unary_expression(p):
             place=tmp_var,
         )
         # p[0].ast = build_AST(p, rule_name)
-        # print(p[3])
         type_size = get_data_type_size(p[3].type)
         if type_size == -1:
             ST.error(
@@ -872,10 +872,6 @@ def p_multipicative_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
-        # print(p[0])
-        # print(p[1])
-        # print(p[2])
-        # print(p[3])
         tmp_var1 = p[1].place
         tmp_var3 = p[3].place
         if p[1].type != p[0].type:
@@ -1154,8 +1150,6 @@ def p_assignment_expression(p):
     | unary_expression assignment_operator assignment_expression
     """
     rule_name = "assignment_expression"
-    # print(p[0], "\n", p[1])
-    # print("BANDAR       ", p[1])
 
     if len(p) == 2:
         p[0] = p[1]
@@ -1298,7 +1292,6 @@ def p_assignment_expression(p):
                     [p[3].type + "2" + temp_node.type, tmp_var3, p[3].place]
                 )
             code_gen.append([temp_node.type + _op, temp_node.place, tmp_var1, tmp_var3])
-            # print(temp_node)
 
             if p[0].type != temp_node.type:
                 temp_node1 = ST.get_tmp_var(p[0].type)
@@ -1396,12 +1389,10 @@ def p_declaration(p):
     # global all_typedef
     rule_name = "declaration"
     if p[1].type.upper() in PRIMITIVE_TYPES:
-        # print(p[1].type)
         p[1].type = TYPE_EASY[p[1].type.upper()].lower()
     if len(p) == 3:
 
         p[0] = p[1]
-        # print("First one used")
         p[0].ast = build_AST(p, rule_name)
     else:
 
@@ -1489,7 +1480,6 @@ def p_declaration(p):
                             [p[1].type + "=", child.children[0].place, temp_node1, "*"]
                         )
                 else:
-                    # print(child.children)
                     if len(p[1].array) == 0 and p[1].name != "Pointer":
                         code_gen.append(
                             [
@@ -1570,7 +1560,6 @@ def p_declaration_specifiers(p):
         p[0] = p[1]
         p[0].ast = build_AST(p, rule_name)
         if p[1].type.upper() in PRIMITIVE_TYPES:
-            # print(p[1].type)
             p[1].type = TYPE_EASY[p[1].type.upper()].lower()
         ST.curType.append(p[1].type)
 
@@ -1615,7 +1604,6 @@ def p_declaration_specifiers(p):
 
         ST.curType.pop()
         if (p[1].type + " " + p[2].type).upper() in PRIMITIVE_TYPES:
-            # print(p[1].type)
             ST.curType.append(TYPE_EASY[(p[1].type + " " + p[2].type).upper()].lower())
         else:
             ST.curType.append(p[1].type + " " + p[2].type)
@@ -1982,10 +1970,6 @@ def p_direct_declarator_2(p):
     | direct_declarator push_scope_lb identifier_list RIGHT_BRACKET
     """
     rule_name = "direct_declarator_2"
-    # print(
-    #     str(len(p)), "p_direct_declarator_2 is called := ", p[1], "\n", ST.curType
-    # )  # "\n", tempList
-    # print(p[1])
     if len(p) == 2:
         p[0] = Node(
             name="ID", val=p[1], type="", lno=p.lineno(1), children=[], place=p[1]

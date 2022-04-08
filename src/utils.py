@@ -633,4 +633,3 @@ pre_append_array = [node1, node2]
 def pre_append_to_table():
     for node in pre_append_array:
         ST.scope_tables[0].insert(node)
-    print(ST.scope_tables[0])
