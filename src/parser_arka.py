@@ -133,6 +133,9 @@ def p_float_constant(p):
     )
     rule_name = "float_constant"
     p[0].ast = build_AST(p, rule_name)
+    if "l" in p[1] or "L" in p[1]:
+        p[0].type = "double"
+        p[0].val = p[1][:-2]
 
 
 def p_hex_constant(p):
@@ -148,6 +151,13 @@ def p_hex_constant(p):
     )
     rule_name = "hex_constant"
     p[0].ast = build_AST(p, rule_name)
+    temp = re.findall("[0-9]+", p[1][2:])
+    p[0].val = temp[0]
+    if "l" in p[1] or "L" in p[1]:
+        p[0].type = "long"
+
+    if "u" in p[1] or "U" in p[1]:
+        p[0].type = "unsigned " + p[0].type
 
 
 def p_oct_constant(p):
@@ -161,6 +171,13 @@ def p_oct_constant(p):
         place=p[1],
         code="",
     )
+    temp = re.findall("[0-9]+", p[1][1:])
+    p[0].val = temp[0]
+    if "l" in p[1] or "L" in p[1]:
+        p[0].type = "long"
+
+    if "u" in p[1] or "U" in p[1]:
+        p[0].type = "unsigned " + p[0].type
     rule_name = "oct_constant"
     p[0].ast = build_AST(p, rule_name)
 
@@ -176,6 +193,13 @@ def p_int_constant(p):
         place=p[1],
         code="",
     )
+    temp = re.findall("[0-9]+", p[1])
+    p[0].val = temp[0]
+    if "l" in p[1] or "L" in p[1]:
+        p[0].type = "long"
+
+    if "u" in p[1] or "U" in p[1]:
+        p[0].type = "unsigned " + p[0].type
     rule_name = "int_constant"
     p[0].ast = build_AST(p, rule_name)
 
@@ -226,12 +250,15 @@ def p_identifier(p):
     p1_node = ST.find(p[1])
     if p1_node is not None:
         p[0].type = p1_node.type
-        if str(p[0].type).count("*") != 0:
-            p[0].level = str(p[0].type).count("*")
+        temp_count = str(p[0].type).count("*")
+        if temp_count != 0:
+            p[0].level = temp_count
         p[0].array = p1_node.array
         p[0].level += len(p1_node.array)
         p[0].is_func = p1_node.is_func
         p[0].ast = build_AST(p, rule_name)
+        if temp_count != p[0].level:
+            p[0].type += (" *") * (p[0].level - temp_count)
     else:
         ST.error(
             Error(
@@ -378,6 +405,16 @@ def p_postfix_expression_3(p):
             p[0].ast = build_AST_2(p, [1, 3], p[2])
 
             struct_name = p[1].type
+            if not struct_name.startswith("struct"):
+                ST.error(
+                    Error(
+                        p[1].lno,
+                        rule_name,
+                        "compilation error",
+                        f"{p[1].val} is not a struct",
+                    )
+                )
+                return
             if (struct_name.endswith("*") and p[2][0] == ".") or (
                 not struct_name.endswith("*") and p[2][0] == "->"
             ):
@@ -390,16 +427,17 @@ def p_postfix_expression_3(p):
                     )
                 )
                 return
-            if not struct_name.startswith("struct"):
+            # Akshay added this ..now -> shouldnt work ..check it
+            if p[1].level > 0:
                 ST.error(
                     Error(
                         p[1].lno,
                         rule_name,
                         "compilation error",
-                        f"{p[1].val} is not a struct",
+                        f" Invalid dimensions on struct {p[1].val}",
                     )
                 )
-                return
+
             struct_node = ST.find(struct_name)
             flag = 0
             for curr_list in struct_node.field_list:
@@ -479,7 +517,12 @@ def p_postfix_expression_3(p):
                         f"Incorrect number of dimensions specified for {p[1].val}",
                     )
                 )
+            ##begin AKSHAY ADDED THIS..ASK FOR HELP
+            elif p[1].type.count("*") > 0:
+                p[0].type = p[1].type[:-2]
             temp_var = p[3].place
+            ##end of AKSHAY ADDED THIS..ASK FOR HELP
+
             if p[3].type.upper() not in TYPE_INTEGER + TYPE_CHAR:
                 ST.error(
                     Error(
@@ -489,8 +532,12 @@ def p_postfix_expression_3(p):
                         "Array Index is of incompatible type",
                     )
                 )
-            elif p[3].type.upper()[-3:] != "INT":
-                # int long unisgnedint,unsigned long,unsigned short,short,char, unsigned_char
+                return  ## added might cause varities error later-Arka
+            if p[1].name.startswith("Dot"):
+                ## added by akshay to evaluate array of structs in field of struct
+                p[0].name = p[1].name
+
+            if p[3].type.upper()[-3:] != "INT":
 
                 temp_var = ST.get_tmp_var("int")
                 code_gen.append([p[3].type + "2int", temp_var, p[3].place])
@@ -570,14 +617,14 @@ def p_postfix_expression_3(p):
                             p[3].children[i].type.upper()
                         ].lower()
                     ST.curType.append(p[3].children[i].type)
-
+                    # according to akshay TODO
                     if ST.curType[-1].split()[-1] != arguments.split()[-1]:
                         ST.error(
                             Error(
                                 p[1].lno,
                                 rule_name,
                                 "warning",
-                                f"Type mismatch in argument {i+1} of function call. Expected: {arguments}, Received: {ST.curType}",
+                                f"Type mismatch in argument {i+1} of function call. Expected: {arguments}, Received: {ST.curType[-1]}",
                             )
                         )
                         return
@@ -728,8 +775,9 @@ def p_unary_expression(p):
                 name="PointerVariable",
                 val=p[2].val,
                 lno=p[2].lno,
-                type=p[2].type[:-2],
                 children=[p[2]],
+                level=p[2].level - 1,
+                type=p[2].type[:-2],
             )
             temp_var = ST.get_tmp_var(p[2].type[:-2])
             p[0].place = temp_var
@@ -1154,7 +1202,7 @@ def p_assignment_expression(p):
 
         # p[0].ast = build_AST(p, rule_name)
     else:
-
+        ###TO-DO Lvalue check to be done
         if p[1].type == "" or p[3].type == "":
             p[0] = Node(
                 name="AssignmentOperation",
@@ -1181,6 +1229,15 @@ def p_assignment_expression(p):
                         rule_name,
                         "compilation error",
                         f"Cannot assign variable of type {p[3].type} to {p[1].type}",
+                    )
+                )
+            elif op1 and op2 and (p[1].type != p[3].type):
+                ST.error(
+                    Error(
+                        p[1].lno,
+                        rule_name,
+                        "compilation error",
+                        f"Struct {p[3].type}, {p[1].type} are of different types",
                     )
                 )
         if p[1].level != p[3].level:

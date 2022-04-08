@@ -2,7 +2,10 @@ int x1(int a, int b, char *s)
 {
     return 0;
 }
-
+struct st
+{
+    int x;
+};
 int main()
 {
     // int x;
@@ -13,14 +16,18 @@ int main()
     // {
     //     int x;
     // }
-    char x = 0, arr[3];
-    do
-    {
-        break;
-        x++;
-    } while (x < 10);
+    // int x = 0;
+    // char arr[3];
+    // do
+    // {
+    //     break;
+    //     x++;
+    // } while (x < 10);
+    // x1(x, x, arr);
+    struct st st1;
+    int x = st1->x;
 
-    // arr[2][1][x1];
+    // // arr[2][1][x1];
 
     // long *x = arr[1][2];
     // long x1;
