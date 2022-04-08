@@ -117,45 +117,35 @@ def p_primary_expression(p):
 
 def p_float_constant(p):
     """float_constant : FLOAT_CONSTANT"""
-    p[0] = Node(
-        name="Constant", val=p[1], lno=p.lineno(1), type="float", children=[]
-    )
+    p[0] = Node(name="Constant", val=p[1], lno=p.lineno(1), type="float", children=[])
     rule_name = "float_constant"
     p[0].ast = build_AST(p, rule_name)
 
 
 def p_hex_constant(p):
     """hex_constant : HEX_CONSTANT"""
-    p[0] = Node(
-        name="Constant", val=p[1], lno=p.lineno(1), type="int", children=[]
-    )
+    p[0] = Node(name="Constant", val=p[1], lno=p.lineno(1), type="int", children=[])
     rule_name = "hex_constant"
     p[0].ast = build_AST(p, rule_name)
 
 
 def p_oct_constant(p):
     """oct_constant : OCT_CONSTANT"""
-    p[0] = Node(
-        name="Constant", val=p[1], lno=p.lineno(1), type="int", children=[]
-    )
+    p[0] = Node(name="Constant", val=p[1], lno=p.lineno(1), type="int", children=[])
     rule_name = "oct_constant"
     p[0].ast = build_AST(p, rule_name)
 
 
 def p_int_constant(p):
     """int_constant : INT_CONSTANT"""
-    p[0] = Node(
-        name="Constant", val=p[1], lno=p.lineno(1), type="int", children=[]
-    )
+    p[0] = Node(name="Constant", val=p[1], lno=p.lineno(1), type="int", children=[])
     rule_name = "int_constant"
     p[0].ast = build_AST(p, rule_name)
 
 
 def p_char_constant(p):
     """char_constant : CHAR_CONSTANT"""
-    p[0] = Node(
-        name="Constant", val=p[1], lno=p.lineno(1), type="char", children=[]
-    )
+    p[0] = Node(name="Constant", val=p[1], lno=p.lineno(1), type="char", children=[])
     rule_name = "char_constant"
     p[0].ast = build_AST(p, rule_name)
 
@@ -361,7 +351,7 @@ def p_postfix_expression_3(p):
             p[0].ast = build_AST_2(p, [1, 3], "[]")
             # p[0].ast = build_AST(p, rule_name)
             p[0].array = copy.deepcopy(p[1].array[1:])
-            p[0].array.append(p[3].val)
+            # p[0].array.append(p[3].val)
             p[0].level = p[1].level - 1
             if p[0].level == -1:
                 ST.error(
@@ -381,6 +371,7 @@ def p_postfix_expression_3(p):
                         "Array Index is of incompatible type",
                     )
                 )
+            print(p[1].array)
 
         else:
             p[0] = Node(
@@ -484,9 +475,7 @@ def p_unary_expression(p):
                         f"Array {p[2].val} pointer increment",
                     )
                 )
-            tempNode = Node(
-                name="", val=p[1], lno=p[2].lno, type="", children=""
-            )
+            tempNode = Node(name="", val=p[1], lno=p[2].lno, type="", children="")
             p[0] = Node(
                 name="UnaryOperation",
                 val=p[2].val,
@@ -569,9 +558,7 @@ def p_unary_operator(p):
     | LOGICAL_NOT
     """
     rule_name = "unary_operator"
-    p[0] = Node(
-        name="UnaryOperator", val=p[1], lno=p.lineno(1), type="", children=[]
-    )
+    p[0] = Node(name="UnaryOperator", val=p[1], lno=p.lineno(1), type="", children=[])
     # p[0].ast = build_AST(p, rule_name)
 
 
@@ -787,9 +774,7 @@ def p_assignment_expression(p):
         if p[1].type == "-1" or p[3].type == "-1":
             return
         if "const" in p[1].type.split():
-            ST.error(
-                Error(p[1].lno, rule_name, "error", "Modifying const variable")
-            )
+            ST.error(Error(p[1].lno, rule_name, "error", "Modifying const variable"))
         if "struct" in p[1].type.split() or "struct" not in p[3].type.split():
             op1 = "struct" in p[1].type.split()
             op2 = "struct" in p[3].type.split()
@@ -838,9 +823,7 @@ def p_assignment_expression(p):
                 if curr_list[1] == p[1].val:
                     if len(curr_list) < 5 and len(p[1].array) == 0:
                         break
-                    if len(curr_list) < 5 or (
-                        len(curr_list[4]) < len(p[1].array)
-                    ):
+                    if len(curr_list) < 5 or (len(curr_list[4]) < len(p[1].array)):
                         ST.error(
                             Error(
                                 p[1].lno,
@@ -873,9 +856,7 @@ def p_assignment_expression(p):
             )
 
         if p[2].val != "=":
-            if ("struct" in p[1].type.split()) or (
-                "struct" in p[3].type.split()
-            ):
+            if ("struct" in p[1].type.split()) or ("struct" in p[3].type.split()):
                 ST.error(
                     Error(
                         p[1].lno,
@@ -1179,11 +1160,7 @@ def p_init_declarator(p):
                 )
             )
         if p[1].level != p[3].level:
-            ST.error(
-                Error(
-                    p[1].lno, rule_name, "compilation error", "Type Mismatch"
-                )
-            )
+            ST.error(Error(p[1].lno, rule_name, "compilation error", "Type Mismatch"))
 
 
 def p_storage_class_specifier(p):
@@ -1214,9 +1191,7 @@ def p_type_specifier_1(p):
     | BOOL
     """
     # rule_name = "type_specifier_1"
-    p[0] = Node(
-        name="TypeSpecifier1", val="", type=p[1], lno=p.lineno(1), children=[]
-    )
+    p[0] = Node(name="TypeSpecifier1", val="", type=p[1], lno=p.lineno(1), children=[])
     # p[0].ast = build_AST(p,rule_name)
 
 
@@ -1290,9 +1265,7 @@ def p_struct_or_union_specifier(p):
                 curr_list.append(child.array)
                 for ele in child.array:
                     totalEle *= ele
-            curr_offset = (
-                curr_offset + get_data_type_size(child.type) * totalEle
-            )
+            curr_offset = curr_offset + get_data_type_size(child.type) * totalEle
             curr_list[2] *= totalEle
             SZ *= totalEle
             max_size = max(max_size, SZ)
@@ -1433,9 +1406,7 @@ def p_struct_declarator(p):
 
 def p_type_qualifier(p):
     """type_qualifier : CONST"""
-    p[0] = Node(
-        name="TypeQualifier", val="", type=p[1], lno=p.lineno(1), children=[]
-    )
+    p[0] = Node(name="TypeQualifier", val="", type=p[1], lno=p.lineno(1), children=[])
 
 
 def p_declarator_1(p):
@@ -1554,9 +1525,7 @@ def p_direct_declarator_4(p):
                     f"Function {p[1].val} already declared",
                 )
             )
-        node = Node(
-            name=p[1].val, type=ST.curType[-1], is_func=1, argument_list=[]
-        )
+        node = Node(name=p[1].val, type=ST.curType[-1], is_func=1, argument_list=[])
         # Modified
         ST.parent_table.insert(node)
         ST.curFuncReturnType = copy.deepcopy(ST.curType[-1])
@@ -1571,9 +1540,7 @@ def p_pointer(p):
     """
     rule_name = "pointer"
     if len(p) == 2:
-        p[0] = Node(
-            name="Pointer", val="", type="*", lno=p.lineno(1), children=[]
-        )
+        p[0] = Node(name="Pointer", val="", type="*", lno=p.lineno(1), children=[])
         p[0].ast = build_AST(p, rule_name)
     elif len(p) == 3:
         p[0] = Node(
@@ -1623,9 +1590,7 @@ def p_parameter_list(p):
     | parameter_list COMMA parameter_declaration
     """
     rule_name = "parameter_list"
-    p[0] = Node(
-        name="ParameterList", val="", type="", children=[], lno=p.lineno(1)
-    )
+    p[0] = Node(name="ParameterList", val="", type="", children=[], lno=p.lineno(1))
     if len(p) == 2:
         p[0].ast = build_AST(p, rule_name)
         p[0].children.append(p[1])
@@ -1717,9 +1682,7 @@ def p_type_name(p):
         p[0] = p[1]
         p[0].name = "TypeName"
     else:
-        p[0] = Node(
-            name="TypeName", val="", type=p[1].type, lno=p[1].lno, children=[]
-        )
+        p[0] = Node(name="TypeName", val="", type=p[1].type, lno=p[1].lno, children=[])
         if p[2].type.endswith("*"):
             p[0].type = p[0].type + "*" * (p[2].type.count("*"))
     p[0].ast = build_AST(p, rule_name)
@@ -1845,9 +1808,7 @@ def p_statement(p):
     | jump_statement
     """
     rule_name = "statement"
-    p[0] = Node(
-        name="Statement", val="", type="", children=[], lno=p.lineno(1)
-    )
+    p[0] = Node(name="Statement", val="", type="", children=[], lno=p.lineno(1))
     p[0].ast = build_AST(p, rule_name)
 
 
@@ -2006,9 +1967,7 @@ def p_statement_list(p):
         p[0] = p[1]
         p[0].ast = build_AST(p, rule_name)
     else:
-        p[0] = Node(
-            name="StatementList", val="", type="", children=[], lno=p.lineno(1)
-        )
+        p[0] = Node(name="StatementList", val="", type="", children=[], lno=p.lineno(1))
         p[0].ast = build_AST(p, rule_name)
         if p[1].name != "StatmentList":
             p[0].children.append(p[1])
@@ -2127,9 +2086,7 @@ def p_iteration_statement(p):
         )
         p[0].ast = build_AST(p, rule_name)
     else:
-        p[0] = Node(
-            name="ForStatement", val="", type="", children=[], lno=p.lineno(1)
-        )
+        p[0] = Node(name="ForStatement", val="", type="", children=[], lno=p.lineno(1))
         p[0].ast = build_AST(p, rule_name)
 
     ST.looping_depth -= 1
@@ -2180,9 +2137,7 @@ def p_jump_statemen_1(p):
     | CONTINUE SEMICOLON
     | BREAK SEMICOLON"""
     rule_name = "jump_statement_1"
-    p[0] = Node(
-        name="JumpStatement", val="", type="", lno=p.lineno(1), children=[]
-    )
+    p[0] = Node(name="JumpStatement", val="", type="", lno=p.lineno(1), children=[])
     p[0].ast = build_AST(p, rule_name)
     temp = p[1][0] if isinstance(p[1], tuple) else p[1]
     if temp == "continue" and ST.looping_depth == 0:
@@ -2209,9 +2164,7 @@ def p_jump_statemen_2(p):
     """jump_statement : RETURN SEMICOLON
     | RETURN expression SEMICOLON"""
     rule_name = "jump_statement_2"
-    p[0] = Node(
-        name="JumpStatement", val="", type="", lno=p.lineno(1), children=[]
-    )
+    p[0] = Node(name="JumpStatement", val="", type="", lno=p.lineno(1), children=[])
     p[0].ast = build_AST(p, rule_name)
     if len(p) == 3:
         if ST.curFuncReturnType != "void":
@@ -2240,9 +2193,7 @@ def p_translation_unit(p):
     | translation_unit external_declaration
     """
     rule_name = "translation_unit"
-    p[0] = Node(
-        name="JumpStatement", val="", type="", lno=p.lineno(1), children=[]
-    )
+    p[0] = Node(name="JumpStatement", val="", type="", lno=p.lineno(1), children=[])
     if len(p) == 2:
         p[0].children.append(p[1])
     else:
@@ -2392,9 +2343,7 @@ parser = yacc.yacc(start="translation_unit")
 def getArgs():
     parser = argparse.ArgumentParser()
     parser.add_argument("-input", type=str, required=True, help="Input file")
-    parser.add_argument(
-        "-o", "--output", type=str, default="AST", help="Output file"
-    )
+    parser.add_argument("-o", "--output", type=str, default="AST", help="Output file")
     parser.add_argument("-v", action="store_true", help="Verbose output")
     parser.add_argument("-w", action="store_true", help="Warning")
     return parser

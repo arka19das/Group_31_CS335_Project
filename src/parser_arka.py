@@ -152,8 +152,8 @@ def p_hex_constant(p):
     rule_name = "hex_constant"
     p[0].ast = build_AST(p, rule_name)
     temp = re.findall("[0-9a-fA-F]+", p[1][2:])
-    p[0].val = int(temp[0],16)
-    p[0].place = int(temp[0],16)
+    p[0].val = int(temp[0], 16)
+    p[0].place = int(temp[0], 16)
     if "l" in p[1] or "L" in p[1]:
         p[0].type = "long"
 
@@ -173,8 +173,8 @@ def p_oct_constant(p):
         code="",
     )
     temp = re.findall("[0-7]+", p[1][1:])
-    p[0].val = int(temp[0],8)
-    p[0].place = int(temp[0],8)
+    p[0].val = int(temp[0], 8)
+    p[0].place = int(temp[0], 8)
     if "l" in p[1] or "L" in p[1]:
         p[0].type = "long"
 
@@ -430,7 +430,7 @@ def p_postfix_expression_3(p):
                 )
                 return
             # Akshay added this ..now -> shouldnt work ..check it
-            if ( p[1].level>0 and p[2] == '.') or (p[1].level>1 and p[2] == '->'):
+            if (p[1].level > 0 and p[2] == ".") or (p[1].level > 1 and p[2] == "->"):
                 ST.error(
                     Error(
                         p[1].lno,
@@ -445,6 +445,8 @@ def p_postfix_expression_3(p):
             for curr_list in struct_node.field_list:
                 if curr_list[1] == p[3][0]:
                     flag = 1
+                    if len(curr_list) == 5:
+                        p[0].array = curr_list[4]
                     p[0].type = curr_list[0]
                     p[0].parentStruct = struct_name
                     p[0].level = curr_list[0].count("*")
@@ -522,8 +524,8 @@ def p_postfix_expression_3(p):
             ##begin AKSHAY ADDED THIS..ASK FOR HELP
             elif p[1].type.count("*") > 0:
                 p[0].type = p[1].type[:-2]
-            temp_var = p[3].place
             ##end of AKSHAY ADDED THIS..ASK FOR HELP
+            temp_var = p[3].place
 
             if p[3].type.upper() not in TYPE_INTEGER + TYPE_CHAR:
                 ST.error(
@@ -545,12 +547,14 @@ def p_postfix_expression_3(p):
                 code_gen.append([p[3].type + "2int", temp_var, p[3].place])
             d = len(p[1].array) - 1 - p[0].level
             v1 = ST.get_tmp_var("int")
-            code_gen.append(["int*", v1, p[1].index, p[1].array[d - 1]])
-            code_gen.append(["int+", temp_var, v1, p[3].place])
+            if d != 0:
+                # code_gen.append(["long=", temp_var, p[3].place, ""])
+                code_gen.append(["int*", v1, p[1].index, p[1].array[0]])
+                code_gen.append(["int+", v1, v1, temp_var])
 
             if p[0].level == 0 and len(p[0].array) > 0:
                 # v1=ST.get_tmp_var('int')
-                code_gen.append(["int*", v1, temp_var, get_data_type_size(p[0].type)])
+                code_gen.append(["int*", v1, v1, get_data_type_size(p[0].type)])
                 v2 = ST.get_tmp_var("long")
                 code_gen.append(["addr", v2, p[0].place, ""])
                 code_gen.append(["long+", v2, v1, v2])
@@ -569,7 +573,10 @@ def p_postfix_expression_3(p):
                 ## load instruction may be redundant or not required sometimes
 
             elif len(p[0].array) > 0:
-                p[0].index = temp_var
+                if d == 0:
+                    p[0].index = temp_var
+                else:
+                    p[0].index = v1
         else:
             p[0] = Node(
                 name="FunctionCall2",
@@ -629,7 +636,7 @@ def p_postfix_expression_3(p):
                                 f"Type mismatch in argument {i+1} of function call. Expected: {arguments}, Received: {ST.curType[-1]}",
                             )
                         )
-                        return
+                        # return
                     i += 1
                 code_gen.append(["call", p[1].val, "", ""])
 
@@ -1843,6 +1850,7 @@ def p_struct_or_union_specifier(p):
                 for ele in child.array:
                     totalEle *= ele
             curr_offset = curr_offset + get_data_type_size(child.type) * totalEle
+            curr_offset += (8 - curr_offset) % 8
             curr_list[2] *= totalEle
             SZ *= totalEle
             max_size = max(max_size, SZ)
