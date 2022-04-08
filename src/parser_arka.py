@@ -1011,6 +1011,7 @@ def p_relational_expression(p):
             code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
         code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
+        # print(p[0])
 
 
 def p_equality_expresssion(p):
@@ -2506,8 +2507,8 @@ def p_compound_statement(p):
             type="",
             children=[],
             lno=p.lineno(1),
-            label=p[1].label + p[2].label,
-            expr=p[1].expr + p[2].expr,
+            label=p[2].label,  # p[1].label + p[2].label,
+            expr=p[2].expr,  # p[1].expr + p[2].expr,
         )
         p[0].ast = build_AST(p, rule_name)
 
@@ -3147,6 +3148,7 @@ def p_push_scope_lcb(p):
     """push_scope_lcb : LEFT_CURLY_BRACKET"""
     ST.push_scope()
     offsets[ST.currentScope] = 0
+
     p[0] = p[1]
 
 
@@ -3160,7 +3162,9 @@ def p_push_scope_lb(p):
 
 def p_pop_scope_rcb(p):
     """pop_scope_rcb : RIGHT_CURLY_BRACKET"""
+
     ST.pop_scope()
+
     p[0] = p[1]
 
 

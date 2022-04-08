@@ -1,10 +1,14 @@
-// checking multi dim array
 int main()
 {
-    int s = 1;
-    int a[2][4][6], *b;
-    // b = &s;
-    long int s1;
-    a[10][s][s1] = 1;
+    int y = 0, i = 0;
+    for (i = 0; i < 5; i++)
+    {
+        y++;
+        y *= -1;
+    }
+    while (y > 5)
+    {
+        y = y - 1;
+    }
     return 0;
 }

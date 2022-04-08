@@ -301,7 +301,6 @@ class SymbolTable:
         if vartype is not None:
             scope = self.currentScope
             scope_table = self.scope_tables[scope]
-            # print(offsets)
             node = Node(
                 name=vname,
                 val=value,
@@ -354,6 +353,7 @@ def check_identifier(p):
 def type_util(op1: Node, op2: Node, op: str):
     # TODO: code_gen for type_conversion implicit
     rule_name = "type_util"
+
     tmp_var = ST.get_tmp_var()
     temp = Node(
         name=op + "Operation",
@@ -363,6 +363,7 @@ def type_util(op1: Node, op2: Node, op: str):
         children=[],
         place=tmp_var,
     )
+
     if op1.type == "" or op2.type == "":
         temp.type = "int"  # default
         return temp
@@ -559,7 +560,6 @@ def type_util(op1: Node, op2: Node, op: str):
                 f"Invalid operation on {op2.val}",
             )
         )
-
     return temp
 
 
@@ -612,8 +612,8 @@ def dump_symbol_table_csv(verbose: bool = False):
         # if not scope_table.nodes:
         #     continue
         name = scope_table.name
-        if not verbose:
-            name = name.split("_")[0]
+        # if not verbose:
+        # name = name.split("_")[0]
         with open(csv_base_dir / f"{name}.csv", "a") as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             if name not in filenames:
