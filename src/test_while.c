@@ -1,14 +1,15 @@
+// checking multi dim array
+struct st
+{
+    int a;
+    int x;
+};
 int main()
 {
-    int y = 0, i = 0;
-    for (i = 0; i < 5; i++)
-    {
-        y++;
-        y *= -1;
-    }
-    while (y > 5)
-    {
-        y = y - 1;
-    }
+    int s = 1;
+    long a[4][5][6];
+    long b;
+    // b = &s;
+    a[1][3] = &b;
     return 0;
 }

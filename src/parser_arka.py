@@ -510,7 +510,7 @@ def p_postfix_expression_3(p):
             p[0].ast = build_AST_2(p, [1, 3], "[]")
             # p[0].ast = build_AST(p, rule_name)
             p[0].array = copy.deepcopy(p[1].array[1:])
-            p[0].array.append(p[3].val)
+            # p[0].array.append(p[3].val)
             p[0].level = p[1].level - 1
             if p[0].level == -1:
                 ST.error(
@@ -545,14 +545,16 @@ def p_postfix_expression_3(p):
 
                 temp_var = ST.get_tmp_var("int")
                 code_gen.append([p[3].type + "2int", temp_var, p[3].place])
-            d = len(p[1].array) - 1 - p[0].level
+            d = len(p[1].array) - p[0].level
             v1 = ST.get_tmp_var("int")
+            # print(p[1].array)
             if d != 0:
                 # code_gen.append(["long=", temp_var, p[3].place, ""])
                 code_gen.append(["int*", v1, p[1].index, p[1].array[0]])
                 code_gen.append(["int+", v1, v1, temp_var])
-
-            if p[0].level == 0 and len(p[0].array) > 0:
+            # if p[0].level == 0 and len(p[0].array) > 0:
+            print(d)
+            if len(p[0].array) == 0:
                 # v1=ST.get_tmp_var('int')
                 code_gen.append(["int*", v1, v1, get_data_type_size(p[0].type)])
                 v2 = ST.get_tmp_var("long")
