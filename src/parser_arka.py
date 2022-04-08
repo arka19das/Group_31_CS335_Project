@@ -428,7 +428,7 @@ def p_postfix_expression_3(p):
                 )
                 return
             # Akshay added this ..now -> shouldnt work ..check it
-            if p[1].level > 0:
+            if ( p[1].level>0 and p[2] == '.') or (p[1].level>1 and p[2] == '->'):
                 ST.error(
                     Error(
                         p[1].lno,
@@ -1183,7 +1183,7 @@ def p_conditional_expression(p):
             name="ConditionalOperation",
             val="",
             lno=p[1].lno,
-            type=p[4].type,
+            type=p[3].type,
             children=[],
         )
         p[0].ast = build_AST_2(p, [3, 5], ":")
@@ -3239,11 +3239,11 @@ if __name__ == "__main__":
     ST.display_errors(args.w)
     if ST.error_flag == 0:
 
-        if args.output[-4:] == ".dot":
-            args.output = args.output[:-4]
-            graph.render(filename=args.output, cleanup=True)
-        else:
-            graph.render(filename="ast", cleanup=True)
+        # if args.output[-4:] == ".dot":
+        #     args.output = args.output[:-4]
+        #     graph.render(filename=args.output, cleanup=True)
+        # else:
+        #     graph.render(filename="ast", cleanup=True)
         file = open("3ac.txt", "w")
 
         # Saving the array in a text file
