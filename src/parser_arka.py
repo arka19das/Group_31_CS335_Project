@@ -291,7 +291,6 @@ def p_postfix_expression_3(p):
         # DONE: FLOAT not supported yet and neither are pointers dhang se
         if p[2] == "++":
             if p[1].type.endswith("*"):
-                # print(p[1].type[:-1] + "1")
                 code_gen.append(
                     [
                         "long+",
@@ -403,7 +402,6 @@ def p_postfix_expression_3(p):
                 return
             struct_node = ST.find(struct_name)
             flag = 0
-            print(struct_node.field_list)
             for curr_list in struct_node.field_list:
                 if curr_list[1] == p[3][0]:
                     flag = 1
@@ -443,6 +441,7 @@ def p_postfix_expression_3(p):
                                 "",
                             ]
                         )
+                    ## load instruction may be redundant or not required sometimes
 
             if flag == 0:
                 ST.error(
@@ -471,7 +470,6 @@ def p_postfix_expression_3(p):
             p[0].array = copy.deepcopy(p[1].array[1:])
             p[0].array.append(p[3].val)
             p[0].level = p[1].level - 1
-            # print(p[0].array)
             if p[0].level == -1:
                 ST.error(
                     Error(
@@ -513,13 +511,13 @@ def p_postfix_expression_3(p):
                 p[0].addr = v2
 
                 # agar isko stack pe liya to p[0].place ko v3 me store krne se gayab hojayega
-                print(type1)
                 if type1.upper() in PRIMITIVE_TYPES:
                     code_gen.append([f"{get_data_type_size(type1)}load", v3, v2, ""])
                 else:
                     code_gen.append(
                         [f"{get_data_type_size(type1)}non_primitive_load", v3, v2, ""]
                     )
+                ## load instruction may be redundant or not required sometimes
 
             elif len(p[0].array) > 0:
                 p[0].index = temp_var
@@ -691,7 +689,6 @@ def p_unary_expression(p):
             )
 
             # p[0].ast = build_AST(p, rule_name)
-            # print(p[3])
             type_size = get_data_type_size(p[2].type)
             if type_size == -1:
                 ST.error(
@@ -752,6 +749,7 @@ def p_unary_expression(p):
                         "",
                     ]
                 )
+            ## load instruction may be redundant or not required sometimes
 
             p[0].addr = p[2].place
 
@@ -1292,7 +1290,6 @@ def p_assignment_expression(p):
                     [p[3].type + "2" + temp_node.type, tmp_var3, p[3].place]
                 )
             code_gen.append([temp_node.type + _op, temp_node.place, tmp_var1, tmp_var3])
-
             if p[0].type != temp_node.type:
                 temp_node1 = ST.get_tmp_var(p[0].type)
                 code_gen.append(
@@ -1301,7 +1298,7 @@ def p_assignment_expression(p):
                 if len(p[1].array) == 0 and p[1].name != "Pointer":
                     code_gen.append([p[0].type + "=", p[1].place, temp_node1, ""])
                 else:
-                    code_gen.append([p[0].type + "=", p[1].place, temp_node1, "*"])
+                    code_gen.append([p[0].type + "=", p[1].addr, temp_node1, "*"])
             else:
                 if len(p[1].array) == 0 and p[1].name != "Pointer":
                     code_gen.append(
@@ -1309,7 +1306,7 @@ def p_assignment_expression(p):
                     )
                 else:
                     code_gen.append(
-                        [temp_node.type + "=", p[1].place, temp_node.place, "*"]
+                        [temp_node.type + "=", p[1].addr, temp_node.place, "*"]
                     )
 
         else:
@@ -1321,7 +1318,7 @@ def p_assignment_expression(p):
                 if len(p[1].array) == 0 and p[1].name != "Pointer":
                     code_gen.append([p[0].type + "=", p[1].place, temp_node1, ""])
                 else:
-                    code_gen.append([p[0].type + "=", p[1].place, temp_node1, "*"])
+                    code_gen.append([p[0].type + "=", p[1].addr, temp_node1, "*"])
             else:
                 if len(p[1].array) == 0 and p[1].name != "Pointer":
                     code_gen.append(
@@ -1329,7 +1326,7 @@ def p_assignment_expression(p):
                     )
                 else:
                     code_gen.append(
-                        [temp_node.type + "=", p[1].place, temp_node.place, "*"]
+                        [temp_node.type + "=", p[1].addr, temp_node.place, "*"]
                     )
         # p[0].ast = build_AST(p, rule_name)
         p[0].ast = build_AST_2(p, [1, 3], p[2].val)
@@ -2146,7 +2143,6 @@ def p_parameter_declaration(p):
     """
     rule_name = "parameter_declaration"
     if p[1].type.upper() in PRIMITIVE_TYPES:
-        # print(p[1].type)
         p[1].type = TYPE_EASY[p[1].type.upper()].lower()
 
     if len(p) == 2:
@@ -2223,11 +2219,9 @@ def p_type_name(p):
     """
     rule_name = "type_name"
     if len(p) == 2:
-        # print(p[1])
         p[0] = p[1]
         p[0].name = "TypeName"
     else:
-        # print(p[1], p[2])
         p[0] = Node(name="TypeName", val="", type=p[1].type, lno=p[1].lno, children=[])
         if p[2].type.endswith("*"):
             p[0].type = p[0].type + "*" * (p[2].type.count("*"))
@@ -2386,7 +2380,6 @@ def p_labeled_statement(p):
                 )
             )
 
-        # print(p[3])
         name = "CaseStatement"
 
     elif p[2] == "default":
@@ -2552,7 +2545,6 @@ def p_statement_list(p):
         p[0].children.append(p[2])
         p[0].label = p[1].label + p[2].label
         p[0].expr = p[1].expr + p[2].expr
-        # print("3", p[1].expr)
 
 
 def p_expression_statement(p):
@@ -2627,7 +2619,6 @@ def p_selection_statement(p):
             children=[],
             lno=p.lineno(1),
         )
-        # print(p[6])
 
     p[0].ast = build_AST(p, rule_name)
 
@@ -2648,7 +2639,6 @@ def p_if_M2(p):
 
 def p_Switch_M2(p):
     """Switch_M2 :"""
-    # print(p[-2])
     label1 = ST.get_tmp_label()
     code_gen.append(["goto", "", "", label1])
     label2 = ST.get_tmp_label()
@@ -2658,8 +2648,6 @@ def p_Switch_M2(p):
 
 def p_Switch_M3(p):
     """Switch_M3 :"""
-    # print(p[-2])
-    # print(p[-4])
     code_gen.append(
         ["goto", "", "", p[-2][1]]
     )  ### after all cases break from switch case
@@ -2667,7 +2655,6 @@ def p_Switch_M3(p):
     code_gen.append(["label", p[-2][0], ":", ""])
     flag = False
     default_array = None
-    # print(p[-1].expr)
     if len(set(p[-1].expr)) < len(p[-1].expr):
         ST.error(
             Error(
@@ -2782,7 +2769,6 @@ def p_while_M2(p):
 
 def p_while_M3(p):
     """while_M3 :"""
-    # print(p[-8])
 
     code_gen.append(["goto", "", "", p[-6][0]])
     code_gen.append(["label", p[-6][1], ":", ""])
@@ -2798,14 +2784,11 @@ def p_do_M1(p):
     contStack.append(l2)
     brkStack.append(l3)
     code_gen.append(["label", l1, ":", ""])
-    # print(brkStack)
-    # print(contStack)
     p[0] = [l1, l2, l3]
 
 
 def p_do_M2(p):
     """do_M2 :"""
-    # print(p[-8])
 
     code_gen.append(["label", p[-3][1], ":", ""])
 
@@ -2815,8 +2798,6 @@ def p_do_M3(p):
     code_gen.append(["beq", p[-2].place, "0", p[-7][2]])
     code_gen.append(["goto", "", "", p[-7][0]])  ## non useful
     code_gen.append(["label", p[-7][2], ":", ""])  ## non useful
-    # print(1, brkStack)
-    # print(1, contStack)
     brkStack.pop()
     contStack.pop()
 
@@ -2835,13 +2816,11 @@ def p_FM1(p):
 
 def p_FM2(p):
     """FM2 :"""
-    # print(p[-1].place, p[-2])
     code_gen.append(["beq", p[-2].place, "0", p[-3][1]])
 
 
 def p_FM8(p):
     """FM8 :"""
-    # print(p[-5])
     code_gen.append(["goto", "", "", p[-4][0]])
     code_gen.append(["label", p[-4][1], ":", ""])
     contStack.pop()
@@ -2850,7 +2829,6 @@ def p_FM8(p):
 
 def p_FM4(p):
     """FM4 :"""
-    # print(p[-2])
     code_gen.append(["beq", p[-2].place, "0", p[-3][1]])
     code_gen.append(["goto", "", "", p[-3][2]])
     code_gen.append(["label", p[-3][3], ":", ""])
@@ -2858,7 +2836,6 @@ def p_FM4(p):
 
 def p_FM9(p):
     """FM9 :"""
-    # print(p[-2])
     # code_gen.append(["beq", p[-2].place, "0", p[-3][1]])
     code_gen.append(["goto", "", "", p[-2][2]])
     code_gen.append(["label", p[-2][3], ":", ""])
@@ -2866,7 +2843,6 @@ def p_FM9(p):
 
 def p_FM3(p):
     """FM3 :"""
-    # print(p[-5])
     code_gen.append(["goto", "", "", p[-6][0]])
     code_gen.append(["label", p[-6][1], ":", ""])
     contStack.pop()
@@ -2875,19 +2851,16 @@ def p_FM3(p):
 
 def p_FM5(p):
     """FM5 :"""
-    # print(p[-4])
     code_gen.append(["goto", "", "", p[-5][0]])
 
 
 def p_FM6(p):
     """FM6 :"""
-    # print(p[-6])
     code_gen.append(["label", p[-7][2], ":", ""])
 
 
 def p_FM7(p):
     """FM7 :"""
-    # print(p[-8])
     code_gen.append(["goto", "", "", p[-9][3]])
     code_gen.append(["label", p[-9][1], ":", ""])
     brkStack.pop()
@@ -2896,19 +2869,16 @@ def p_FM7(p):
 
 def p_FM10(p):
     """FM10 :"""
-    # print(p[-4])
     code_gen.append(["goto", "", "", p[-4][0]])
 
 
 def p_FM11(p):
     """FM11 :"""
-    # print(p[-6])
     code_gen.append(["label", p[-6][2], ":", ""])
 
 
 def p_FM12(p):
     """FM12 :"""
-    # print(p[-8])
     code_gen.append(["goto", "", "", p[-8][3]])
     code_gen.append(["label", p[-8][1], ":", ""])
     brkStack.pop()
@@ -3007,7 +2977,6 @@ def p_jump_statemen_2(p):
             )
         code_gen.append(["return0", "", "", ""])
     else:
-        # print("Yeh ffunction ke baare mei", p[2].type, " HUH ", ST.curFuncReturnType)
         if p[2].type != "" and ST.curFuncReturnType != p[2].type:
             ST.error(
                 Error(
@@ -3080,11 +3049,8 @@ def p_external_declaration(p):
 def p_function_definition_2(p):
     """function_definition : declaration_specifiers declarator funcmark1 function_compound_statement"""
     rule_name = "function_definition_2"
-    # print(p[1])
-    # print(p[3])
     if p[1].type.upper() in PRIMITIVE_TYPES:
         p[1].type = TYPE_EASY[p[1].type.upper()].lower()
-        # print(p[1].type)
 
     p[0] = Node(
         name="FuncDecl",
@@ -3113,7 +3079,6 @@ def p_funcmark1(p):
 def p_push_scope_lcb(p):
     """push_scope_lcb : LEFT_CURLY_BRACKET"""
     ST.push_scope()
-    # print("YEH hai scope", ST.currentScope)
     offsets[ST.currentScope] = 0
     p[0] = p[1]
 

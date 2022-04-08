@@ -13,7 +13,7 @@ int main()
     // {
     //     int x;
     // }
-    int x = 0;
+    char x = 0, arr[3];
     do
     {
         break;
