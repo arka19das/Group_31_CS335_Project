@@ -151,8 +151,9 @@ def p_hex_constant(p):
     )
     rule_name = "hex_constant"
     p[0].ast = build_AST(p, rule_name)
-    temp = re.findall("[0-9]+", p[1][2:])
-    p[0].val = temp[0]
+    temp = re.findall("[0-9a-fA-F]+", p[1][2:])
+    p[0].val = int(temp[0],16)
+    p[0].place = int(temp[0],16)
     if "l" in p[1] or "L" in p[1]:
         p[0].type = "long"
 
@@ -171,8 +172,9 @@ def p_oct_constant(p):
         place=p[1],
         code="",
     )
-    temp = re.findall("[0-9]+", p[1][1:])
-    p[0].val = temp[0]
+    temp = re.findall("[0-7]+", p[1][1:])
+    p[0].val = int(temp[0],8)
+    p[0].place = int(temp[0],8)
     if "l" in p[1] or "L" in p[1]:
         p[0].type = "long"
 
