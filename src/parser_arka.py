@@ -317,7 +317,7 @@ def p_postfix_expression_3(p):
             lhs=1
         )
         p[0].ast = build_AST_2(p, [1], p[2])
-        check_identifier(p[1])
+        check_identifier(p[1],p.lineno(1))
         if p[1].type.endswith("*"):
             code_gen.append(["8=", p[1].place, tmp_var])
         else:
@@ -712,7 +712,7 @@ def p_unary_expression(p):
                 level=p[2].level,
                 lhs=1
             )
-            check_identifier(p[2])
+            check_identifier(p[2],p.lineno(2))
 
             # DONE: FLOAT not supported yet and neither are pointers dhang se
             if p[1] == "++":
@@ -845,10 +845,30 @@ def p_unary_expression(p):
                 type=p[2].type,
                 children=[p[2]],
                 place=tmp_var,
-                lhs=1
+                lhs=1,
             )
             code_gen.append([p[2].type + "_uminus", tmp_var, "0", p[2].place])
         else:
+            ##TO-DO: Further checking to be done
+            ## To-Arka - Code-gen part ?
+            if p[1].val == '~' and p[2].type.upper() not in TYPE_CHAR+TYPE_INTEGER:
+                ST.error(
+                    Error(
+                        p[1].lno,
+                        rule_name,
+                        "compilation error",
+                        f"{p[1].val} is not allowed for  {p[2].type}",
+                    )
+                )
+            elif p[1].val not in ['!','+'] and p[2].type.upper() not in PRIMITIVE_TYPES:
+                ST.error(
+                    Error(
+                        p[1].lno,
+                        rule_name,
+                        "compilation error",
+                        f"{p[1].val} is not allowed for  {p[2].type}",
+                    )
+                )    
             p[0] = Node(
                 name="UnaryOperation",
                 val=p[2].val,
@@ -1231,8 +1251,6 @@ def p_assignment_expression(p):
 
         # p[0].ast = build_AST(p, rule_name)
     else:
-        ###TO-DO Lvalue check to be done
-        
         if p[1].lhs ==1:
             ST.error(Error(p[1].lno, rule_name, "syntax error", "Left side of assignment cannot be expression"))            
         if p[1].type == "" or p[3].type == "":

@@ -338,12 +338,12 @@ class SymbolTable:
 ST = SymbolTable()
 
 
-def check_identifier(p):
+def check_identifier(p, line):
     p_node = ST.find(p.val)
     if (p_node is not None) and ((p.is_func == 1) or ("struct" in p.type.split())):
         ST.error(
             Error(
-                p[1].lno,
+                line,
                 "Check Identifier",
                 "compilation error",
                 f"Invalid operation on {p.val}",
