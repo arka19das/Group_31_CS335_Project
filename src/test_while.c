@@ -11,7 +11,13 @@ int main()
     int b, c;
     if (!s)
     {
-        1;
+        if (s > 0)
+        {
+            if (s < 0)
+            {
+                b = 1;
+            }
+        }
     }
     // c = b;
     // b = &s;

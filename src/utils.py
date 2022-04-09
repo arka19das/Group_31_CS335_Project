@@ -1,3 +1,4 @@
+import code
 import csv
 from dataclasses import dataclass, field, fields
 from pathlib import Path
@@ -190,7 +191,7 @@ class Node:
     label: List = field(default_factory=list)
     index: str = ""
     offset: int = -1  # TODO:default value for all nodes 0 or 1?
-    lhs:int = 0
+    lhs: int = 0
     addr: str = ""
     ast: Any = None
 
@@ -582,11 +583,29 @@ def ignore_char(ch):
     return ch in IGNORE_LIST
 
 
+def remove_redundant_label(code_gen):
+    map_label_parent = {}
+    for i in range(len(code_gen)):
+        if code_gen[i][0] == "label":
+            if i == 0 or code_gen[i - 1][0] != "label":
+                map_label_parent[code_gen[i][1]] = code_gen[i][1]
+            else:
+                map_label_parent[code_gen[i][1]] = map_label_parent[code_gen[i - 1][1]]
+    for i in range(len(code_gen)):
+        for j in range(len(code_gen[i])):
+            if code_gen[i][j].startswith("__label"):
+                code_gen[i][j] = map_label_parent[code_gen[i][j]]
+    return
+
+
 def write_code(code):
     file = open("3ac.txt", "w")
 
     # Saving the array in a text file
-    for each_line in code:
+    for i in range(len(code)):
+        if i > 0 and code[i - 1][0] == "label" and code[i][0] == "label":
+            continue
+        each_line = code[i]
         if each_line[0] != "label":
             file.write("\t")
             for words in each_line:

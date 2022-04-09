@@ -3413,5 +3413,7 @@ if __name__ == "__main__":
         #     file.write(str(content))
         #     file.write("\n")
         # file.close()
+        remove_redundant_label(code_gen)
         write_code(code_gen)
+
     dump_symbol_table_csv(args.v)
