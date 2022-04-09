@@ -214,11 +214,11 @@ def p_char_constant(p):
     """char_constant : CHAR_CONSTANT"""
     p[0] = Node(
         name="Constant",
-        val=p[1],
+        val=str(ord(p[1][1:-1])),
         lno=p.lineno(1),
-        type="char",
+        type="int",
         children=[],
-        place=p[1],
+        place=str(ord(p[1][1:-1])),
         code="",
         lhs=1,
     )
@@ -2870,6 +2870,7 @@ def p_Switch_M3(p):
     code_gen.append(["label", p[-2][0], ":", ""])
     flag = False
     default_array = None
+    # print(p[-1].expr)
     if len(set(p[-1].expr)) < len(p[-1].expr):
         ST.error(
             Error(

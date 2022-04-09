@@ -4,27 +4,26 @@ struct st
     int a;
     int x;
 };
-if (s == s1)
-    {
-        s = s1;
-        return;
-    }
+// if (s == s1)
+// {
+//     s = s1;
+//     return;
+// }
 int main()
 {
     char s, s1;
     s = s1;
     // c = b;
-    if (s == s1)
+    switch (s)
     {
+    case 'a':
         s = s1;
-        return;
-    }
-    else
-    {
+        break;
+    case 97:
         s = s1;
+        break;
     }
-    
-    
+
     // b = &s;
     // c = !a[4];
     // a[1][3] = &b;
