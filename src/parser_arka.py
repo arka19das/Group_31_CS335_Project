@@ -130,7 +130,7 @@ def p_float_constant(p):
         type="float",
         children=[],
         place=p[1],
-        lhs=1
+        lhs=1,
     )
     rule_name = "float_constant"
     p[0].ast = build_AST(p, rule_name)
@@ -149,8 +149,7 @@ def p_hex_constant(p):
         children=[],
         place=p[1],
         code="",
-        lhs=1
-
+        lhs=1,
     )
     rule_name = "hex_constant"
     p[0].ast = build_AST(p, rule_name)
@@ -174,7 +173,7 @@ def p_oct_constant(p):
         children=[],
         place=p[1],
         code="",
-        lhs=1
+        lhs=1,
     )
     temp = re.findall("[0-7]+", p[1][1:])
     p[0].val = int(temp[0], 8)
@@ -198,7 +197,7 @@ def p_int_constant(p):
         children=[],
         place=p[1],
         code="",
-        lhs=1 
+        lhs=1,
     )
     temp = re.findall("[0-9]+", p[1])
     p[0].val = temp[0]
@@ -221,7 +220,7 @@ def p_char_constant(p):
         children=[],
         place=p[1],
         code="",
-        lhs=1
+        lhs=1,
     )
     rule_name = "char_constant"
     p[0].ast = build_AST(p, rule_name)
@@ -238,7 +237,7 @@ def p_string_literal(p):
         children=[],
         place=p[1],
         code="",
-        lhs=1
+        lhs=1,
     )
     rule_name = "string_literal"
     p[0].ast = build_AST(p, rule_name)
@@ -314,10 +313,10 @@ def p_postfix_expression_3(p):
             children=[],
             place=tmp_var,
             level=p[1].level,
-            lhs=1
+            lhs=1,
         )
         p[0].ast = build_AST_2(p, [1], p[2])
-        check_identifier(p[1],p.lineno(1))
+        check_identifier(p[1], p.lineno(1))
         if p[1].type.endswith("*"):
             code_gen.append(["8=", p[1].place, tmp_var])
         else:
@@ -366,7 +365,7 @@ def p_postfix_expression_3(p):
                 children=[p[1]],
                 is_func=0,
                 place=p[1].place,
-                lhs=1
+                lhs=1,
             )
             p[0].ast = build_AST_2(p, [1], "()")
             # p[0].ast = build_AST(p, rule_name)
@@ -597,7 +596,7 @@ def p_postfix_expression_3(p):
                 children=[],
                 is_func=0,
                 place=p[1].place,
-                lhs=1
+                lhs=1,
             )
             p[0].ast = build_AST_2(p, [1, 3], "()")
             # p[0].ast = build_AST(p, rule_name)
@@ -710,9 +709,9 @@ def p_unary_expression(p):
                 children=[tempNode, p[2]],
                 place=p[2].place,
                 level=p[2].level,
-                lhs=1
+                lhs=1,
             )
-            check_identifier(p[2],p.lineno(2))
+            check_identifier(p[2], p.lineno(2))
 
             # DONE: FLOAT not supported yet and neither are pointers dhang se
             if p[1] == "++":
@@ -756,7 +755,7 @@ def p_unary_expression(p):
                 type="int",
                 children=[p[2]],
                 place=tmp_var,
-                lhs=1
+                lhs=1,
             )
 
             # p[0].ast = build_AST(p, rule_name)
@@ -780,7 +779,7 @@ def p_unary_expression(p):
                 type=p[2].type + " *",
                 level=p[1].level + 1,
                 children=[p[2]],
-                lhs=1
+                lhs=1,
             )
             temp_var = ST.get_tmp_var(p[2].type + " *")
             p[0].place = temp_var
@@ -837,7 +836,6 @@ def p_unary_expression(p):
                     )
                 )
             tmp_var = ST.get_tmp_var(p[2].type)
-            tmp_var
             p[0] = Node(
                 name="UnaryOperationMinus",
                 val=tmp_var,
@@ -845,13 +843,84 @@ def p_unary_expression(p):
                 type=p[2].type,
                 children=[p[2]],
                 place=tmp_var,
+                level=p[2].level,
                 lhs=1,
             )
             code_gen.append([p[2].type + "_uminus", tmp_var, "0", p[2].place])
+        elif p[1].val == "+":
+            if p[2].type.upper() not in PRIMITIVE_TYPES:
+                ST.error(
+                    Error(
+                        p[1].lno,
+                        rule_name,
+                        "compilation error",
+                        f"Unary minus is not allowed for  {p[2].type}",
+                    )
+                )
+            p[0] = p[2]
         else:
             ##TO-DO: Further checking to be done
             ## To-Arka - Code-gen part ?
-            if p[1].val == '~' and p[2].type.upper() not in TYPE_CHAR+TYPE_INTEGER:
+            if p[1].val == "~":
+                if p[2].type.upper() not in TYPE_CHAR + TYPE_INTEGER:
+                    ST.error(
+                        Error(
+                            p[1].lno,
+                            rule_name,
+                            "compilation error",
+                            f"{p[1].val} is not allowed for  {p[2].type}",
+                        )
+                    )
+                else:
+                    tmp_var = ST.get_tmp_var(p[2].type)
+                    p[0] = Node(
+                        name="UnaryOperationBitwiseNot",
+                        val=tmp_var,
+                        lno=p[2].lno,
+                        type=p[2].type,
+                        children=[p[2]],
+                        place=tmp_var,
+                        lhs=1,
+                        level=p[2].level,
+                    )
+                    code_gen.append([p[2].type + "~", tmp_var, p[2].place, ""])
+            elif p[1].val == "!":
+                # print(p[2].type, p[2].place)
+                if p[2].type.upper() not in TYPE_CHAR + TYPE_INTEGER:
+                    ST.error(
+                        Error(
+                            p[1].lno,
+                            rule_name,
+                            "compilation error",
+                            f"{p[1].val} is not allowed for  {p[2].type}",
+                        )
+                    )
+                else:
+                    tmp_var = ST.get_tmp_var(p[2].type)
+                    p[0] = Node(
+                        name="UnaryOperationLogicalNot",
+                        val=tmp_var,
+                        lno=p[2].lno,
+                        type="int",
+                        children=[p[2]],
+                        place=tmp_var,
+                        lhs=1,
+                        level=p[2].level,
+                    )
+                    label1 = ST.get_tmp_label()
+                    label2 = ST.get_tmp_label()
+                    # print(p[2].place, 1)
+                    code_gen.append(["beq", p[2].place, "0", label1])
+                    code_gen.append(["4=", tmp_var, "1", ""])
+                    code_gen.append(["goto", "", "", label2])
+                    code_gen.append(["label", label1, ":", ""])
+                    code_gen.append(["4=", tmp_var, "0", ""])
+                    code_gen.append(["label", label2, ":", ""])
+
+                    # code_gen.append([p[2].type + "!", tmp_var, p[2].place, ""])
+            elif (
+                p[1].val not in ["!", "+"] and p[2].type.upper() not in PRIMITIVE_TYPES
+            ):
                 ST.error(
                     Error(
                         p[1].lno,
@@ -860,22 +929,13 @@ def p_unary_expression(p):
                         f"{p[1].val} is not allowed for  {p[2].type}",
                     )
                 )
-            elif p[1].val not in ['!','+'] and p[2].type.upper() not in PRIMITIVE_TYPES:
-                ST.error(
-                    Error(
-                        p[1].lno,
-                        rule_name,
-                        "compilation error",
-                        f"{p[1].val} is not allowed for  {p[2].type}",
-                    )
-                )    
             p[0] = Node(
                 name="UnaryOperation",
                 val=p[2].val,
                 lno=p[2].lno,
                 type=p[2].type,
                 children=[],
-                lhs=1
+                lhs=1,
             )
         p[0].ast = build_AST(p, rule_name)
     else:
@@ -888,7 +948,7 @@ def p_unary_expression(p):
             type="int",
             children=[p[3]],
             place=tmp_var,
-            lhs=1
+            lhs=1,
         )
         # p[0].ast = build_AST(p, rule_name)
         type_size = get_data_type_size(p[3].type)
@@ -935,7 +995,40 @@ def p_cast_expression(p):
         # p[0].ast = build_AST(p, rule_name)
     else:
         # confusion about val
-        # TODO: ERROR HANDLING
+
+        if p[2].type == p[4].type:
+            p[0] = p[4]
+            return
+        if p[2].type.startswith("struct") and p[4].type.startswith("struct"):
+            ST.error(
+                Error(
+                    p.lineno(1),
+                    rule_name,
+                    "Syntax error",
+                    f"Cannot cast {p[2].type} to {p[4].type}",
+                )
+            )
+        elif p[2].type.startswith("struct") or p[4].type.startswith("struct"):
+            ST.error(
+                Error(
+                    p.lineno(1),
+                    rule_name,
+                    "Syntax error",
+                    f"Cannot cast {p[2].type} to {p[4].type}",
+                )
+            )
+        # print(p[2].type, p[4].type)
+        # TODO: EXPLICIT TYPE CONVERSION of pointers of different levels
+        # till now it has not been done
+        if p[2].type.count("*") != p[4].type.count("*"):
+            ST.error(
+                Error(
+                    p.lineno(1),
+                    rule_name,
+                    "Syntax error",
+                    f"Cannot cast {p[2].type} to {p[4].type} as pointer levels are different",
+                )
+            )
         tmp_var = ST.get_tmp_var(p[2].type)
         p[0] = Node(
             name="TypeCasting",
@@ -946,9 +1039,7 @@ def p_cast_expression(p):
             children=[],
             place=tmp_var,
         )
-        code_gen.append(
-            [f"convert ({p[2].type}, {p[4].type})", p[4].place, " ", tmp_var]
-        )
+        code_gen.append([f"{p[4].type}2{p[2].type}", tmp_var, p[4].place, " "])
         # p[0].ast = build_AST(p, rule_name)
         p[0].ast = build_AST_2(p, [2, 4], "()")
 
@@ -1251,8 +1342,15 @@ def p_assignment_expression(p):
 
         # p[0].ast = build_AST(p, rule_name)
     else:
-        if p[1].lhs ==1:
-            ST.error(Error(p[1].lno, rule_name, "syntax error", "Left side of assignment cannot be expression"))            
+        if p[1].lhs == 1:
+            ST.error(
+                Error(
+                    p[1].lno,
+                    rule_name,
+                    "syntax error",
+                    "Left side of assignment cannot be expression",
+                )
+            )
         if p[1].type == "" or p[3].type == "":
             p[0] = Node(
                 name="AssignmentOperation",
@@ -1482,7 +1580,7 @@ def p_expression(p):
     else:
         p[0] = p[1]
         p[0].children.append(p[3])
-        p[0].lhs=1
+        p[0].lhs = 1
         # p[0].ast = build_AST_2([p[1],[3]],',');
     # FIXME
     p[0].ast = build_AST(p, rule_name)
@@ -2342,7 +2440,7 @@ def p_type_name(p):
     else:
         p[0] = Node(name="TypeName", val="", type=p[1].type, lno=p[1].lno, children=[])
         if p[2].type.endswith("*"):
-            p[0].type = p[0].type + "*" * (p[2].type.count("*"))
+            p[0].type = p[0].type + " *" * (p[2].type.count("*"))
     p[0].ast = build_AST(p, rule_name)
 
 

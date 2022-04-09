@@ -7,9 +7,15 @@ struct st
 int main()
 {
     int s = 1;
-    long a[4][5][6];
-    long b;
+    float a[4];
+    int b, c;
+    if (!s)
+    {
+        1;
+    }
+    // c = b;
     // b = &s;
-    a[1][3] = &b;
+    // c = !a[4];
+    // a[1][3] = &b;
     return 0;
 }
