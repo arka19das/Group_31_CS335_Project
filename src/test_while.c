@@ -4,22 +4,27 @@ struct st
     int a;
     int x;
 };
+if (s == s1)
+    {
+        s = s1;
+        return;
+    }
 int main()
 {
-    int s = 1;
-    float a[4];
-    int b, c;
-    if (!s)
-    {
-        if (s > 0)
-        {
-            if (s < 0)
-            {
-                b = 1;
-            }
-        }
-    }
+    char s, s1;
+    s = s1;
     // c = b;
+    if (s == s1)
+    {
+        s = s1;
+        return;
+    }
+    else
+    {
+        s = s1;
+    }
+    
+    
     // b = &s;
     // c = !a[4];
     // a[1][3] = &b;

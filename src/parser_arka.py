@@ -478,7 +478,7 @@ def p_postfix_expression_3(p):
                     p[0].place = tmp2
                     code_gen.append(["addr", tmp, p[1].place, ""])
                     # if curr_list[3] > 0:
-                    code_gen.append(["long_+", tmp, curr_list[3], tmp])
+                    code_gen.append(["long+", tmp, curr_list[3], tmp])
                     if type1.upper() in PRIMITIVE_TYPES:
                         code_gen.append(
                             [f"{get_data_type_size(type1)}load", tmp2, tmp, ""]
@@ -553,7 +553,7 @@ def p_postfix_expression_3(p):
             if p[3].type.upper()[-3:] != "INT":
 
                 temp_var = ST.get_tmp_var("int")
-                code_gen.append([p[3].type + "2int", temp_var, p[3].place])
+                code_gen.append([p[3].type + "2" + "int", temp_var, p[3].place])
             d = len(p[1].array) - p[0].level
             v1 = ST.get_tmp_var("int")
             # print(p[1].array)
@@ -1920,9 +1920,9 @@ def p_type_specifier_1(p):
     | SIGNED
     | UNSIGNED
     | TYPE_NAME
-    | class_definition
     | BOOL
     """
+    # | class_definition
     # rule_name = "type_specifier_1"
     p[0] = Node(name="TypeSpecifier1", val="", type=p[1], lno=p.lineno(1), children=[])
     # p[0].ast = build_AST(p,rule_name)
@@ -2864,9 +2864,8 @@ def p_Switch_M2(p):
 
 def p_Switch_M3(p):
     """Switch_M3 :"""
-    code_gen.append(
-        ["goto", "", "", p[-2][1]]
-    )  ### after all cases break from switch case
+    code_gen.append(["goto", "", "", p[-2][1]])
+    ### after all cases break from switch case
 
     code_gen.append(["label", p[-2][0], ":", ""])
     flag = False
@@ -2885,12 +2884,12 @@ def p_Switch_M3(p):
     if p[-4].type[-4:] == "char":
 
         tmp_var = ST.get_tmp_var("int")
-        code_gen.append([p[-4].type + "2int", tmp_var, p[-4].place])
+        code_gen.append([p[-4].type + "2" + "int", tmp_var, p[-4].place])
     for i in range(0, len(p[-1].expr)):
         case = p[-1].expr[i]
         if case == "":
             flag = True
-            default_array = ["goto", "", "", p[-1].label[i]]
+            default_array = p[-1].label[i]
         else:
             if case[0] == "'":
                 case = str(ord(case[1:-1]))
@@ -2900,7 +2899,7 @@ def p_Switch_M3(p):
 
             code_gen.append(["beq", tmp_var, case, p[-1].label[i]])
     if flag:
-        code_gen.append(default_array)
+        code_gen.append(["goto", "", "", default_array])
     brkStack.pop()
     code_gen.append(["label", p[-2][1], ":", ""])
 
@@ -3316,59 +3315,59 @@ def p_pop_scope_rcb(p):
     p[0] = p[1]
 
 
-def p_inheritance_specifier(p):
-    """inheritance_specifier : access_specifier IDENTIFIER"""
-    p[0] = ["inheritance_specifier"] + p[1:]
+# def p_inheritance_specifier(p):
+#     """inheritance_specifier : access_specifier IDENTIFIER"""
+#     p[0] = ["inheritance_specifier"] + p[1:]
 
 
-def p_inheritance_specifier_list(p):
-    """inheritance_specifier_list : inheritance_specifier
-    | inheritance_specifier_list COMMA inheritance_specifier"""
-    p[0] = ["inheritance_specifier_list"] + p[1:]
+# def p_inheritance_specifier_list(p):
+#     """inheritance_specifier_list : inheritance_specifier
+#     | inheritance_specifier_list COMMA inheritance_specifier"""
+#     p[0] = ["inheritance_specifier_list"] + p[1:]
 
 
-def p_access_specifier(p):
-    """access_specifier : PRIVATE
-    | PUBLIC
-    | PROTECTED"""
-    p[0] = p[1:]
+# def p_access_specifier(p):
+#     """access_specifier : PRIVATE
+#     | PUBLIC
+#     | PROTECTED"""
+#     p[0] = p[1:]
 
 
-def p_class_definition_head(p):
-    """class_definition_head : CLASS IDENTIFIER  INHERITANCE_OP inheritance_specifier_list
-    | CLASS IDENTIFIER
-    | CLASS INHERITANCE_OP inheritance_specifier_list
-    | CLASS"""
-    p[0] = ["class_definition_head"] + p[1:]
+# def p_class_definition_head(p):
+#     """class_definition_head : CLASS IDENTIFIER  INHERITANCE_OP inheritance_specifier_list
+#     | CLASS IDENTIFIER
+#     | CLASS INHERITANCE_OP inheritance_specifier_list
+#     | CLASS"""
+#     p[0] = ["class_definition_head"] + p[1:]
 
 
-def p_class_definition(p):
-    """class_definition : class_definition_head LEFT_CURLY_BRACKET class_internal_definition_list RIGHT_CURLY_BRACKET
-    | class_definition_head"""
-    p[0] = ["class_definition"] + p[1:]
+# def p_class_definition(p):
+#     """class_definition : class_definition_head LEFT_CURLY_BRACKET class_internal_definition_list RIGHT_CURLY_BRACKET
+#     | class_definition_head"""
+#     p[0] = ["class_definition"] + p[1:]
 
 
-def p_class_internal_definition_list(p):
-    """class_internal_definition_list : class_internal_definition
-    | class_internal_definition_list class_internal_definition"""
-    p[0] = ["class_internal_definition_list"] + p[1:]
+# def p_class_internal_definition_list(p):
+#     """class_internal_definition_list : class_internal_definition
+#     | class_internal_definition_list class_internal_definition"""
+#     p[0] = ["class_internal_definition_list"] + p[1:]
 
 
-def p_class_internal_definition(p):
-    """class_internal_definition : access_specifier LEFT_CURLY_BRACKET class_member_list RIGHT_CURLY_BRACKET SEMICOLON"""
-    p[0] = ["class_internal_definition"] + p[1:]
+# def p_class_internal_definition(p):
+#     """class_internal_definition : access_specifier LEFT_CURLY_BRACKET class_member_list RIGHT_CURLY_BRACKET SEMICOLON"""
+#     p[0] = ["class_internal_definition"] + p[1:]
 
 
-def p_class_member_list(p):
-    """class_member_list : class_member
-    | class_member_list class_member"""
-    p[0] = ["class_member_list"] + p[1:]
+# def p_class_member_list(p):
+#     """class_member_list : class_member
+#     | class_member_list class_member"""
+#     p[0] = ["class_member_list"] + p[1:]
 
 
-def p_class_member(p):
-    """class_member : function_definition
-    | declaration"""
-    p[0] = ["class_member"] + p[1:]
+# def p_class_member(p):
+#     """class_member : function_definition
+#     | declaration"""
+#     p[0] = ["class_member"] + p[1:]
 
 
 # Error rule for syntax errors
