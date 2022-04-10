@@ -351,7 +351,7 @@ def p_postfix_expression_3(p):
                     ]
                 )
             else:
-                code_gen.append([p[1].type + "+", p[1].place, p[1].place, -1])
+                code_gen.append([p[1].type + "+", p[1].place, p[1].place, "-1"])
             # code_gen.append(f"{p[1].place} := {p[1].place} - 1")
         # code_gen.append()
         # p[0].ast = build_AST(p, rule_name)
@@ -739,7 +739,7 @@ def p_unary_expression(p):
                         ]
                     )
                 else:
-                    code_gen.append([p[2].type + "+", p[2].place, p[2].place, -1])
+                    code_gen.append([p[2].type + "+", p[2].place, p[2].place, "-1"])
                 # code_gen.append(f"{p[1].place} := {p[1].place} - 1")
             #
             # code_gen.append()
