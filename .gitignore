@@ -10,6 +10,8 @@ t.sh
 *.dot
 *.csv
 *.json
+*.png
+*.exe
 t1
 t2
 t3
