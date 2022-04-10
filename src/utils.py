@@ -610,7 +610,7 @@ def remove_redundant_label(code_gen):
     return
 
 
-def write_code(code,file):
+def write_code(code, file):
     # file = open("3ac.txt", "w")
 
     # Saving the array in a text file
@@ -664,4 +664,4 @@ pre_append_array = [node1, node2]
 
 def pre_append_to_table():
     for node in pre_append_array:
-        ST.scope_tables[0].insert(node)    
+        ST.scope_tables[0].insert(node)
