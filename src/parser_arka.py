@@ -22,6 +22,7 @@ tokens = lexer.tokens
 
 cur_num = 0
 
+# in_whose_scope = ""
 
 offsets[0] = 0
 
@@ -3282,6 +3283,8 @@ def p_function_definition_2(p):
 
 def p_funcmark1(p):
     """funcmark1 :"""
+    # ST.scope_tables[ST.currentScope].in_whose_scope = ST.currentScope
+    # print(p[-1])
     code_gen.append(["funcstart", p[-1].val, "", ""])
 
 
@@ -3310,7 +3313,7 @@ def p_push_scope_lb(p):
 
 def p_pop_scope_rcb(p):
     """pop_scope_rcb : RIGHT_CURLY_BRACKET"""
-
+    # ST.scope_tables[ST.currentScope].assign_in_whose_scope()
     ST.pop_scope()
 
     p[0] = p[1]

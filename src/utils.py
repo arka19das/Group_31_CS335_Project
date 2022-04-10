@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any, List, Union, Dict
 
 offsets = {}
+# offsets__with_table_name = {}
 code_gen = []
 contStack = []
 brkStack = []
@@ -194,6 +195,7 @@ class Node:
     lhs: int = 0
     addr: str = ""
     ast: Any = None
+    in_whose_scope: str = ""
 
     def to_dict(self, verbose: bool = False):
         s = {}
@@ -221,6 +223,8 @@ class ScopeTable:
     name: str = ""
     nodes: list = field(default_factory=list)
     subscope_counter: Dict[str, int] = field(default_factory=dict)
+    # in_whose_scope: int = 0
+    offset_from_original: int = 0
 
     def find(self, key):
         for node in self.nodes:
@@ -229,7 +233,12 @@ class ScopeTable:
         return None
 
     def insert(self, node):
+        node.in_whose_scope = self.name
         self.nodes.append(node)
+
+    # def assign_in_whose_scope(self):
+    # for node in self.nodes:
+    # node.in_whose_scope = self.in_whose_scope
 
 
 class SymbolTable:
@@ -269,7 +278,10 @@ class SymbolTable:
         value = self.parent_table.subscope_counter.get(self.subscope_name, 1)
         table_name = f"{self.parent_table.name}_{self.subscope_name}{value}"
         self.parent_table.subscope_counter[self.subscope_name] = value + 1
-        self.scope_tables.append(ScopeTable(name=table_name))
+        self.scope_tables.append(
+            ScopeTable(name=table_name)
+            # in_whose_scope=self.parent_table.in_whose_scope)
+        )
 
     def pop_scope(self):
         self.currentScope = self.parent[self.currentScope]
