@@ -29,16 +29,22 @@ activation_record = []
 def cal_offset(p):
     if (isinstance(p,Node) and p.place.startswith("__tmp")) or (isinstance(p,str)):
         return ""
-
-    
+    if p.in_whose_scope=="#global":
+        offset = p.offset    
+        if offset:
+            offset_string = f'_{offset}($static)'
+        else:
+            offset_string = '_0($static)'
+        return offset_string
+            
     count_ = p.in_whose_scope.count("_")
-    curr_Scope = ST.currentScope
     offset=0
-    for i in range(count_):
-        offset+=offsets[curr_Scope-i-1]
+    for c_ in range(count_+1): #CHECK ARKA BC
+        offset+=offsets[1+c_]
+    
     offset+=p.offset
     if offset:
-        offset_string = f'_-{offset}($fp)'
+        offset_string = f'_{offset}($fp)'
     else:
         offset_string = '_0($fp)'
         
