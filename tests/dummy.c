@@ -2,29 +2,30 @@ struct p{
     int a;
 };
 int main(){
-    //     int c;
-    int c;
-    int d;
-    c++;
-    d++;
-    // float a;
-    // char d;
-    // a = ~a;
-    // a = !a;
-    // a = +a;
-    // c=!c;
-    // c=~c;
-    // c=+c;
-    // d=!d;
-    // d=~d;
-    // d=+d;
-    // struct p q, w;
-    // int a;
-    // w = (struct p)q;
-    // int *ptr, c;
+    // int c;
     // struct p q;
-    // q++;
-    // *(ptr++)=1;
-    // *ptr = *sizeof(*ptr);
+    // int d;
+    
+    // c++;
+    // q.a++;
+    // d++;
+    int arr[2][2];
+    arr[1][1]=1;
+    // switch(arr[1][1])
+    // {
+    //     case 'a': for(int i=0;i<100;i++)
+    //     {
+    //         int j;
+    //         if(i==j)
+    //         {
+    //             arr[1][0]=1;
+    //         }
+    //         else 
+    //         {
+    //             break;
+    //         }
+    //     }
+    // default:break;
+    // }
     return 0;
 }
