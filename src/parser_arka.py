@@ -721,8 +721,11 @@ def p_postfix_expression_3(p):
                 # v1=ST.get_tmp_var('int')
                 v2 = ST.get_tmp_var(p[1].type)
                 # p[]
+                if p[1].place[0:10] == "__tmp_var_":
+                    code_gen.append(["addr", v2, p[1].addr, ""])
 
-                code_gen.append(["addr", v2, p[1].place, ""])
+                else:
+                    code_gen.append(["addr", v2, p[1].place, ""])
                 code_gen.append(["long+", v2, v1, v2])
                 activation_record.append(["addr", v2, p[1].place + offset_string, ""])
                 activation_record.append(["long+", v2, v1, v2])
@@ -2501,7 +2504,7 @@ def p_struct_or_union_specifier(p):
     """
     # p[0] = build_AST(p)
     # TODO : check the semicolon thing after pop_scope_rcb in gramamar
-    # TODO : Manage the size and offset of fields
+    # DONE : Manage the size and offset of fields
     rule_name = "struct_or_union_specifier"
     p[0] = Node(
         name="StructOrUnionSpecifier",
