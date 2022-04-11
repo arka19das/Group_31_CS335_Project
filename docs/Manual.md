@@ -1143,7 +1143,7 @@ stated otherwise.
 You write statements to cause actions and to control flow within your
 programs. You can also write statements that do not do anything at all,
 or do things that are uselessly trivial.
-
+**The declarations must be completed before beginning with the statements in any scope. In any other cases it will return an error**
 ------------------------------------------------------------------------
 
 []{#Labels}
