@@ -59,13 +59,32 @@
 //         // y = arr[1][2];
 //         // y = sizeof(int) + sizeof arr[1][2];
 //     }
+struct st
+{
+    int x;
+    // ;
+    int y;
+    char xy[2];
+};
 int main()
 {
-    int *arr[100][200][300][400];
+    // int *arr[100][200][300][400];
     // int **x = arr[100][200];
     // x++;
-    int x, **y = arr[1][2][3];
+    int x, **y; // arr[1][2][3];
     // y = arr[1][2][3];
+    struct st s1;
+    char xy[2];
+    x = xy[2];
+l:
+
+    for (int i = 0; i<x, i> 0; i++)
+    {
+        x++;
+    }
+    goto l;
+    s1.xy[2];
+
     return 0;
 }
 // kjdjbfjkdfbjkf

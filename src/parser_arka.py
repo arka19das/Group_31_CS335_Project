@@ -25,6 +25,7 @@ cur_num = 0
 # in_whose_scope = ""
 offsets[0] = 0
 activation_record = []
+valid_goto_labels = []
 
 
 def cal_offset(p):
@@ -357,7 +358,7 @@ def p_postfix_expression_3(p):
             code_gen.append(
                 [
                     str(get_data_type_size(p[1].type)) + "=",
-                    p[1].place + offset_string,
+                    p[1].place,
                     tmp_var,
                 ]
             )
@@ -376,8 +377,8 @@ def p_postfix_expression_3(p):
                 code_gen.append(
                     [
                         "long+",
-                        p[1].place + offset_string,
-                        p[1].place + offset_string,
+                        p[1].place,
+                        p[1].place,
                         get_data_type_size(p[1].type[:-2]),
                     ]
                 )
@@ -566,6 +567,9 @@ def p_postfix_expression_3(p):
 
                     # if curr_list[3] > 0:
                     code_gen.append(["long+", tmp, curr_list[3], tmp])
+                    activation_record.append(
+                        ["long+", tmp, curr_list[3], tmp]
+                    )  ## AKSHAY check
                     if type1.upper() in PRIMITIVE_TYPES:
                         code_gen.append(
                             [f"{get_data_type_size(type1)}load", tmp2, tmp, ""]
@@ -669,7 +673,15 @@ def p_postfix_expression_3(p):
             # if d != 0:
             # print(p[1].array)
             # code_gen.append(["long=", temp_var, p[3].place, ""])
-            if isinstance(p[1].array[-1], int):
+            if isinstance(p[0].array[0], str):
+                code_gen.append(["int+", v1, v1, temp_var])
+                activation_record.append(["int+", v1, v1, temp_var])
+
+                code_gen.append(["long*", v1, v1, str(get_data_type_size(p[0].type))])
+                activation_record.append(
+                    ["long*", v1, v1, str(get_data_type_size(p[0].type))]
+                )
+            elif isinstance(p[1].array[-1], int):
                 code_gen.append(["int+", v1, v1, temp_var])
                 activation_record.append(["int+", v1, v1, temp_var])
 
@@ -684,15 +696,6 @@ def p_postfix_expression_3(p):
                 code_gen.append(["int*", v1, v1, str(p[1].array[0])])
                 activation_record.append(["int*", v1, v1, str(p[1].array[0])])
                 p[0].index = v1
-            if isinstance(p[0].array[0], str):
-
-                code_gen.append(["int", v1, p[1].index, temp_var])
-                activation_record.append(["int+", v1, p[1].index, temp_var])
-
-                code_gen.append(["long*", v1, v1, str(get_data_type_size(p[0].type))])
-                activation_record.append(
-                    ["long*", v1, v1, str(get_data_type_size(p[0].type))]
-                )
 
             # if p[0].level == 0 and len(p[0].array) > 0:
             if isinstance(p[0].array[0], str):
@@ -3115,12 +3118,20 @@ def p_statement(p):
     p[0].ast = build_AST(p, rule_name)
 
 
+def p_label_marker(p):
+    """label_marker :"""
+    code_gen.append(["label", "__label_" + p[-1], ":", ""])
+    valid_goto_labels.append(p[-1])
+
+
 def p_labeled_statement(p):
-    """labeled_statement : IDENTIFIER COLON statement
+    """labeled_statement : IDENTIFIER label_marker COLON statement
     | Switch_M CASE constant_expression COLON statement
     | Switch_M DEFAULT COLON statement"""
     rule_name = "labeled_statement"
     name = ""
+    # if isinstance(p[2], str) and p[2] == "":
+    #     code_gen.append(["__label_" + p[1], ":", "", ""])
     if p[2] == "case":
         if p[3].type.upper() not in (TYPE_INTEGER + TYPE_CHAR) or (
             not p[3].name.startswith("Constant")
@@ -3772,6 +3783,17 @@ def p_jump_statemen_1(p):
     elif temp == "break":
         code_gen.append(["goto", "", "", brkStack[-1]])
         activation_record.append(["goto", "", "", brkStack[-1]])
+    elif temp == "goto":
+        if p[2][0] not in valid_goto_labels:
+            ST.error(
+                Error(
+                    p.lineno(1),
+                    rule_name,
+                    "compilation error",
+                    "Not a valid goto label",
+                )
+            )
+        code_gen.append(["goto", "", "", "__label_" + p[2][0]])
 
 
 def p_jump_statemen_2(p):
