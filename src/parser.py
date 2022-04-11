@@ -871,7 +871,6 @@ def p_unary_expression(p):
 
         elif len(p[1].array) > 0 and isinstance(p[1].array[0], int):
             p[0] = p[1]
-            print(p[1])
             p[0].array = []
             # print(p[0].index, "1")
             v2 = ST.get_tmp_var(p[1].type)
@@ -882,7 +881,6 @@ def p_unary_expression(p):
             offset_string = cal_offset(p[1].place)
             activation_record.append(["addr", v2, p[1].place + offset_string, ""])
             activation_record.append(["long+", v2, code_gen[-2][1], v2])
-            print(p[0].type)
             p[0].val = p[0].place = v2
         else:
             p[0] = p[1]
@@ -914,8 +912,6 @@ def p_unary_expression(p):
                 offset=p[2].offset,
             )
             check_identifier(p[2], p.lineno(2))
-
-            print(offset_string)
 
             # DONE: FLOAT not supported yet and neither are pointers dhang se
             if p[1] == "++":
@@ -2066,7 +2062,6 @@ def p_assignment_operator(p):
     | XOR_ASSIGN
     | OR_ASSIGN
     """
-    print(p[1])
     rule_name = "assignment_operator"
     p[0] = Node(
         name="AssignmentOperator",
