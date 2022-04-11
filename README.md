@@ -50,8 +50,4 @@ Parser += Semantics + AST
 
 # Current Issues
 
-1. Class
-2. Typedef
-3. Update spec: Empty functions not allowed
-4. Declaration only at beginning of scope
-5. Array Expressions are not handled currently
+1. Declaration only at beginning of scope

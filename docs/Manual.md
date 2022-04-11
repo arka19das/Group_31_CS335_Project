@@ -1233,10 +1233,11 @@ switch (test)
 The `switch` statement compares `test`{.variable} to each of the
 `compare`{.variable} expressions, until it finds one that is equal to
 `test`{.variable}. Then, the statements following the successful case
-are executed. All of the expressions compared must be of an integer
-type, and the `compare-N`{.variable} expressions must be of a constant
-integer type (e.g., a literal integer or an expression built of literal
-integers).
+are executed. All of the expressions compared must be of either character or integer
+type, and the `compare-N`{.variable} expressions must similarly be of a constant
+character or integer type (e.g., a literal character/integer or an expression built of literal
+characters/integers). 
+You cannot use both integer and character labels simultaneously
 
 Optionally, you can specify a default case. If `test`{.variable} doesn't
 match any of the specific cases listed prior to the default case, then
@@ -1524,7 +1525,9 @@ The parameter names can be any identifier, and if you have more than one paramet
 directive to include that function declaration in any source code files
 that use the function.
 
-`The function body` is a series of statements enclosed in braces.
+`The function body` is a series of statements (*at least one*) enclosed in braces.
+
+Functions with empty bodies are not allowed.
 
 -------------------------- ---- ---------------------------- ---- --
 
@@ -1674,6 +1677,15 @@ We implement various library functions to provide additional mathematical functi
 
 ### 7.6 Multidimensional Arrays{#multidimensionalarrays .section}
 We plan to implement multidimensional arrays, in simple words as an array of arrays. Data in multidimensional arrays are stored in tabular form.
+
+Currently, we only allow pointers of level 1 to refer to rows of the multidimensional arrays. 
+Pointers of higher levels cannot be initialized to rows of multidimensional arrays 
+
+```c 
+int arr[2][3][4];
+int* ptr = arr[1][2]; // Works !
+int** ptr2 = arr[1]; // Fails
+```
 
 **We have started to implement this, work in progress**.
 
