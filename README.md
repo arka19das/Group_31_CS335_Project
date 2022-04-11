@@ -47,7 +47,16 @@ Parser += Semantics + AST
 # to test nth semantic testcase
 ./testing_script.sh semantic <n>
 ```
+### Intermediate code_gen and activation record
 
-# Current Issues
+```
+python ./src/parser.py <testing_file_path> #command for testing
+```
+ The output ```3ac.txt``` shall have the 3ac.txt of the input file and ```activation_record.txt``` shall have the 3ac along with the offset with respect to the frame pointer or stack pointer when the final code would be generated. The __label_<number> denotes the labels, and __tmp_var_<number> are registers used by us to do various computations hence they will not have any offsets. 
+
+### tag folder consists of the tests for this tag
+
+
+# Rules for our grammar 
 
 1. Declaration only at beginning of scope
