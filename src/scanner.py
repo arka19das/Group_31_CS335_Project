@@ -135,7 +135,7 @@ class Lexer(object):
         t.lexer.lineno += t.value.count("\n")
 
     def t_comment(self, t):
-        r"/\*(.|\n)*?\*/ | //(.)*?\n"
+        r"/\*(.|\n)*?\*/ | //(.)*?(\n|\Z)"
         t.lexer.lineno += t.value.count("\n")
 
     def t_preprocessor(self, t):

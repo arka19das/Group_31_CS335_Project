@@ -144,7 +144,9 @@ def p_primary_expression(p):
     if len(p) == 2:
         p[0] = p[1]
     else:
+        # print(p[2])
         p[0] = p[2]
+        # p[0].lhs = 1
 
 
 def p_float_constant(p):
@@ -322,7 +324,7 @@ def p_postfix_expression_3(p):
         # p[0].ast = build_AST(p, rule_name)
 
     elif len(p) == 3:
-        if len(p[1].array) > 0 and p[1].level > 0:
+        if len(p[1].array) > 0 and isinstance(p[1].array[0], int):
             ST.error(
                 Error(
                     p[1].lno,
@@ -568,8 +570,19 @@ def p_postfix_expression_3(p):
                         code_gen.append(
                             [f"{get_data_type_size(type1)}load", tmp2, tmp, ""]
                         )
+                        activation_record.append(
+                            [f"{get_data_type_size(type1)}load", tmp2, tmp, ""]
+                        )
                     else:
                         code_gen.append(
+                            [
+                                f"{get_data_type_size(type1)}non_primitive_load",
+                                tmp2,
+                                tmp,
+                                "",
+                            ]
+                        )
+                        activation_record.append(
                             [
                                 f"{get_data_type_size(type1)}non_primitive_load",
                                 tmp2,
@@ -590,6 +603,7 @@ def p_postfix_expression_3(p):
                 )
 
     elif len(p) == 5:
+        ##multidimensional array mei multiply galat cheez se karrahe
         if p[2] == "[":
             p[0] = Node(
                 name="ArrayExpression",
@@ -648,46 +662,51 @@ def p_postfix_expression_3(p):
             d = len(p[1].array) - p[0].level - 1
             v1 = ST.get_tmp_var("int")
             # print(p[1].array)
-            print(d, "bandar")
-            if d == 0:
+            if isinstance(p[1].array[-1], int):
                 code_gen.append(["int^", v1, v1, v1])
                 activation_record.append(["int^", v1, v1, v1])
 
             # if d != 0:
-            if True:
-                # code_gen.append(["long=", temp_var, p[3].place, ""])
+            # print(p[1].array)
+            # code_gen.append(["long=", temp_var, p[3].place, ""])
+            if isinstance(p[1].array[-1], int):
                 code_gen.append(["int+", v1, v1, temp_var])
-                if p[0].level != 0:
-                    code_gen.append(["int*", v1, p[1].index, str(p[1].array[0])])
-                    activation_record.append(
-                        ["int*", v1, p[1].index, str(p[1].array[0])]
-                    )
-                else:
-                    # code_gen.append(["OKay"])
-                    code_gen.append(
-                        ["int*", v1, v1, str(get_data_type_size(p[0].type))]
-                    )
-                    activation_record.append(
-                        ["int*", v1, v1, str(get_data_type_size(p[0].type))]
-                    )
+                activation_record.append(["int+", v1, v1, temp_var])
+
+                code_gen.append(["int*", v1, v1, str(p[1].array[0])])
+                activation_record.append(["int*", v1, v1, str(p[1].array[0])])
+                p[0].index = v1
+
+            else:
+                code_gen.append(["int+", v1, p[1].index, temp_var])
+                activation_record.append(["int+", v1, p[1].index, temp_var])
+
+                code_gen.append(["int*", v1, v1, str(p[1].array[0])])
+                activation_record.append(["int*", v1, v1, str(p[1].array[0])])
+                p[0].index = v1
+            if isinstance(p[0].array[0], str):
+
+                code_gen.append(["int", v1, p[1].index, temp_var])
+                activation_record.append(["int+", v1, p[1].index, temp_var])
+
+                code_gen.append(["long*", v1, v1, str(get_data_type_size(p[0].type))])
+                activation_record.append(
+                    ["long*", v1, v1, str(get_data_type_size(p[0].type))]
+                )
 
             # if p[0].level == 0 and len(p[0].array) > 0:
-            if p[0].level == 0:
+            if isinstance(p[0].array[0], str):
                 # v1=ST.get_tmp_var('int')
-                v2 = ST.get_tmp_var("long")
+                v2 = ST.get_tmp_var(p[1].type)
                 # p[]
                 code_gen.append(["addr", v2, p[1].place, ""])
                 code_gen.append(["long+", v2, v1, v2])
-                type1 = p[0].type.strip(" *")  # TODO: BUGGED
+                activation_record.append(["addr", v2, p[1].place + offset_string, ""])
+                activation_record.append(["long+", v2, v1, v2])
+                type1 = p[0].type  # TODO: BUGGED
                 v3 = ST.get_tmp_var(type1)
                 p[0].place = v3
                 p[0].addr = v2
-
-                activation_record.append(
-                    ["int*", v1, v1, str(get_data_type_size(p[0].type))]
-                )
-                activation_record.append(["addr", v2, p[1].place + offset_string, ""])
-                activation_record.append(["long+", v2, v1, v2])
 
                 # agar isko stack pe liya to p[0].place ko v3 me store krne se gayab hojayega
                 if type1.upper() in PRIMITIVE_TYPES:
@@ -705,11 +724,11 @@ def p_postfix_expression_3(p):
                     )
                 ## load instruction may be redundant or not required sometimes
 
-            elif len(p[0].array) > 0:
-                if d == 0:
-                    p[0].index = temp_var
-                else:
-                    p[0].index = v1
+            # elif len(p[0].array) > 0:
+            #     if d == 0:
+            #         p[0].index = temp_var
+            #     else:
+            #         p[0].index = v1
         else:
             p[0] = Node(
                 name="FunctionCall2",
@@ -810,12 +829,42 @@ def p_unary_expression(p):
     """
     rule_name = "unary_expression"
     if len(p) == 2:
-        p[0] = p[1]
-        # p[0].ast = build_AST(p, rule_name)
+
+        if len(p[1].array) > 1 and isinstance(p[1].array[1], int):
+
+            ST.error(
+                Error(
+                    p[1].lno,
+                    rule_name,
+                    "compilation error",
+                    f"Cannot assign or operate with an array indexed with level greater than 1",
+                )
+            )
+            p[0] = p[1]
+
+        elif len(p[1].array) > 0 and isinstance(p[1].array[0], int):
+            p[0] = p[1]
+            print(p[1])
+            p[0].array = []
+            # print(p[0].index, "1")
+            v2 = ST.get_tmp_var(p[1].type)
+            # p[]
+            # code_gen.append(["OKAY"])
+            code_gen.append(["addr", v2, p[1].place, ""])
+            code_gen.append(["long+", v2, code_gen[-2][1], v2])
+            offset_string = cal_offset(p[1].place)
+            activation_record.append(["addr", v2, p[1].place + offset_string, ""])
+            activation_record.append(["long+", v2, code_gen[-2][1], v2])
+            print(p[0].type)
+            p[0].val = p[0].place = v2
+        else:
+            p[0] = p[1]
+        p[0].ast = build_AST(p, rule_name)
+
     elif len(p) == 3:
         offset_string = cal_offset(p[2])
         if p[1] == "++" or p[1] == "--":
-            if len(p[2].array) > 0 and p[2].level > 0:
+            if len(p[2].array) > 0 and isinstance(p[2].array[0], int):
                 ST.error(
                     Error(
                         p[1].lno,
@@ -975,7 +1024,6 @@ def p_unary_expression(p):
             temp_var = ST.get_tmp_var(p[2].type[:-2])
             p[0].place = temp_var
             p[0].addr = p[2].place
-            ## yahan aajao
             type1 = p[2].type[:-2]
             if type1.upper() in PRIMITIVE_TYPES:
                 code_gen.append(
@@ -990,22 +1038,41 @@ def p_unary_expression(p):
                     ]
                 )
             else:
-                code_gen.append(
-                    [
-                        f"{get_data_type_size(type1)}non_primitive_load",
-                        temp_var,
-                        p[2].place,
-                        "",
-                    ]
-                )
-                activation_record.append(
-                    [
-                        f"{get_data_type_size(type1)}non_primitive_load",
-                        temp_var,
-                        p[2].place + offset_string,
-                        "",
-                    ]
-                )
+                # print(p[2].level)
+                if p[2].level > 1:
+                    code_gen.append(
+                        [
+                            "long^",
+                            temp_var,
+                            p[2].place,
+                            "0",
+                        ]
+                    )
+                    activation_record.append(
+                        [
+                            "long^",
+                            temp_var,
+                            p[2].place,
+                            "0",
+                        ]
+                    )
+                else:
+                    code_gen.append(
+                        [
+                            f"{get_data_type_size(type1)}non_primitive_load",
+                            temp_var,
+                            p[2].place,
+                            "",
+                        ]
+                    )
+                    activation_record.append(
+                        [
+                            f"{get_data_type_size(type1)}non_primitive_load",
+                            temp_var,
+                            p[2].place + offset_string,
+                            "",
+                        ]
+                    )
             ## load instruction may be redundant or not required sometimes
 
             p[0].addr = p[2].place
@@ -1665,6 +1732,8 @@ def p_assignment_expression(p):
     rule_name = "assignment_expression"
 
     if len(p) == 2:
+        # print(p[1])
+
         p[0] = p[1]
 
         # p[0].ast = build_AST(p, rule_name)
@@ -1715,7 +1784,7 @@ def p_assignment_expression(p):
                         f"Struct {p[3].type}, {p[1].type} are of different types",
                     )
                 )
-        elif p[1].level and len(p[1].array) > 0:
+        elif len(p[1].array) > 0 and isinstance(p[1].array[0], int):
             ST.error(
                 Error(
                     p[1].lno,
@@ -1814,6 +1883,7 @@ def p_assignment_expression(p):
             level=p[1].level,
         )
         temp_node = p[3]
+        # print(temp_node)
 
         if p[2].val != "=":
             _op = p[2].val[:-1]
@@ -1969,6 +2039,7 @@ def p_assignment_operator(p):
     | XOR_ASSIGN
     | OR_ASSIGN
     """
+    print(p[1])
     rule_name = "assignment_operator"
     p[0] = Node(
         name="AssignmentOperator",
@@ -2017,7 +2088,6 @@ def p_declaration(p):
         p[0] = p[1]
         p[0].ast = build_AST(p, rule_name)
     else:
-
         p[0] = Node(
             name="Declaration",
             val=p[1],
@@ -2051,15 +2121,14 @@ def p_declaration(p):
                             f"Identifier {child.children[0].val} already declared",
                         )
                     )
-
                 node = Node(
                     name=child.children[0].val,
-                    type=p[1].type,
+                    type=child.type,
                     val=child.children[1].val,
                     size=get_data_type_size(p[1].type),
                     offset=offsets[ST.currentScope],
                 )
-                print(offsets[ST.currentScope])
+                # print(offsets[ST.currentScope])
                 ST.current_table.insert(node)
                 totalEle = 1
                 if len(child.children[0].array) > 0:
@@ -2084,20 +2153,20 @@ def p_declaration(p):
                 offsets[ST.currentScope] += node.size
                 offsets[ST.currentScope] += (8 - offsets[ST.currentScope] % 8) % 8
 
-                if p[1].type != child.children[1].type:
+                if child.type != child.children[1].type:
 
-                    temp_node1 = ST.get_tmp_var(p[1].type)
+                    temp_node1 = ST.get_tmp_var(child.type)
                     offset_string = cal_offset(child.children[1].place)
                     code_gen.append(
                         [
-                            child.children[1].type + "2" + p[1].type,
+                            child.children[1].type + "2" + child.type,
                             temp_node1,
                             child.children[1].place,
                         ]
                     )
                     activation_record.append(
                         [
-                            child.children[1].type + "2" + p[1].type,
+                            child.children[1].type + "2" + child.type,
                             temp_node1,
                             child.children[1].place + offset_string,
                         ]
@@ -2105,11 +2174,11 @@ def p_declaration(p):
                     offset_string = cal_offset(child.children[0].place)
                     if len(p[1].array) == 0 and p[1].name != "Pointer":
                         code_gen.append(
-                            [p[1].type + "=", child.children[0].place, temp_node1, ""]
+                            [child.type + "=", child.children[0].place, temp_node1, ""]
                         )
                         activation_record.append(
                             [
-                                p[1].type + "=",
+                                child.type + "=",
                                 child.children[0].place + offset_string,
                                 temp_node1,
                                 "",
@@ -2117,23 +2186,26 @@ def p_declaration(p):
                         )
                     else:
                         code_gen.append(
-                            [p[1].type + "=", child.children[0].place, temp_node1, "*"]
+                            # [p[1].type + "=", child.children[0].place, temp_node1, "*"]
+                            [child.type + "=", child.children[0].addr, temp_node1, "*"]
                         )
                         activation_record.append(
                             [
-                                p[1].type + "=",
-                                child.children[0].place + offset_string,
+                                child.type + "=",
+                                # child.children[0].place + offset_string,
+                                child.children[0].addr + offset_string,
                                 temp_node1,
                                 "*",
                             ]
                         )
                 else:
+
                     offset_string0 = cal_offset(child.children[0].place)
                     offset_string1 = cal_offset(child.children[1].place)
                     if len(p[1].array) == 0 and p[1].name != "Pointer":
                         code_gen.append(
                             [
-                                p[1].type + "=",
+                                child.type + "=",
                                 child.children[0].place,
                                 child.children[1].place,
                                 "",
@@ -2141,7 +2213,7 @@ def p_declaration(p):
                         )
                         activation_record.append(
                             [
-                                p[1].type + "=",
+                                child.type + "=",
                                 child.children[0].place + offset_string0,
                                 child.children[1].place + offset_string1,
                                 "",
@@ -2150,7 +2222,7 @@ def p_declaration(p):
                     else:
                         code_gen.append(
                             [
-                                p[1].type + "=",
+                                child.type + "=",
                                 child.children[0].place,
                                 child.children[1].place,
                                 "*",
@@ -2158,7 +2230,7 @@ def p_declaration(p):
                         )
                         activation_record.append(
                             [
-                                p[1].type + "=",
+                                child.type + "=",
                                 child.children[0].place + offset_string0,
                                 child.children[1].place + offset_string1,
                                 "*",
@@ -2166,6 +2238,7 @@ def p_declaration(p):
                         )
                 # above line maybe necessary to be commented
             else:
+
                 if (
                     ST.current_table.find(child.val)
                     and ST.current_table.find(child.val).is_func > 0
@@ -2183,7 +2256,7 @@ def p_declaration(p):
 
                 node = Node(
                     name=child.val,
-                    type=p[1].type,
+                    type=child.type,
                     size=get_data_type_size(p[1].type),
                     offset=offsets[ST.currentScope],
                 )
@@ -2195,8 +2268,8 @@ def p_declaration(p):
                         if i == 0:
                             continue
                         totalEle = totalEle * i
-                if len(child.type) > 0:
-                    node.type = p[1].type + " " + child.type
+                if child.type[-1] == "*":
+                    # node.type = p[1].type + " " + child.type
                     node.size = 8
                 elif flag == 0:
                     ST.error(
@@ -2294,25 +2367,33 @@ def p_declaration_specifiers(p):
 
 
 def p_init_declarator_list(p):
-    """init_declarator_list : init_declarator
+    """init_declarator_list : red init_declarator
     | init_declarator_list COMMA init_declarator
     """
     rule_name = "init_declarator_list"
-    if len(p) == 2:
+    if len(p) == 3:
         p[0] = Node(
             name="InitDeclaratorList",
             val="",
-            type="",
+            type=p[-1].type,
             lno=p.lineno(1),
-            children=[p[1]],
+            children=[p[2]],
         )
+        # print(p[1].val, "no clue")
+        array = copy.deepcopy(p[2].array)
+
         # p[0].ast = p[1].ast
-        p[0].ast = build_AST(p, rule_name)
+        p[0].ast = build_AST_2(p, [2], rule_name)
     else:
         p[0] = p[1]
         p[0].children.append(p[3])
         p[0].ast = build_AST(p, rule_name)
         # p[0].ast = build_AST_2(p,[1,3],',')
+
+
+def p_red(p):
+    """red :"""
+    p[0] = "red_mark"
 
 
 def p_init_declarator(p):
@@ -2322,13 +2403,14 @@ def p_init_declarator(p):
     rule_name = "init_declarator"
     if len(p) == 2:
         p[0] = p[1]
+        p[0].type = p[-2].type + p[1].type
         # p[0].ast = p[1].ast
         p[0].ast = build_AST(p, rule_name)
     else:
         p[0] = Node(
             name="InitDeclarator",
             val="",
-            type=p[1].type,
+            type=p[-2].type + p[1].type,
             lno=p.lineno(1),
             children=[p[1], p[3]],
             array=p[1].array,
@@ -2613,6 +2695,7 @@ def p_declarator_1(p):
     rule_name = "declarator_1"
     if len(p) == 2:
         p[0] = p[1]
+
         p[0].name = "Declarator"
         p[0].ast = build_AST(p, rule_name)
 
@@ -2966,24 +3049,25 @@ def p_direct_abstract_declarator_2(p):
 
 
 def p_initializer(p):
-    """initializer : assignment_expression
-    | LEFT_CURLY_BRACKET initializer_list RIGHT_CURLY_BRACKET
-    | LEFT_CURLY_BRACKET initializer_list COMMA RIGHT_CURLY_BRACKET
-    """
+    """initializer : assignment_expression"""
+    # | LEFT_CURLY_BRACKET initializer_list RIGHT_CURLY_BRACKET
+    # | LEFT_CURLY_BRACKET initializer_list COMMA RIGHT_CURLY_BRACKET
+
     rule_name = "initializer"
-    if len(p) == 2:
-        p[0] = p[1]
-        p[0].ast = build_AST(p, rule_name)
-    else:
-        p[0] = p[2]
-        p[0].is_array = True
+    # if len(p) == 2:
+    p[0] = p[1]
+    # print(p[0].type)
+    p[0].ast = build_AST(p, rule_name)
+    # else:
+    #     p[0] = p[2]
+    #     p[0].is_array = True
 
     p[0].name = "Initializer"
-    if len(p) == 4:
-        p[0].max_depth = p[2].max_depth + 1
-        p[0].ast = build_AST(p, rule_name)
-    elif len(p) == 5:
-        p[0].ast = build_AST(p, rule_name)
+    # if len(p) == 4:
+    #     p[0].max_depth = p[2].max_depth + 1
+    #     p[0].ast = build_AST(p, rule_name)
+    # elif len(p) == 5:
+    #     p[0].ast = build_AST(p, rule_name)
 
 
 def p_initializer_list(p):
