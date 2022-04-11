@@ -183,11 +183,11 @@ class Node:
     level: int = 0
     place: str = ""
     code: str = ""
-    truelist: List = field(default_factory=list)
-    falselist: List = field(default_factory=list)
+    # truelist: List = field(default_factory=list)
+    # falselist: List = field(default_factory=list)
     continuelist: List = field(default_factory=list)
     breaklist: List = field(default_factory=list)
-    nextlist: List = field(default_factory=list)
+    # nextlist: List = field(default_factory=list)
     expr: List = field(default_factory=list)
     label: List = field(default_factory=list)
     index: str = ""
@@ -376,6 +376,7 @@ def type_util(op1: Node, op2: Node, op: str):
         type="int",
         children=[],
         place=tmp_var,
+        lhs=1,
     )
 
     if op1.type == "" or op2.type == "":
@@ -615,8 +616,8 @@ def write_code(code, file):
 
     # Saving the array in a text file
     for i in range(len(code)):
-        if i > 0 and code[i - 1][0] == "label" and code[i][0] == "label":
-            continue
+        # if i > 0 and code[i - 1][0] == "label" and code[i][0] == "label":
+        #     continue
         each_line = code[i]
         if each_line[0] != "label":
             file.write("\t")
