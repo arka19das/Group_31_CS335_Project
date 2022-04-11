@@ -1,4 +1,4 @@
-﻿# CS335 Course Project
+﻿﻿# CS335 Course Project
 
 Building a Compiler from C to MIPS, implemented in Python
 
@@ -50,7 +50,4 @@ Parser += Semantics + AST
 
 # Current Issues
 
-1. Class
-2. Typedef
-3. Update spec: Empty functions not allowed
-4. Declaration only at beginning of scope
+1. Declaration only at beginning of scope

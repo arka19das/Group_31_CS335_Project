@@ -54,9 +54,9 @@ You cannot use them for any other purpose.
 Here is a list of keywords recognized by C:
 
 ```example
-break case char const continue default do double else
+break case char continue default do double else
 float for goto if int long return short signed sizeof
-struct switch typedef unsigned void while
+struct switch unsigned void while
 ```
 
 
@@ -483,7 +483,7 @@ The size of a structure type is equal to the sum of the size of all of its membe
 
 []{#Arrays-1}
 
-### 2.5 Arrays {#arrays .section}
+### 2.3 Arrays {#arrays .section}
 
 []{#index-arrays} []{#index-types_002c-array}
 []{#index-data-types_002c-array}
@@ -721,56 +721,6 @@ to a primitive data type.
 You can access the members of a structure variable through a pointer,
 but you can't use the regular member access operator anymore. Instead,
 you have to use the indirect member access operator (`->`)
-
-------------------------------------------------------------------------
-
-[]{#Incomplete-Types}
-
-
-[]{#Incomplete-Types-1}
-
-### 2.5 Incomplete Types {#incomplete-types .section}
-
-[]{#index-incomplete-types} []{#index-types_002c-incomplete}
-[]{#index-structures_002c-incomplete}
-[]{#index-enumerations_002c-incomplete}
-[]{#index-unions_002c-incomplete}
-
-You can define structures without listing their members. Doing so results
-in an incomplete type. You can't declare variables of incomplete types,
-but you can work with pointers to those types. At some time later in your program you will want to complete the type. You do this by defining it as you usually would define a struct. This technique is commonly used to for linked lists.
-
-------------------------------------------------------------------------
-
-[]{#Type-Qualifiers}
-
-
-[]{#Type-Qualifiers-1}
-
-### 2.6 Type Qualifiers {#type-qualifiers .section}
-
-[]{#index-type-qualifiers} []{#index-qualifiers_002c-type}
-[]{#index-const-type-qualifier} []{#index-volatile-type-qualifier}
-
-There is one type qualifier that you can prepend to your variable
-declarations which change how the variables may be accessed: `const`
-
-`const` causes the variable to be read-only; after initialization, its
-value may not be changed.
-
-------------------------------------------------------------------------
-
-[]{#Renaming-Types}
-
-
-[]{#Renaming-Types-1}
-
-### 2.7 Renaming Types {#renaming-types .section}
-
-[]{#index-renaming-types} []{#index-types_002c-renaming}
-
-Sometimes it is convenient to give a new name to a type. You can do this
-using the `typedef` statement. See [The typedef Statement](#The-typedef-Statement), for more information.
 
 
 ------------------------------------------------------------------------
@@ -1072,9 +1022,6 @@ A call to any function which returns a value is an expression.
 You use the comma operator `,` to separate two
 expressions. For instance, the first expression might produce a value
 that is used by the second expression.
-More commonly, the comma operator is used in `for` statements.
-This lets you conveniently set, monitor, and modify multiple control
-expressions for the `for` statement.
 
 A comma is also used to separate function parameters; however, this is
 *not* the comma operator in action. In fact, if the comma operator is
@@ -1134,8 +1081,6 @@ As a GNU C extension, you can build an expression using compound
 statement enclosed in parentheses. This allows you to included loops,
 switches, and local variables within an expression.
 
-If you don't know the type of the operand, you can still do this, but
-you must use `typeof` expressions or type naming.
 
 ------------------------------------------------------------------------
 
@@ -1198,7 +1143,7 @@ stated otherwise.
 You write statements to cause actions and to control flow within your
 programs. You can also write statements that do not do anything at all,
 or do things that are uselessly trivial.
-
+**The declarations must be completed before beginning with the statements in any scope. In any other cases it will return an error**
 ------------------------------------------------------------------------
 
 []{#Labels}
@@ -1288,10 +1233,11 @@ switch (test)
 The `switch` statement compares `test`{.variable} to each of the
 `compare`{.variable} expressions, until it finds one that is equal to
 `test`{.variable}. Then, the statements following the successful case
-are executed. All of the expressions compared must be of an integer
-type, and the `compare-N`{.variable} expressions must be of a constant
-integer type (e.g., a literal integer or an expression built of literal
-integers).
+are executed. All of the expressions compared must be of either character or integer
+type, and the `compare-N`{.variable} expressions must similarly be of a constant
+character or integer type (e.g., a literal character/integer or an expression built of literal
+characters/integers). 
+You cannot use both integer and character labels simultaneously
 
 Optionally, you can specify a default case. If `test`{.variable} doesn't
 match any of the specific cases listed prior to the default case, then
@@ -1540,39 +1486,6 @@ performed, then returning `return-value`{.variable} is invalid.
 
 If the function's return type is not `void` then return value *must* be specified.
 
-
-------------------------------------------------------------------------
-
-[]{#The-typedef-Statement}
-
-
-[]{#The-typedef-Statement-1}
-
-### 4.14 The `typedef` Statement {#the-typedef-statement .section}
-
-[]{#index-typedef-statement}
-
-Use the `typedef` statement to create new names for data types.
-Here is the general form of the `typedef` statement:
-
-
-`old-type-name`{.variable} is the existing name for the type, and may
-consist of more than one token (e.g., `unsigned long int`).
-`new-type-name`{.variable} is the resulting new name for the type, and
-must be a single identifier. Creating this new name for the type does
-not cause the old name to cease to exist. Here are some examples:
-
-
-To make a type definition of an array, you first provide the type of the
-element, and then establish the number of elements at the end of the
-type definition.
-
-
-When selecting names for types, you should avoid ending your type names
-with a `_t` suffix. The compiler will allow you to do this, but the
-POSIX standard reserves use of the `_t` suffix for standard library type
-names.
-
 ------------------------------------------------------------------------
 
 []{#Functions}
@@ -1612,7 +1525,9 @@ The parameter names can be any identifier, and if you have more than one paramet
 directive to include that function declaration in any source code files
 that use the function.
 
-`The function body` is a series of statements enclosed in braces.
+`The function body` is a series of statements (*at least one*) enclosed in braces.
+
+Functions with empty bodies are not allowed.
 
 -------------------------- ---- ---------------------------- ---- --
 
@@ -1696,7 +1611,7 @@ A declared object can be visible only within a particular function, or within a 
 []{#index-advanced-features}
 
 This section shall contain details of various advanced features apart from the above mentioned basic features we are going to implement through our compiler along with some of the code optimizations
-
+**We are gonna implement this only if time permits**.
 ------------------------------------------------------------------------
 
 []{#DeadCode}
@@ -1755,7 +1670,37 @@ We implement various library functions to provide additional mathematical functi
 **This list is not exhaustive and further addition or elimination shall be made based on the time remaining as we go along with this project.**
 
 --------------------------------------------------------------------------------
+
+[]{#Multidimensional Arrays}
+
+[]{#Multidimensional Arrays-1}
+
+### 7.6 Multidimensional Arrays{#multidimensionalarrays .section}
+We plan to implement multidimensional arrays, in simple words as an array of arrays. Data in multidimensional arrays are stored in tabular form.
+
+Currently, we only allow pointers of level 1 to refer to rows of the multidimensional arrays. 
+Pointers of higher levels cannot be initialized to rows of multidimensional arrays 
+
+```c 
+int arr[2][3][4];
+int* ptr = arr[1][2]; // Works !
+int** ptr2 = arr[1]; // Fails
+```
+
+**We have started to implement this, work in progress**.
+
 ----------------------------------------------------------------
 
+[]{#Incomplete Arrays}
+
+[]{#Incomplete Arrays-1}
+
+### 7.7  Incomplete Arrays{#incompletearrays .section}
+We plan to implement arrays of unspecified length i.e the first dimension can be made optional.
+
+**We are gonna implement this only if time permits**.
+
+----------------------------------------------------------------
+--------------------------------------------------------------------------
 ## References
 https://www.gnu.org/software/gnu-c-manual/gnu-c-manual.html
