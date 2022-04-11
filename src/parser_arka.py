@@ -535,10 +535,24 @@ def p_postfix_expression_3(p):
             flag = 0
             for curr_list in struct_node.field_list:
                 if curr_list[1] == p[3][0]:
+                    # TODO:INCOMPLETE
                     flag = 1
+                    offset_string = cal_offset(p[1])
+                    tmp = ST.get_tmp_var("long")
+
+                    type1 = curr_list[0]
+                    tmp2 = ST.get_tmp_var(curr_list[0])
+                    p[0] = ST.find(tmp2)
+
+                    p[0].addr = tmp
+                    p[0].name = "DotOrPTRExpression"
+                    p[0].val = p[3]
                     if len(curr_list) == 5:
+                        p[0].name = tmp2
                         p[0].array = curr_list[4]
+                        # p[0].size = 8
                     p[0].type = curr_list[0]
+
                     p[0].parentStruct = struct_name
                     p[0].level = curr_list[0].count("*")
                     if len(curr_list) == 5:
@@ -554,12 +568,13 @@ def p_postfix_expression_3(p):
                         )
                         return  ## IS RETURN ACTUALLY REQUIRED --ADDED BY ARKA
 
-                    offset_string = cal_offset(p[1])
-                    tmp = ST.get_tmp_var("long")
-                    p[0].addr = tmp
-                    type1 = curr_list[0]
-                    tmp2 = ST.get_tmp_var(curr_list[0])
-                    p[0].place = tmp2
+                    # offset_string = cal_offset(p[1])
+                    # tmp = ST.get_tmp_var("long")
+                    # p[0].addr = tmp
+                    # type1 = curr_list[0]
+                    # tmp2 = ST.get_tmp_var(curr_list[0])
+                    # if len(curr_list) > 4:
+                    #     tmp2.array = copy.deepcopy(curr_list[4])
                     code_gen.append(["addr", tmp, p[1].place, ""])
                     activation_record.append(
                         ["addr", tmp, p[1].place + offset_string, ""]
@@ -567,9 +582,12 @@ def p_postfix_expression_3(p):
 
                     # if curr_list[3] > 0:
                     code_gen.append(["long+", tmp, curr_list[3], tmp])
-                    activation_record.append(
-                        ["long+", tmp, curr_list[3], tmp]
-                    )  ## AKSHAY check
+                    activation_record.append(["long+", tmp, curr_list[3], tmp])
+                    # print(type1)
+                    # if len(p[0].array) > 0:
+                    #     print(1)
+                    #     code_gen.append([f"long=", tmp2, tmp, ""])
+                    #     activation_record.append([f"long=", tmp2, tmp, ""])
                     if type1.upper() in PRIMITIVE_TYPES:
                         code_gen.append(
                             [f"{get_data_type_size(type1)}load", tmp2, tmp, ""]
@@ -577,6 +595,7 @@ def p_postfix_expression_3(p):
                         activation_record.append(
                             [f"{get_data_type_size(type1)}load", tmp2, tmp, ""]
                         )
+
                     else:
                         code_gen.append(
                             [
@@ -702,6 +721,7 @@ def p_postfix_expression_3(p):
                 # v1=ST.get_tmp_var('int')
                 v2 = ST.get_tmp_var(p[1].type)
                 # p[]
+
                 code_gen.append(["addr", v2, p[1].place, ""])
                 code_gen.append(["long+", v2, v1, v2])
                 activation_record.append(["addr", v2, p[1].place + offset_string, ""])

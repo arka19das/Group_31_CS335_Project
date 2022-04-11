@@ -65,6 +65,7 @@ struct st
     // ;
     int y;
     char xy[2];
+    // struct st * next;
 };
 int main()
 {
@@ -78,13 +79,10 @@ int main()
     x = xy[2];
 l:
 
-    for (int i = 0; i<x, i> 0; i++)
-    {
-        x++;
-    }
-    goto l;
-    s1.xy[2];
+    return 0;
 
+    s1.xy[2];
+    s1.x;
     return 0;
 }
 // kjdjbfjkdfbjkf

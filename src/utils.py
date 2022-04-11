@@ -183,11 +183,11 @@ class Node:
     level: int = 0
     place: str = ""
     code: str = ""
-    truelist: List = field(default_factory=list)
-    falselist: List = field(default_factory=list)
+    # truelist: List = field(default_factory=list)
+    # falselist: List = field(default_factory=list)
     continuelist: List = field(default_factory=list)
     breaklist: List = field(default_factory=list)
-    nextlist: List = field(default_factory=list)
+    # nextlist: List = field(default_factory=list)
     expr: List = field(default_factory=list)
     label: List = field(default_factory=list)
     index: str = ""
