@@ -4,6 +4,7 @@
 from cmath import exp
 import copy
 import re
+import signal
 from numpy import var
 
 import ply.yacc as yacc
@@ -4043,13 +4044,36 @@ def getArgs():
     return parser
 
 
+class TimeoutException(Exception):   # Custom exception class
+    pass
+
+
+def timeout_handler(signum, frame):   # Custom signal handler
+    raise TimeoutException
+
+
+def async_parse(data, seconds=10):
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(seconds)
+    try:
+        res = parser.parse(data)
+        signal.alarm(0)      # Clear alarm
+        return res
+    except TimeoutException:
+        lineno = parser.token().lineno
+        print('Compiler Timed Out at Line', lineno)
+        # Change final error from syntax/semantic to compilation? 
+        ST.errors[-1].err_type = 'compilation error'
+    return
+
+
 if __name__ == "__main__":
     args = getArgs().parse_args()
     graph = Digraph(format="dot")
     with open(str(args.input), "r+") as file:
         data = file.read()
     pre_append_to_table()
-    tree = parser.parse(data)
+    tree = async_parse(data)
 
     ST.display_errors(args.w)
     if ST.error_flag == 0:
