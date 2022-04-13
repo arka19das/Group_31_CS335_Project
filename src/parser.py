@@ -26,8 +26,11 @@ valid_goto_labels = []
 
 
 def cal_offset(p):
-    if (isinstance(p, Node) and p.place.startswith("__tmp")) or (isinstance(p, str)):
+    # if (isinstance(p, Node) and p.place.startswith("__tmp")) or (isinstance(p, str)):
+    #     return ""
+    if isinstance(p, str):
         return ""
+    
     if p.in_whose_scope == "#global":
         offset = p.offset
         if offset:
@@ -802,18 +805,53 @@ def p_postfix_expression_3(p):
                             p[3].children[i].type.upper()
                         ].lower()
                     ST.curType.append(p[3].children[i].type)
+                    tmp_var = ST.get_tmp_var(arguments)
                     # according to akshay TODO
-                    if ST.curType[-1].split()[-1] != arguments.split()[-1]:
+
+                    if ST.curType[-1].split()[-1] != arguments.split()[-1] and p[3].children[i].type.upper() in PRIMITIVE_TYPES and arguments.upper() in PRIMITIVE_TYPES:
                         ST.error(
-                            Error(
+                            Error( 
                                 p[1].lno,
                                 rule_name,
                                 "warning",
                                 f"Type mismatch in argument {i+1} of function call. Expected: {arguments}, Received: {ST.curType[-1]}",
                             )
                         )
-                        # return
+                        code_gen.append([f"{ST.curType[-1]}2{arguments}", tmp_var, p[3].children[i].val, " "])
+                        activation_record.append(
+                            [f"{ST.curType[-1]}2{arguments}", tmp_var, p[3].children[i].val, " "]
+                        )
+
+                    elif ( (p[3].children[i].type.upper() in PRIMITIVE_TYPES) ^ (arguments.upper() in PRIMITIVE_TYPES) ):
+                        ST.error(
+                            Error( 
+                                p[1].lno,
+                                rule_name,
+                                "compilation error",
+                                f"Type mismatch in argument {i+1} of function call. Expected: {arguments}, Received: {ST.curType[-1]}",
+                            )
+                        )
+                        return 
+
+                    elif ST.curType[-1] != arguments and p[3].children[i].type.upper() not in PRIMITIVE_TYPES and arguments.upper() not in PRIMITIVE_TYPES:
+                        ST.error(
+                            Error( 
+                                p[1].lno,
+                                rule_name,
+                                "compilation error",
+                                f"Type mismatch in argument {i+1} of function call. Expected: {arguments}, Received: {ST.curType[-1]}",
+                            )
+                        )
+                        return 
+
+                    offset_string = cal_offset(p[3].children[i])
+                    code_gen.append([f"param_{p[1].val}", p[3].children[i].val, " ", " "])
+                    activation_record.append(
+                        [f"param_{p[1].val}", p[3].children[i].val+offset_string, " ", " "]
+                    )
+                    
                     i += 1
+                    
                 code_gen.append(["call", p[1].val, "", ""])
                 activation_record.append(["call", p[1].val, "", f"__{p[1].val}"])
 
@@ -4060,11 +4098,11 @@ def timeout_handler(signum, frame):  # Custom signal handler
 
 
 def async_parse(data, seconds=10):
-    signal.signal(signal.SIGALRM, timeout_handler)
-    signal.alarm(seconds)
+    # signal.signal(signal.SIGALRM, timeout_handler)
+    # signal.alarm(seconds)
     try:
         res = parser.parse(data)
-        signal.alarm(0)  # Clear alarm
+        # signal.alarm(0)  # Clear alarm
         return res
     except TimeoutException:
         lineno = parser.token().lineno
@@ -4080,7 +4118,7 @@ if __name__ == "__main__":
     with open(str(args.input), "r+") as file:
         data = file.read()
     pre_append_to_table()
-    # tree = async_parse(data)
+    tree = async_parse(data)
 
     ST.display_errors(args.w)
     if ST.error_flag == 0:
