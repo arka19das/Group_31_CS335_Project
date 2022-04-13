@@ -1,19 +1,15 @@
 # TODO: check invalid operation on function and backpatching
 # TODO: small error,, in repeated cases unable to display line number
 # Yacc example
-from cmath import exp
 import copy
 import re
 import signal
-from numpy import var
 
 import ply.yacc as yacc
-import pydot
 from graphviz import Digraph
 
 from scanner import *
 from utils import *
-from utils import offsets, code_gen, contStack, brkStack, funcstack
 
 # Get the token map from the lexer.  This is required.
 lexer = Lexer()
@@ -2493,14 +2489,37 @@ def p_type_specifier_2(p):
     p[0].ast = build_AST(p, rule_name)
 
 
+def p_struct_declaration_with_linked_list(p):
+    '''struct_declaration_with_linked_list : struct_or_union IDENTIFIER push_scope_lcb'''
+    
+    p[0] = p[1]
+    p[0].name = 'LinkedList'
+    val_name = p[1].type 
+    p[0].type = p[1].type+' '+ p[2]
+    p[0].val = p[0].type
+    
+    if ST.current_table.find(p[0].type):
+            ST.error(
+                Error(
+                    p[1].lno,
+                    "ABC",
+                    "compilation error",
+                    f"Struct {p[0].type} already declared",
+                )
+            )
+    
+    valptr_name = p[0].type + " *"
+    val_node = Node(name=p[0].type, type=p[0].type)
+    valptr_node = Node(name=valptr_name, type=valptr_name)
+    ST.current_table.nodes += [val_node, valptr_node]
+
 def p_struct_or_union_specifier(p):
-    """struct_or_union_specifier : struct_or_union IDENTIFIER push_scope_lcb struct_declaration_list pop_scope_rcb
+    """struct_or_union_specifier : struct_declaration_with_linked_list struct_declaration_list pop_scope_rcb
     | struct_or_union push_scope_lcb struct_declaration_list pop_scope_rcb
     | struct_or_union IDENTIFIER
     """
     # p[0] = build_AST(p)
     # TODO : check the semicolon thing after pop_scope_rcb in gramamar
-    # DONE : Manage the size and offset of fields
     rule_name = "struct_or_union_specifier"
     p[0] = Node(
         name="StructOrUnionSpecifier",
@@ -2509,27 +2528,20 @@ def p_struct_or_union_specifier(p):
         lno=p[1].lno,
         children=[],
     )
-    if len(p) == 6:
-        val_name = p[1].type + " " + p[2]
-        p[0].ast = build_AST(p, rule_name)
-        if ST.current_table.find(val_name):
-            ST.error(
-                Error(
-                    p[1].lno,
-                    rule_name,
-                    "compilation error",
-                    f"Struct {val_name} already declared",
-                )
-            )
 
+    if len(p) == 4 and p[1].name == 'LinkedList':
+        
+        p[0].ast = build_AST(p, rule_name)
+        val_name = p[1].type
         valptr_name = val_name + " *"
         val_node = Node(name=val_name, type=val_name)
         valptr_node = Node(name=valptr_name, type=valptr_name)
         ST.current_table.nodes += [val_node, valptr_node]
+        
         temp_list = []
         curr_offset = 0
         max_size = 0
-        for child in p[4].children:
+        for child in p[2].children:
             for prev_list in temp_list:
                 if prev_list[1] == child.val:
                     ST.error(
@@ -2562,14 +2574,15 @@ def p_struct_or_union_specifier(p):
             SZ *= totalEle
             max_size = max(max_size, SZ)
             temp_list.append(curr_list)
-
+        
         val_node.field_list = temp_list
         valptr_node.field_list = temp_list
         val_node.size = curr_offset
         valptr_node.size = 8
 
     elif len(p) == 3:
-        p[0].type = p[1].type + " " + p[2]
+        p[0].type = p[1].type+' '+p[2]
+        p[0].val = p[0].type
         p[0].ast = build_AST(p, rule_name)
         p0t_node = ST.find(p[0].type)
         if p0t_node is None:
@@ -2583,7 +2596,6 @@ def p_struct_or_union_specifier(p):
             )
     else:
         p[0].ast = build_AST(p, rule_name)
-
 
 def p_struct_or_union(p):
     """struct_or_union : STRUCT"""
@@ -4068,7 +4080,7 @@ if __name__ == "__main__":
     with open(str(args.input), "r+") as file:
         data = file.read()
     pre_append_to_table()
-    tree = async_parse(data)
+    # tree = async_parse(data)
 
     ST.display_errors(args.w)
     if ST.error_flag == 0:

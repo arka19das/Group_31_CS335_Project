@@ -1,5 +1,6 @@
 .dist
 .vscode
+.vscodeignore
 __pycache__
 __pycache__/
 parsetab.py
@@ -12,9 +13,10 @@ t.sh
 *.json
 *.png
 *.exe
+ast
 t1
 t2
 t3
 t4
 arka_test
-./src/random_checks.py
+symbol_table_dump
