@@ -24,6 +24,12 @@ offsets[0] = 0
 activation_record = []
 valid_goto_labels = []
 
+def is_const(p):
+    if p[0]>='0' and p[0] <= '9':
+        return True
+    elif p[0]=='-' and p[1]>='0' and p[1] <= '9':
+        return True
+    return False
 
 def cal_offset(p):
     # if (isinstance(p, Node) and p.place.startswith("__tmp")) or (isinstance(p, str)):
@@ -1402,26 +1408,45 @@ def p_multipicative_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
-        tmp_var1 = p[1].place
-        tmp_var3 = p[3].place
-        if p[1].type != p[0].type:
-            offset_string = cal_offset(p[1])
-            tmp_var1 = ST.get_tmp_var(p[0].type)
-            code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
-            activation_record.append(
-                [p[1].type + "2" + p[0].type, tmp_var1, p[1].place + offset_string]
-            )
+        
+        if is_const(p[1].place) and is_const(p[3].place):
+            if p[2]== "*":
+                if p[0].type.upper() in TYPE_FLOAT:
+                    p[0].place = float(p[1].place)*float(p[3].place)
+                else:
+                    p[0].place = int(p[1].place)*int(p[3].place)
 
-        if p[3].type != p[0].type:
-            offset_string = cal_offset(p[3])
-            tmp_var3 = ST.get_tmp_var(p[0].type)
-            code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
-            activation_record.append(
-                [p[3].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
-            )
+            elif p[2]== "/":
+                if p[0].type.upper() in TYPE_FLOAT:
+                    p[0].place = float(p[1].place)/float(p[3].place)
+                else:
+                    p[0].place = int(p[1].place)//int(p[3].place)
 
-        code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
-        activation_record.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
+            else:
+                p[0].place = int(p[1].place)%int(p[3].place)
+
+            p[0].place = str(p[0].place)
+        else:
+            tmp_var1 = p[1].place
+            tmp_var3 = p[3].place
+            if p[1].type != p[0].type:
+                offset_string = cal_offset(p[1])
+                tmp_var1 = ST.get_tmp_var(p[0].type)
+                code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
+                activation_record.append(
+                    [p[1].type + "2" + p[0].type, tmp_var1, p[1].place + offset_string]
+                )
+
+            if p[3].type != p[0].type:
+                offset_string = cal_offset(p[3])
+                tmp_var3 = ST.get_tmp_var(p[0].type)
+                code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
+                activation_record.append(
+                    [p[3].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
+                )
+
+            code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
+            activation_record.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
 
@@ -1437,26 +1462,41 @@ def p_additive_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
-        tmp_var1 = p[1].place
-        tmp_var3 = p[3].place
-        if p[1].type != p[0].type:
-            offset_string = cal_offset(p[1])
-            tmp_var1 = ST.get_tmp_var(p[0].type)
-            code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
-            activation_record.append(
-                [p[1].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
-            )
+        if is_const(p[1].place) and is_const(p[3].place):
+            if p[2]== "+":
+                if p[0].type.upper() in TYPE_FLOAT:
+                    p[0].place = float(p[1].place)+float(p[3].place)
+                else:
+                    p[0].place = int(p[1].place)+int(p[3].place)
 
-        if p[3].type != p[0].type:
-            offset_string = cal_offset(p[3])
-            tmp_var3 = ST.get_tmp_var(p[0].type)
-            code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
-            activation_record.append(
-                [p[3].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
-            )
+            else:
+                if p[0].type.upper() in TYPE_FLOAT:
+                    p[0].place = float(p[1].place)-float(p[3].place)
+                else:
+                    p[0].place = int(p[1].place)-int(p[3].place)
+            p[0].place = str(p[0].place)
 
-        code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
-        activation_record.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
+        else:
+            tmp_var1 = p[1].place
+            tmp_var3 = p[3].place
+            if p[1].type != p[0].type:
+                offset_string = cal_offset(p[1])
+                tmp_var1 = ST.get_tmp_var(p[0].type)
+                code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
+                activation_record.append(
+                    [p[1].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
+                )
+
+            if p[3].type != p[0].type:
+                offset_string = cal_offset(p[3])
+                tmp_var3 = ST.get_tmp_var(p[0].type)
+                code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
+                activation_record.append(
+                    [p[3].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
+                )
+
+            code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
+            activation_record.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
 
@@ -1472,26 +1512,34 @@ def p_shift_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
-        tmp_var1 = p[1].place
-        tmp_var3 = p[3].place
-        if p[1].type != p[0].type:
-            offset_string = cal_offset(p[1])
-            tmp_var1 = ST.get_tmp_var(p[0].type)
-            code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
-            activation_record.append(
-                [p[1].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
-            )
+        if is_const(p[1].place) and is_const(p[3].place):
+            if p[2]== "<<":
+                p[0].place = int(p[1].place)<<int(p[3].place)
+            else:
+                p[0].place = int(p[1].place)>>int(p[3].place)
+            p[0].place = str(p[0].place)
+        
+        else:
+            tmp_var1 = p[1].place
+            tmp_var3 = p[3].place
+            if p[1].type != p[0].type:
+                offset_string = cal_offset(p[1])
+                tmp_var1 = ST.get_tmp_var(p[0].type)
+                code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
+                activation_record.append(
+                    [p[1].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
+                )
 
-        if p[3].type != p[0].type:
-            offset_string = cal_offset(p[3])
-            tmp_var3 = ST.get_tmp_var(p[0].type)
-            code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
-            activation_record.append(
-                [p[3].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
-            )
+            if p[3].type != p[0].type:
+                offset_string = cal_offset(p[3])
+                tmp_var3 = ST.get_tmp_var(p[0].type)
+                code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
+                activation_record.append(
+                    [p[3].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
+                )
 
-        code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
-        activation_record.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
+            code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
+            activation_record.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
 
@@ -1509,29 +1557,54 @@ def p_relational_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
-        tmp_var1 = p[1].place
-        tmp_var3 = p[3].place
-        if p[1].type != p[0].type:
-            offset_string = cal_offset(p[1])
-            tmp_var1 = ST.get_tmp_var(p[0].type)
-            code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
-            activation_record.append(
-                [p[1].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
-            )
+            
+        if is_const(p[1].place) and is_const(p[3].place):
+            if p[2]== "<":
+                if p[0].type.upper() in TYPE_FLOAT:
+                    p[0].place = "1" if float(p[1].place)<float(p[3].place) else "0"
+                else:
+                    p[0].place = "1" if int(p[1].place)<int(p[3].place) else "0"
 
-        if p[3].type != p[0].type:
-            offset_string = cal_offset(p[3])
-            tmp_var3 = ST.get_tmp_var(p[0].type)
-            code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
-            activation_record.append(
-                [p[3].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
-            )
+            elif p[2]== "<=":
+                if p[0].type.upper() in TYPE_FLOAT:
+                    p[0].place = "1" if float(p[1].place)<=float(p[3].place) else "0"
+                else:
+                    p[0].place = "1" if int(p[1].place)<=int(p[3].place) else "0"
 
-        code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
-        activation_record.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
+            elif p[2]== ">":
+                if p[0].type.upper() in TYPE_FLOAT:
+                    p[0].place = "1" if float(p[1].place)>float(p[3].place) else "0"
+                else:
+                    p[0].place = "1" if int(p[1].place)>int(p[3].place) else "0"
+
+            elif p[2]== ">=":
+                if p[0].type.upper() in TYPE_FLOAT:
+                    p[0].place = "1" if float(p[1].place)>=float(p[3].place) else "0"
+                else:
+                    p[0].place = "1" if int(p[1].place)>=int(p[3].place) else "0"
+
+        else:
+            tmp_var1 = p[1].place
+            tmp_var3 = p[3].place
+            if p[1].type != p[0].type:
+                offset_string = cal_offset(p[1])
+                tmp_var1 = ST.get_tmp_var(p[0].type)
+                code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
+                activation_record.append(
+                    [p[1].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
+                )
+
+            if p[3].type != p[0].type:
+                offset_string = cal_offset(p[3])
+                tmp_var3 = ST.get_tmp_var(p[0].type)
+                code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
+                activation_record.append(
+                    [p[3].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
+                )
+
+            code_gen.append(["int" + _op, p[0].place, tmp_var1, tmp_var3])
+            activation_record.append(["int" + _op, p[0].place, tmp_var1, tmp_var3])
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
-        # print(p[0])
-
 
 def p_equality_expresssion(p):
     """equality_expression : relational_expression
@@ -1540,33 +1613,46 @@ def p_equality_expresssion(p):
     """
     if len(p) == 2:
         p[0] = p[1]
-        # p[0].ast = build_AST(p, rule_name)
     else:
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
-        tmp_var1 = p[1].place
-        tmp_var3 = p[3].place
-        if p[1].type != p[0].type:
-            offset_string = cal_offset(p[1])
-            tmp_var1 = ST.get_tmp_var(p[0].type)
-            code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
-            activation_record.append(
-                [p[1].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
-            )
+        if is_const(p[1].place) and is_const(p[3].place):
+            if p[2]== "==":
+                if p[0].type.upper() in TYPE_FLOAT:
+                    p[0].place = float(p[1].place)==float(p[3].place)
+                else:
+                    p[0].place = int(p[1].place)==int(p[3].place)
 
-        if p[3].type != p[0].type:
-            offset_string = cal_offset(p[3])
-            tmp_var3 = ST.get_tmp_var(p[0].type)
-            code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
-            activation_record.append(
-                [p[3].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
-            )
+            else:
+                if p[0].type.upper() in TYPE_FLOAT:
+                    p[0].place = float(p[1].place)!=float(p[3].place)
+                else:
+                    p[0].place = int(p[1].place)!=int(p[3].place)
+            p[0].place = str(p[0].place)
+       
+        else:
+            tmp_var1 = p[1].place
+            tmp_var3 = p[3].place
+            if p[1].type != p[0].type:
+                offset_string = cal_offset(p[1])
+                tmp_var1 = ST.get_tmp_var(p[0].type)
+                code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
+                activation_record.append(
+                    [p[1].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
+                )
 
-        code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
-        activation_record.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
+            if p[3].type != p[0].type:
+                offset_string = cal_offset(p[3])
+                tmp_var3 = ST.get_tmp_var(p[0].type)
+                code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
+                activation_record.append(
+                    [p[3].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
+                )
+
+            code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
+            activation_record.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
-
 
 def p_and_expression(p):
     """and_expression : equality_expression
@@ -1580,25 +1666,30 @@ def p_and_expression(p):
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
         p[0].type = "int"  ##forced
-        tmp_var1 = p[1].place
-        tmp_var3 = p[3].place
-        if p[1].type != p[0].type:
-            offset_string = cal_offset(p[1])
-            tmp_var1 = ST.get_tmp_var(p[0].type)
-            code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
-            activation_record.append(
-                [p[1].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
-            )
-        if p[3].type != p[0].type:
-            offset_string = cal_offset(p[3])
-            tmp_var3 = ST.get_tmp_var(p[0].type)
-            code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
-            activation_record.append(
-                [p[3].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
-            )
+        if is_const(p[1].place) and is_const(p[3].place):
+            p[0].place = int(p[1].place)&int(p[3].place)
+            p[0].place = str(p[0].place)
+        
+        else:
+            tmp_var1 = p[1].place
+            tmp_var3 = p[3].place
+            if p[1].type != p[0].type:
+                offset_string = cal_offset(p[1])
+                tmp_var1 = ST.get_tmp_var(p[0].type)
+                code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
+                activation_record.append(
+                    [p[1].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
+                )
+            if p[3].type != p[0].type:
+                offset_string = cal_offset(p[3])
+                tmp_var3 = ST.get_tmp_var(p[0].type)
+                code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
+                activation_record.append(
+                    [p[3].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
+                )
 
-        code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
-        activation_record.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
+            code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
+            activation_record.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
 
@@ -1613,27 +1704,32 @@ def p_exclusive_or_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
-        tmp_var1 = p[1].place
-        tmp_var3 = p[3].place
+        if is_const(p[1].place) and is_const(p[3].place):
+            p[0].place = int(p[1].place)^int(p[3].place)
+            p[0].place = str(p[0].place)
 
-        if p[1].type != p[0].type:
-            offset_string = cal_offset(p[1])
-            tmp_var1 = ST.get_tmp_var(p[0].type)
-            code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
-            activation_record.append(
-                [p[1].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
-            )
+        else:
+            tmp_var1 = p[1].place
+            tmp_var3 = p[3].place
 
-        if p[3].type != p[0].type:
-            offset_string = cal_offset(p[3])
-            tmp_var3 = ST.get_tmp_var(p[0].type)
-            code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
-            activation_record.append(
-                [p[3].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
-            )
+            if p[1].type != p[0].type:
+                offset_string = cal_offset(p[1])
+                tmp_var1 = ST.get_tmp_var(p[0].type)
+                code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
+                activation_record.append(
+                    [p[1].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
+                )
 
-        code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
-        activation_record.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
+            if p[3].type != p[0].type:
+                offset_string = cal_offset(p[3])
+                tmp_var3 = ST.get_tmp_var(p[0].type)
+                code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
+                activation_record.append(
+                    [p[3].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
+                )
+
+            code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
+            activation_record.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
 
@@ -1648,25 +1744,30 @@ def p_inclusive_or_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
-        tmp_var1 = p[1].place
-        tmp_var3 = p[3].place
-        if p[1].type != p[0].type:
-            offset_string = cal_offset(p[1])
-            tmp_var1 = ST.get_tmp_var(p[0].type)
-            code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
-            activation_record.append(
-                [p[1].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
-            )
-        if p[3].type != p[0].type:
-            offset_string = cal_offset(p[3])
-            tmp_var3 = ST.get_tmp_var(p[0].type)
-            code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
-            activation_record.append(
-                [p[3].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
-            )
+        if is_const(p[1].place) and is_const(p[3].place):
+            p[0].place = int(p[1].place)|int(p[3].place)
+            p[0].place = str(p[0].place)
 
-        code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
-        activation_record.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
+        else:
+            tmp_var1 = p[1].place
+            tmp_var3 = p[3].place
+            if p[1].type != p[0].type:
+                offset_string = cal_offset(p[1])
+                tmp_var1 = ST.get_tmp_var(p[0].type)
+                code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
+                activation_record.append(
+                    [p[1].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
+                )
+            if p[3].type != p[0].type:
+                offset_string = cal_offset(p[3])
+                tmp_var3 = ST.get_tmp_var(p[0].type)
+                code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
+                activation_record.append(
+                    [p[3].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
+                )
+
+            code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
+            activation_record.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
 
@@ -1681,25 +1782,29 @@ def p_logical_and_expression(p):
         rule_name = p[3]
         _op = p[3][0] if p[3] is tuple else p[3]
         p[0] = type_util(p[1], p[4], _op)
-        tmp_var1 = p[1].place
-        tmp_var3 = p[4].place
-        if p[1].type != p[0].type:
-            offset_string = cal_offset(p[1])
-            tmp_var1 = ST.get_tmp_var(p[0].type)
-            code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
-            activation_record.append(
-                [p[1].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
-            )
-        if p[4].type != p[0].type:
-            offset_string = cal_offset(p[3])
-            tmp_var3 = ST.get_tmp_var(p[0].type)
-            code_gen.append([p[4].type + "2" + p[0].type, tmp_var3, p[4].place])
-            activation_record.append(
-                [p[3].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
-            )
+        if is_const(p[1].place) and is_const(p[4].place):
+            p[0].place = int(p[1].place) and int(p[4].place)
+            p[0].place = str(p[0].place)
+        else:
+            tmp_var1 = p[1].place
+            tmp_var3 = p[4].place
+            if p[1].type != p[0].type:
+                offset_string = cal_offset(p[1])
+                tmp_var1 = ST.get_tmp_var(p[0].type)
+                code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
+                activation_record.append(
+                    [p[1].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
+                )
+            if p[4].type != p[0].type:
+                offset_string = cal_offset(p[3])
+                tmp_var3 = ST.get_tmp_var(p[0].type)
+                code_gen.append([p[4].type + "2" + p[0].type, tmp_var3, p[4].place])
+                activation_record.append(
+                    [p[3].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
+                )
 
-        code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
-        activation_record.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
+            code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
+            activation_record.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
         p[0].ast = build_AST_2(p, [1, 4], rule_name)
 
 
@@ -1726,26 +1831,30 @@ def p_logical_or_expression(p):
         rule_name = p[3]
         _op = p[3][0] if p[3] is tuple else p[3]
         p[0] = type_util(p[1], p[4], _op)
-        tmp_var1 = p[1].place
-        tmp_var3 = p[4].place
+        if is_const(p[1].place) and is_const(p[4].place):
+            p[0].place = int(p[1].place) or int(p[4].place)
+            p[0].place = str(p[0].place)
+        else:
+            tmp_var1 = p[1].place
+            tmp_var3 = p[4].place
 
-        if p[1].type != p[0].type:
-            offset_string = cal_offset(p[1])
-            tmp_var1 = ST.get_tmp_var(p[0].type)
-            code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
-            activation_record.append(
-                [p[1].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
-            )
-        if p[4].type != p[0].type:
-            offset_string = cal_offset(p[3])
-            tmp_var3 = ST.get_tmp_var(p[0].type)
-            code_gen.append([p[4].type + "2" + p[0].type, tmp_var3, p[4].place])
-            activation_record.append(
-                [p[3].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
-            )
+            if p[1].type != p[0].type:
+                offset_string = cal_offset(p[1])
+                tmp_var1 = ST.get_tmp_var(p[0].type)
+                code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
+                activation_record.append(
+                    [p[1].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
+                )
+            if p[4].type != p[0].type:
+                offset_string = cal_offset(p[3])
+                tmp_var3 = ST.get_tmp_var(p[0].type)
+                code_gen.append([p[4].type + "2" + p[0].type, tmp_var3, p[4].place])
+                activation_record.append(
+                    [p[3].type + "2" + p[0].type, tmp_var3, p[3].place + offset_string]
+                )
 
-        code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
-        activation_record.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
+            code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
+            activation_record.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
         # code_gen.append(["label", p[2][0], ":", ""])
 
@@ -1777,10 +1886,18 @@ def p_conditional_expression(p):
             type=p[3].type,
             children=[],
         )
-        p[0].ast = build_AST_2(p, [3, 5], ":")
-        # TODO:Ternary operator
-        p[0].ast = build_AST_2(p, [1, 0], "?")
 
+        if is_const(p[1].place):
+            if int(p[1].place):
+                p[0].place = p[3].place
+            else:
+                p[0].place = p[5].place
+        else:
+            # TODO:Ternary operator
+            pass
+
+        p[0].ast = build_AST_2(p, [3, 5], ":")
+        p[0].ast = build_AST_2(p, [1, 0], "?")
 
 def p_assignment_expression(p):
     """assignment_expression : conditional_expression
@@ -2846,8 +2963,8 @@ def p_direct_declarator_3(p):
     )
     p[0].ast = build_AST(p, rule_name)
     p[0].array = copy.deepcopy(p[1].array)
-    p[0].array.append(int(p[3].val))
-
+#     p[0].array.append(int(p[3].val))
+    p[0].array.append(int(p[3].place))
 
 def p_direct_declarator_4(p):
     """direct_declarator : direct_declarator LEFT_THIRD_BRACKET RIGHT_THIRD_BRACKET
