@@ -242,7 +242,7 @@ def binary_exp_mips(binexp, reg1, a1, reg2, a2, reg3, a3):
     mips.append(load_reg(reg3, a3, type))
     #mips.append(["ADD",     {reg1},    {reg2},    {reg3}])
     op = Binary_ops[binexp]
-    mips.append([op,reg1,reg2,reg3])
+    mips.append([op[0],reg1,reg2,reg3])
     #mips.append(["SW",      {reg1},    {a1}])
     mips.append(store_reg(reg1, a1, type))
     return mips
