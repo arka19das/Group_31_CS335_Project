@@ -928,7 +928,7 @@ def p_unary_expression(p):
 
     elif len(p) == 3:
         offset_string = cal_offset(p[2])
-        if p[1] == "++" or p[1] == "--":
+        if p[1].val == "++" or p[1].val == "--":
             if len(p[2].array) > 0 and isinstance(p[2].array[0], int):
                 ST.error(
                     Error(
@@ -941,7 +941,7 @@ def p_unary_expression(p):
             tempNode = Node(name="", val=p[1], lno=p[2].lno, type="", children="")
 
             p[0] = Node(
-                name="UnaryOperation",
+                name="UnaryOperation"+p[1].val,
                 val=p[2].val,
                 lno=p[2].lno,
                 type=p[2].type,
@@ -954,7 +954,7 @@ def p_unary_expression(p):
             check_identifier(p[2], p.lineno(2))
 
             # DONE: FLOAT not supported yet and neither are pointers dhang se
-            if p[1] == "++":
+            if p[1].val == "++":
                 if p[2].type.endswith("*"):
                     code_gen.append(
                         [
@@ -984,7 +984,7 @@ def p_unary_expression(p):
                     )
 
                 # code_gen.append(f"{p[1].place} := {p[1].place} + 1")
-            elif p[1] == "--":
+            elif p[1].val == "--":
                 if p[2].type.endswith("*"):
                     code_gen.append(
                         [
@@ -1018,7 +1018,7 @@ def p_unary_expression(p):
             # code_gen.append()
             # p[0].ast = build_AST(p, rule_name)
 
-        elif p[1] == "sizeof":
+        elif p[1].val == "sizeof":
             # MODIFIED
             tmp_var = ST.get_tmp_var("int")
 
@@ -1264,15 +1264,15 @@ def p_unary_expression(p):
                         f"{p[1].val} is not allowed for  {p[2].type}",
                     )
                 )
-            p[0] = Node(
-                name="UnaryOperation",
-                val=p[2].val,
-                lno=p[2].lno,
-                type=p[2].type,
-                children=[],
-                lhs=1,
-                offset=p[2].offset,
-            )
+                p[0] = Node(
+                    name="UnaryOperation",
+                    val=p[2].val,
+                    lno=p[2].lno,
+                    type=p[2].type,
+                    children=[],
+                    lhs=1,
+                    offset=p[2].offset,
+                )
         p[0].ast = build_AST(p, rule_name)
     else:
         # MODIFIED
