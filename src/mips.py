@@ -297,7 +297,7 @@ def binary_exp_mips(binexp, reg1, a1, reg2, a2, reg3, a3):
             type += i
         else:
             op+= i
-    if op =="+" or op == "-" :        
+    if (op =="+" or op == "-") and type in TYPE_INT :        
         #mips.append(["LW",      {reg1},    {a1}])
         mips.append(load_reg(reg1, a1, type))
         #mips.append(["LW",      {reg2},    {a2}])
