@@ -798,6 +798,8 @@ def p_postfix_expression_3(p):
                 return
             else:
                 i = 0
+                temp_act = []
+                temp_3ac = []
                 for arguments in p1v_node.argument_list:
                     # HAVE TO THINK
                     # MODIFIED
@@ -811,7 +813,6 @@ def p_postfix_expression_3(p):
                             p[3].children[i].type.upper()
                         ].lower()
                     ST.curType.append(p[3].children[i].type)
-                    tmp_var = ST.get_tmp_var(arguments)
                     # according to akshay TODO
 
                     if ST.curType[-1].split()[-1] != arguments.split()[-1] and p[3].children[i].type.upper() in PRIMITIVE_TYPES and arguments.upper() in PRIMITIVE_TYPES:
@@ -823,6 +824,7 @@ def p_postfix_expression_3(p):
                                 f"Type mismatch in argument {i+1} of function call. Expected: {arguments}, Received: {ST.curType[-1]}",
                             )
                         )
+                        tmp_var = ST.get_tmp_var(arguments)
                         code_gen.append([f"{ST.curType[-1]}2{arguments}", tmp_var, p[3].children[i].val, " "])
                         activation_record.append(
                             [f"{ST.curType[-1]}2{arguments}", tmp_var, p[3].children[i].val, " "]
@@ -850,16 +852,29 @@ def p_postfix_expression_3(p):
                         )
                         return 
 
+                    tmp_var = ST.get_tmp_var(arguments)
+                    code_gen.append([f"{arguments}=",tmp_var, p[3].children[i].val, ""])
+                    activation_record.append([f'{arguments}=',tmp_var, p[3].children[i].val, ""])
+
                     offset_string = cal_offset(p[3].children[i])
-                    code_gen.append([f"param_{p[1].val}", p[3].children[i].val, " ", " "])
-                    activation_record.append(
-                        [f"param_{p[1].val}", p[3].children[i].val+offset_string, " ", " "]
+                    temp_3ac.append([f"param{p[1].val}", p[3].children[i].val, " ", " "])
+                    temp_act.append(
+                        [f"param{p[1].val}", p[3].children[i].val+offset_string, " ", " "]
                     )
                     
                     i += 1
-                    
-                code_gen.append(["call", p[1].val, "", ""])
-                activation_record.append(["call", p[1].val, "", f"__{p[1].val}"])
+                for t3ac, tact in zip(temp_3ac,temp_act):
+                    code_gen.append(t3ac)
+                    activation_record.append(tact)
+                
+                func_size=0
+                for scope_table in ST.scope_tables:
+                    if scope_table.name == p[1].val:
+                        for node in scope_table.nodes:
+                            func_size+=node.size
+
+                code_gen.append([f"call{func_size}", p[1].val, "", ""])
+                activation_record.append([f"call{func_size}", p[1].val, "", f"__{p[1].val}"])
 
 
 def p_argument_expression_list(p):
