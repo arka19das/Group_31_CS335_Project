@@ -247,43 +247,76 @@ def p_int_constant(p):
 
 def p_char_constant(p):
     """char_constant : CHAR_CONSTANT"""
-    a=p[1][1:-1]
-    b=None
-    if len(a)==2:
-        if a=='\a':
-            b=7
-        elif a=='\b':
-            b=8
-        elif a=='\f':
-            b=12
-        elif a=='\n':
-            b=10
-        elif a=='\r':
-            b=13
-        elif a=='\t':
-            b=9
-        elif a=='\v':
-            b=11
-        elif a=='\'':
-            b=39
-        elif a=='\"':
-            b=34
-        elif a=='\\':
-            b=92
-        elif a=='?':
-            b=63
-        elif a=='\0':
-            b=0
-        elif a=='\?':
-            b=63
+    a = p[1][1:-1]
+    b = None
+    if len(a) == 2:
+        if a == "\a":
+            b = 7
+        elif a == "\b":
+            b = 8
+        elif a == "\f":
+            b = 12
+        elif a == "\n":
+            b = 10
+        elif a == "\r":
+            b = 13
+        elif a == "\t":
+            b = 9
+        elif a == "\v":
+            b = 11
+        elif a == "'":
+            b = 39
+        elif a == '"':
+            b = 34
+        elif a == "\\":
+            b = 92
+        elif a == "?":
+            b = 63
+        elif a == "\0":
+            b = 0
+        elif a == "\?":
+            b = 63
         else:
-            ST.error(Error(p.lineno(1), 'rule_name','Lexical Error',"Invalid character constant"))
-        
-    elif len(a)==1:
-        b=ord(a)    
+            ST.error(
+                Error(
+                    p.lineno(1),
+                    "rule_name",
+                    "Lexical Error",
+                    "Invalid character constant",
+                )
+            )
+
+    elif len(a) == 1:
+        if a == "\\":
+            ST.error(
+                Error(
+                    p.lineno(1),
+                    "rule_name",
+                    "Lexical Error",
+                    "Invalid character constant",
+                )
+            )
+        b = ord(a)
     else:
-        ST.error(Error(p.lineno(1), 'rule_name','Lexical Error',"Invalid character constant"))
-        
+        ST.error(
+            Error(
+                p.lineno(1), "rule_name", "Lexical Error", "Invalid character constant"
+            )
+        )
+
+    p[0] = Node(
+        name="Constant",
+        val=str(b),
+        lno=p.lineno(1),
+        type="int",
+        children=[],
+        place=str(b),
+        code="",
+        lhs=1,
+    )
+    rule_name = "char_constant"
+    p[0].ast = build_AST(p, rule_name)
+     
     
     p[0] = Node(
         name="Constant",
