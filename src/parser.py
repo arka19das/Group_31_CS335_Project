@@ -34,7 +34,7 @@ def is_const(p):
 def cal_offset(p):
     # if (isinstance(p, Node) and p.place.startswith("__tmp")) or (isinstance(p, str)):
     #     return ""
-    if isinstance(p, str):
+    if isinstance(p, str) or is_const(p.place):
         return ""
     
     if p.in_whose_scope == "#global":
@@ -3637,7 +3637,6 @@ def p_if_M1(p):
     label1 = ST.get_tmp_label()
     label2 = ST.get_tmp_label()
     offset_string = cal_offset(p[-2])
-    print(p[-2])
     code_gen.append(["beq", p[-2].place, "0", label1])
     activation_record.append(["beq", p[-2].place+offset_string, "0", label1])
     p[0] = [label1, label2]
@@ -3836,10 +3835,12 @@ def p_do_M2(p):
 
 def p_do_M3(p):
     """do_M3 :"""
+
+    offset_string = cal_offset(p[-2])
     code_gen.append(["beq", p[-2].place, "0", p[-7][2]])
     code_gen.append(["goto", "", "", p[-7][0]])  ## non useful
     code_gen.append(["label", p[-7][2], ":", ""])  ## non useful
-    activation_record.append(["beq", p[-2].place, "0", p[-7][2]])
+    activation_record.append(["beq", p[-2].place+offset_string, "0", p[-7][2]])
     activation_record.append(["goto", "", "", p[-7][0]])  ## non useful
     activation_record.append(["label", p[-7][2], ":", ""])  ## non useful
 
@@ -3863,8 +3864,9 @@ def p_FM1(p):
 
 def p_FM2(p):
     """FM2 :"""
+    offset_string = cal_offset(p[-2])
     code_gen.append(["beq", p[-2].place, "0", p[-3][1]])
-    activation_record.append(["beq", p[-2].place, "0", p[-3][1]])
+    activation_record.append(["beq", p[-2].place+offset_string, "0", p[-3][1]])
 
 
 def p_FM8(p):
@@ -3880,10 +3882,11 @@ def p_FM8(p):
 
 def p_FM4(p):
     """FM4 :"""
+    offset_string = cal_offset(p[-2])
     code_gen.append(["beq", p[-2].place, "0", p[-3][1]])
     code_gen.append(["goto", "", "", p[-3][2]])
     code_gen.append(["label", p[-3][3], ":", ""])
-    activation_record.append(["beq", p[-2].place, "0", p[-3][1]])
+    activation_record.append(["beq", p[-2].place+offset_string, "0", p[-3][1]])
     activation_record.append(["goto", "", "", p[-3][2]])
     activation_record.append(["label", p[-3][3], ":", ""])
 
@@ -4061,6 +4064,7 @@ def p_jump_statemen_2(p):
         activation_record.append(["return0", "", "", ""])
 
     else:
+        offset_string = cal_offset(p[2])
         if p[2].type != "" and ST.curFuncReturnType != p[2].type:
             ST.error(
                 Error(
@@ -4073,7 +4077,7 @@ def p_jump_statemen_2(p):
 
         code_gen.append([f"return{get_data_type_size(p[2].type)}", p[2].place, "", ""])
         activation_record.append(
-            [f"return{get_data_type_size(p[2].type)}", p[2].place, "", ""]
+            [f"return{get_data_type_size(p[2].type)}", p[2].place+offset_string, "", ""]
         )
 
 
@@ -4157,6 +4161,7 @@ def p_funcmark1(p):
     # ST.scope_tables[ST.currentScope].in_whose_scope = ST.currentScope
     # print(p[-1])
 
+    ##Yha bhi offset krna hai -- Akshay ?
     code_gen.append(["funcstart", p[-1].val, "", ""])
     activation_record.append(["funcstart", p[-1].val, "", ""])
 
