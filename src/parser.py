@@ -878,10 +878,11 @@ def p_postfix_expression_3(p):
                 )
                 return
             else:
-                i = 0
+                i = len(p1v_node.argument_list)-1
                 temp_act = []
                 temp_3ac = []
-                for arguments in p1v_node.argument_list:
+                func_offset = 0
+                for arguments in reversed(p1v_node.argument_list):
                     # HAVE TO THINK
                     # MODIFIED
                     # curVal = p[3].children[i].val
@@ -896,7 +897,8 @@ def p_postfix_expression_3(p):
                     ST.curType.append(p[3].children[i].type)
                     # according to akshay TODO
                     offset_string = cal_offset(p[3].children[i])
-                    
+                    tmp_var, tmp_offset_string = ST.get_tmp_var(arguments)
+                        
                     if ST.curType[-1].split()[-1] != arguments.split()[-1] and p[3].children[i].type.upper() in PRIMITIVE_TYPES and arguments.upper() in PRIMITIVE_TYPES:
                         ST.error(
                             Error( 
@@ -906,7 +908,6 @@ def p_postfix_expression_3(p):
                                 f"Type mismatch in argument {i+1} of function call. Expected: {arguments}, Received: {ST.curType[-1]}",
                             )
                         )
-                        tmp_var, tmp_offset_string = ST.get_tmp_var(arguments)
                         code_gen.append([f"{ST.curType[-1]}2{arguments}", tmp_var, p[3].children[i].val, " "])
                         activation_record.append(
                             [f"{ST.curType[-1]}2{arguments}", tmp_var+tmp_offset_string, p[3].children[i].val+offset_string, " "]
@@ -935,17 +936,16 @@ def p_postfix_expression_3(p):
                         return 
                     
                     else:
-                        tmp_var, tmp_offset_string = ST.get_tmp_var(arguments)
                         code_gen.append([f"{arguments}=",tmp_var, p[3].children[i].val, ""])
                         activation_record.append([f'{arguments}=',tmp_var+tmp_offset_string, p[3].children[i].val+offset_string, ""])
 
-                    temp_3ac.append([f"param{p[1].val}", p[3].children[i].val, " ", " "])
+                    temp_3ac.append([f"param{p[1].val}", tmp_var, " ", " "])
                     temp_act.append(
-                        [f"param{p[1].val}", p[3].children[i].val+offset_string, " ", " "]
+                        [f"param{p[1].val}", tmp_var+f"-{func_offset}($fp)", " ", " "]
                     )
-                    
-                    i += 1
-                
+                    func_offset+=get_data_type_size(arguments)
+                    i -= 1
+               
                 for t3ac, tact in zip(temp_3ac,temp_act):
                     code_gen.append(t3ac)
                     activation_record.append(tact)
