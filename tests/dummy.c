@@ -1,19 +1,18 @@
-struct p{
+int foo(int x){
     int a;
-};
-struct q{
-    int a;
-};
-
-int foo(struct p x){
+    float b;
+    if(a>b){
+        double c[10];
+    }
+    else{
+        double c[100];
+    }
     return 0;
 }
 
-
 int main(){
-    struct p a;
-    struct q s;
-
-    foo(s);
+    int e=2.0;
+    int;
+    foo(e);
     return 0;
 }
