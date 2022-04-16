@@ -141,6 +141,7 @@ ops_type = {
     "~": TYPE_INTEGER,
     "^": TYPE_INTEGER,
 }
+
 TMP_VAR_COUNTER = 0
 TMP_LABEL_COUNTER = 0
 TMP_CLOSURE_COUNTER = 0
@@ -312,6 +313,7 @@ class SymbolTable:
         global offsets
         TMP_VAR_COUNTER += 1
         vname = f"__tmp_var_{TMP_VAR_COUNTER}"
+        tmp_offset_string = ""
         if vartype is not None:
             scope = self.currentScope
             scope_table = self.scope_tables[scope]
@@ -332,7 +334,8 @@ class SymbolTable:
             # symTab.insert(
             #     {"name": vname, "type": vartype, "is_array": False, "dimensions": []}
             # )
-        return vname
+            tmp_offset_string = f"_-{offsets[scope]}($fp)"
+        return vname, tmp_offset_string
 
     def get_tmp_closure(self, rettype: str, argtypes: list = []) -> str:
         global TMP_CLOSURE_COUNTER
@@ -368,7 +371,7 @@ def type_util(op1: Node, op2: Node, op: str):
     # TODO: code_gen for type_conversion implicit
     rule_name = "type_util"
 
-    tmp_var = ST.get_tmp_var()
+    tmp_var, tmp_offset_string = ST.get_tmp_var()
     temp = Node(
         name=op + "Operation",
         val=tmp_var,
@@ -379,6 +382,7 @@ def type_util(op1: Node, op2: Node, op: str):
         lhs=1,
     )
 
+    #Where are we using it @Martha ?
     if op1.type == "" or op2.type == "":
         temp.type = "int"  # default
         return temp
@@ -513,38 +517,39 @@ def type_util(op1: Node, op2: Node, op: str):
                 )
             )
 
-        size1 = SIZE_OF_TYPE[tp1]
-        size2 = SIZE_OF_TYPE[tp2]
-        if size1 > size2:
-            ST.error(
-                Error(
-                    -1,
-                    rule_name,
-                    "warning",
-                    f"Implicit type casting of {op2.val}",
-                )
-            )
-            temp.type = op1.type
-
-        elif size2 > size1:
-            ST.error(
-                Error(
-                    -1,
-                    rule_name,
-                    "warning",
-                    f"Implicit type casting of {op1.val}",
-                )
-            )
-            temp.type = op2.type
         else:
-            if tp1 == "FLOAT" or tp2 == "FLOAT":
-                temp.type = "float"
-            elif tp1 == "DOUBLE" or tp2 == "DOUBLE":
-                temp.type = "float"
-            elif top1.startswith("unsigned"):
+            size1 = SIZE_OF_TYPE[tp1]
+            size2 = SIZE_OF_TYPE[tp2]
+            if size1 > size2:
+                ST.error(
+                    Error(
+                        -1,
+                        rule_name,
+                        "warning",
+                        f"Implicit type casting of {op2.val}",
+                    )
+                )
                 temp.type = op1.type
-            else:
+
+            elif size2 > size1:
+                ST.error(
+                    Error(
+                        -1,
+                        rule_name,
+                        "warning",
+                        f"Implicit type casting of {op1.val}",
+                    )
+                )
                 temp.type = op2.type
+            else:
+                if tp1 == "FLOAT" or tp2 == "FLOAT":
+                    temp.type = "float"
+                elif tp1 == "DOUBLE" or tp2 == "DOUBLE":
+                    temp.type = "float"
+                elif top1.startswith("unsigned"):
+                    temp.type = op1.type
+                else:
+                    temp.type = op2.type
 
     if temp.type == "char":
         temp.type = "int"
