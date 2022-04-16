@@ -1,4 +1,8 @@
-int foo(int x){
+struct p{
+    int a;
+    struct p* next;
+}
+int foo(int x, float y, struct p q){
     int a;
     float b;
     if(a>b){
@@ -13,6 +17,7 @@ int foo(int x){
 int main(){
     int e=2.0;
     int;
-    foo(e);
+    struct p x;
+    foo(e, e, x);
     return 0;
 }

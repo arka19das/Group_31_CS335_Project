@@ -372,6 +372,7 @@ def type_util(op1: Node, op2: Node, op: str):
     rule_name = "type_util"
 
     tmp_var, tmp_offset_string = ST.get_tmp_var()
+    scope_table = ST.scope_tables[ST.currentScope].name
     temp = Node(
         name=op + "Operation",
         val=tmp_var,
@@ -380,6 +381,7 @@ def type_util(op1: Node, op2: Node, op: str):
         children=[],
         place=tmp_var,
         lhs=1,
+        in_whose_scope = scope_table
     )
 
     #Where are we using it @Martha ?
