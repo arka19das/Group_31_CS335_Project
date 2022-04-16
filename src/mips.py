@@ -20,7 +20,7 @@ TYPE_INTEGER = [
     "char", "unsigned char", "short", "unsigned short", "int", "unsigned int", "long", "unsigned long"
 ]
 
-#TYPE_LONG = []
+TYPE_FLOAT = ["float","double"]
 
 BIN_BIT_OP = ["&","|","<<",">>","^"]
 
@@ -30,7 +30,7 @@ STORE_INSTRUCTIONS = {
     "short": "SH",
     "void": "SW",
     "long": "SD",
-    "float": "SD",
+    "float": "SWC1",
     "double": "SDC1",
     "unsigned char": "SW",
     "unsigned int": "SW",
@@ -268,9 +268,10 @@ Binary_ops = {
     # DOUBLE, FLOAT, NOT HANDLED WITH NEW OPERATORS
     #<=, >, >=,!= pata nahi kya karenge
     "double+": ["ADD.D", 8],
-    "double-": ["SUB.D", 8],
+    "double-": ["SUB.D", 8],   
     "double*": ["MUL.D", 8],
     "double/": ["DIV.D", 8],
+    
     "double<=": ["SLE", 8],
     "double<": ["C.LT.D", 8],
     "double>=": ["SGE", 8],
@@ -283,6 +284,7 @@ Binary_ops = {
     "float-": ["SUB.D", 4],
     "float*": ["MUL.D", 4],
     "float/": ["DIV.D", 4],
+    
     "float<=": ["SLE", 4],
     "float<": ["C.LT.D", 4],
     "float>=": ["SGE", 4],
@@ -294,7 +296,7 @@ Binary_ops = {
 }
 
 #Handled type_int
-#TODO float and double
+#TODO Type_float ,relational operators
 def binary_exp_mips(binexp, reg1, a1, reg2, a2, reg3, a3):
     mips = []
     type = ""
@@ -359,6 +361,10 @@ def binary_exp_mips(binexp, reg1, a1, reg2, a2, reg3, a3):
     elif op == "!" and type in TYPE_INTEGER:
         op = Binary_ops[binexp][0]
         mips.append([op,reg1,reg1,"1"])
+    #only 2 registers case, constants case not handled
+    elif (op =="+" or op == "-" or op == "/" or op =="*") and type in TYPE_FLOAT :        
+        op = Binary_ops[binexp][0]
+        mips.append([op,reg1,reg2,reg3])    
     mips.append(store_reg(reg1, a1, type))
     return mips
          
@@ -387,7 +393,8 @@ def load_reg(reg,addr,type):
             return mips      
     mips = [instr, reg, addr]
     return mips
-
+# arr=binary_exp_mips("double*" ,'reg1',	'__tmp_var_3_sp',	'reg2', 'a_sp'	, 'reg3', 'b_sp')
+# print(arr)
 # for i in Binary_ops.keys():
 #     if i.startswith("float") or i.startswith('double'):
 #         continue
