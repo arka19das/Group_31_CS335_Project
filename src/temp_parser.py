@@ -31,6 +31,9 @@ def is_const(p):
         return True
     return False
 
+def array_init():
+    pass
+
 def cal_offset(p):
     # if (isinstance(p, Node) and p.place.startswith("__tmp")) or (isinstance(p, str)):
     #     return ""
@@ -939,13 +942,13 @@ def p_postfix_expression_3(p):
                         code_gen.append([f"{arguments}=",tmp_var, p[3].children[i].val, ""])
                         activation_record.append([f'{arguments}=',tmp_var+tmp_offset_string, p[3].children[i].val+offset_string, ""])
 
-                    temp_3ac.append([f"param", p[1].val, tmp_var, " ",])
+                    temp_3ac.append([f"param{p[1].val}", tmp_var, " ", " "])
                     temp_act.append(
-                        [f"param", p[1].val, tmp_var+f"-{func_offset}($fp)", " "]
+                        [f"param{p[1].val}", tmp_var+f"-{func_offset}($fp)", " ", " "]
                     )
                     func_offset+=get_data_type_size(arguments)
                     i -= 1
-               
+
                 for t3ac, tact in zip(temp_3ac,temp_act):
                     code_gen.append(t3ac)
                     activation_record.append(tact)
@@ -955,8 +958,6 @@ def p_postfix_expression_3(p):
                     if scope_table.name == p[1].val:
                         for node in scope_table.nodes:
                             func_size+=node.size
-                            if node.offset == -1:
-                                node.offset = func_size 
 
                 code_gen.append([f"call_{func_size}", p[1].val, "", ""])
                 activation_record.append([f"call_{func_size}", p[1].val, "", f"__{p[1].val}"])
@@ -2708,6 +2709,10 @@ def p_init_declarator(p):
         # p[0].ast = p[1].ast
         p[0].ast = build_AST(p, rule_name)
     else:
+        print(p[3].children)
+        # for node in p[3].children:
+        #     for node_child in node:
+        #         print(node_child)
         p[0] = Node(
             name="InitDeclarator",
             val="",
@@ -3365,43 +3370,75 @@ def p_direct_abstract_declarator_2(p):
     p[0].ast = build_AST(p, rule_name)
 
 
+# def p_initializer(p):
+#     """initializer : assignment_expression"""
+#     # | LEFT_CURLY_BRACKET initializer_list RIGHT_CURLY_BRACKET
+#     # | LEFT_CURLY_BRACKET initializer_list COMMA RIGHT_CURLY_BRACKET
+
+#     rule_name = "initializer"
+#     # if len(p) == 2:
+#     p[0] = p[1]
+#     # print(p[0].type)
+#     p[0].ast = build_AST(p, rule_name)
+#     # else:
+#     #     p[0] = p[2]
+#     #     p[0].is_array = True
+
+#     p[0].name = "Initializer"
+#     # if len(p) == 4:
+#     #     p[0].max_depth = p[2].max_depth + 1
+#     #     p[0].ast = build_AST(p, rule_name)
+#     # elif len(p) == 5:
+#     #     p[0].ast = build_AST(p, rule_name)
+
 def p_initializer(p):
-    """initializer : assignment_expression"""
-    # | LEFT_CURLY_BRACKET initializer_list RIGHT_CURLY_BRACKET
-    # | LEFT_CURLY_BRACKET initializer_list COMMA RIGHT_CURLY_BRACKET
-
-    rule_name = "initializer"
-    # if len(p) == 2:
-    p[0] = p[1]
-    # print(p[0].type)
-    p[0].ast = build_AST(p, rule_name)
-    # else:
-    #     p[0] = p[2]
-    #     p[0].is_array = True
-
-    p[0].name = "Initializer"
-    # if len(p) == 4:
-    #     p[0].max_depth = p[2].max_depth + 1
-    #     p[0].ast = build_AST(p, rule_name)
-    # elif len(p) == 5:
-    #     p[0].ast = build_AST(p, rule_name)
+    """initializer : assignment_expression
+    | LEFT_CURLY_BRACKET initializer_list RIGHT_CURLY_BRACKET
+    """
+    
+    if(len(p) == 2):
+      p[0] = p[1]
+      p[0].ast = build_AST(p,"INi")
+    else:
+        # for node in p[2].children:
+        #     print(node)
+        p[0] = Node(name = 'Initializer', val = '', type = '', lno = p[2].lno, children = [])
+        if p[2].is_array or not p[2].name.startswith('Initial'):
+            p[0].children = [[node.val for node in p[2].children]]
+            print(p[0].children)
+            
+        else:
+            p[0] = p[2]
+            p[0].children = [node.val for node in p[2].children]
+            # print(p[0].children)
+        p[0].name = 'Initializer'
+        p[0].is_array = True
+    if(len(p) == 4):
+      p[0].max_depth = p[2].max_depth + 1
+      p[0].ast = build_AST(p,"INi")
+    elif(len(p) == 5):
+      p[0].ast = build_AST(p,"INi")
 
 
 def p_initializer_list(p):
     """initializer_list : initializer
     | initializer_list COMMA initializer
     """
-    rule_name = "initializer_list"
-    p[0] = Node(
-        name="InitializerList",
-        val="",
-        type="",
-        children=[p[1]],
-        lno=p.lineno(1),
-        max_depth=p[1].max_depth,
-    )
-    p[0].ast = build_AST(p, rule_name)
-    if len(p) == 3:
+    if len(p)==2:
+        p[0]=p[1]
+        p[0].ast = build_AST(p,"INi")
+    else:
+        rule_name = "initializer_list"
+        p[0] = Node(
+            name="InitializerList",
+            val="",
+            type="",
+            children=[],
+            lno=p.lineno(1),
+            max_depth=p[1].max_depth,
+        )
+        p[0].ast = build_AST(p, rule_name)
+        
         if p[1].name != "InitializerList":
             p[0].children.append(p[1])
         else:

@@ -177,6 +177,7 @@ class Node:
     scope: int = 0
     array: List[int] = field(default_factory=list)
     max_depth: int = 0
+    is_array:bool = False
     is_func: int = 0
     parentStruct: str = ""
     argument_list: Union[None, List[Any]] = None
@@ -664,10 +665,16 @@ def dump_symbol_table_csv(verbose: bool = False):
                 writer.writerow(node.to_dict(True))
 
 
-node1 = Node(name="printf", type="int", val="", is_func=1, lno=-1)
-node2 = Node(name="scanf", type="int", val="", is_func=1, lno=-1)
+node1 = Node(name="printf", type="int", val="", is_func=1, argument_list = ["int"], lno=-1, in_whose_scope="#global")
+node2 = Node(name="scanf", type="int", val="", is_func=1, argument_list = ["int"], lno=-1, in_whose_scope="#global")
+node3 = Node(name="malloc", type="void *", val="", is_func=1, argument_list = ["int"], lno=-1, in_whose_scope="#global")
+node4 = Node(name="sqrt", type="float", val="", is_func=1, argument_list = ["int"], lno=-1, in_whose_scope="#global")
+node5 = Node(name="pow", type="float", val="", is_func=1, argument_list = ["int"], lno=-1, in_whose_scope="#global")
+node6 = Node(name="abs", type="float", val="", is_func=1, argument_list = ["int"], lno=-1, in_whose_scope="#global")
+node7 = Node(name="NULL", type="void *", val="0", lno=-1, in_whose_scope="#global")
 
-pre_append_array = [node1, node2]
+
+pre_append_array = [node1, node2, node3, node4, node5, node6, node7]
 
 
 def pre_append_to_table():

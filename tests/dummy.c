@@ -1,23 +1,16 @@
-struct p{
-    int a;
-    struct p* next;
-}
-int foo(int x, float y, struct p q){
-    int a;
-    float b;
-    if(a>b){
-        double c[10];
-    }
-    else{
-        double c[100];
-    }
+int foo(int a, int b){
     return 0;
 }
 
 int main(){
-    int e=2.0;
-    int;
-    struct p x;
-    foo(e, e, x);
-    return 0;
+    
+    int a;
+    foo(a, a);
+    // int arr[1][2] = {{1,2},{2,3}}; 
+    // int *p;
+    // float q;
+    
+    // p = (int*)malloc(sizeof(int)*5);
+    // q=sqrt(q);
+    // return 0;
 }
