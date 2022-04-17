@@ -495,6 +495,18 @@ def assign_op(atype,reg,laddr,raddr):
         mips.append(store_reg(reg, laddr, type))
         return mips
 
+#int= a tmp_var *
+def assign_op_ptr(atype,reg1,laddr,reg2,raddr):
+    mips = []
+    type = atype[:-1]
+    load_instr = LOAD_INSTRUCTIONS[type]
+    mips.append([load_instr,reg2,raddr])
+    mips.append(["LD",reg1,laddr])
+    mips.append(["SD",reg2,f"0({reg1})"])
+    return mips
+
+#TODO int*=
+
 
 
 #print(assign_op("unsigned long=","reg1","b_addr","a_addr"))
