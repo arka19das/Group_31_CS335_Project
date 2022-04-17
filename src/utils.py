@@ -676,7 +676,6 @@ node7 = Node(name="NULL", type="void *", val="0", lno=-1, in_whose_scope="#globa
 
 pre_append_array = [node1, node2, node3, node4, node5, node6, node7]
 
-
 def pre_append_to_table():
     for node in pre_append_array:
         ST.scope_tables[0].insert(node)

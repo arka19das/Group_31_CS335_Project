@@ -941,9 +941,14 @@ def p_postfix_expression_3(p):
 
                     temp_3ac.append([f"param", p[1].val, tmp_var, " ",])
                     temp_act.append(
-                        [f"param", p[1].val, tmp_var+f"-{func_offset}($fp)", " "]
+                        [f"param", p[1].val, tmp_var+f"_{func_offset}($fp)", " "]
                     )
-                    func_offset+=get_data_type_size(arguments)
+                    if p[1].type.upper() in PRIMITIVE_TYPES or p[1].type.endswith('*'):
+                        func_offset+=8
+                    else:
+                        t = get_data_type_size(arguments)
+                        t += (8 - t % 8) % 8
+                        func_offset+=t
                     i -= 1
                
                 for t3ac, tact in zip(temp_3ac,temp_act):
@@ -951,13 +956,15 @@ def p_postfix_expression_3(p):
                     activation_record.append(tact)
                 
                 func_size=0
+                offset_update=0
                 for scope_table in ST.scope_tables:
                     if scope_table.name == p[1].val:
                         for node in scope_table.nodes:
                             func_size+=node.size
                             if node.offset == -1:
-                                node.offset = func_size 
-
+                                node.offset = func_offset-offset_update
+                                func_offset+=node.size 
+                                
                 code_gen.append([f"call_{func_size}", p[1].val, "", ""])
                 activation_record.append([f"call_{func_size}", p[1].val, "", f"__{p[1].val}"])
                     
@@ -3146,7 +3153,7 @@ def p_pointer(p):
     """
     rule_name = "pointer"
     if len(p) == 2:
-        p[0] = Node(name="Pointer", val="", type="*", lno=p.lineno(1), children=[])
+        p[0] = Node(name="Pointer", val="", type=" *", lno=p.lineno(1), children=[])
         p[0].ast = build_AST(p, rule_name)
     elif len(p) == 3:
         p[0] = Node(
@@ -3289,9 +3296,12 @@ def p_type_name(p):
     """
     rule_name = "type_name"
     if len(p) == 2:
+        p[1].type=TYPE_EASY[p[1].type.upper()].lower()
         p[0] = p[1]
         p[0].name = "TypeName"
     else:
+        p[1].type=TYPE_EASY[p[1].type.upper()].lower()
+
         p[0] = Node(name="TypeName", val="", type=p[1].type, lno=p[1].lno, children=[])
         if p[2].type.endswith("*"):
             p[0].type = p[0].type + " *" * (p[2].type.count("*"))
@@ -3756,7 +3766,7 @@ def p_Switch_M3(p):
             )
         )
     tmp_var = p[-4].place
-    offset_string = cal_offset(p[-4].place)
+    offset_string = cal_offset(p[-4])
     tmp_offset_string = offset_string
 
     if p[-4].type[-4:] == "char":
@@ -3778,6 +3788,8 @@ def p_Switch_M3(p):
 
             ## TODO: difference when p[-4] is long or unsigned long
             # if p[-4].type=="unsigned long" or p[-4].type=="long":
+            
+            ##IS offset needed here ?
             offset_string = cal_offset(p[-1].label[i])
             code_gen.append(["beq", tmp_var, case, p[-1].label[i]])
             activation_record.append(
