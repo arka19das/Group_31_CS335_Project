@@ -14,8 +14,7 @@ def is_int(x):
     except: 
      return False
         
-       
-#TODO float constant
+#print(is_int("140"))        
 
 LABEL_COUNTER = 0
 def get_mips_label() -> str:
@@ -273,8 +272,6 @@ Binary_ops = {
 
 
 
-    # DOUBLE, FLOAT, NOT HANDLED WITH NEW OPERATORS
-    #<=, >, >=,!= pata nahi kya karenge
     "double+": ["ADD.D", 8],
     "double-": ["SUB.D", 8],   
     "double*": ["MUL.D", 8],
@@ -287,7 +284,7 @@ Binary_ops = {
     "double==": ["C.EQ.D", 8],
     "double!=": ["C.EQ.D", 8],
 
-    #<=, >, >=,!= pata nahi kya karenge
+    #FLOAT
     "float+": ["ADD.D", 4],
     "float-": ["SUB.D", 4],
     "float*": ["MUL.D", 4],
@@ -303,6 +300,8 @@ Binary_ops = {
 
 }
 
+#Handled type_int
+#TODO Type_float ,relational operators
 def binary_exp_mips(binexp, reg1, a1, reg2, a2, reg3, a3):
     mips = []
     type = ""
@@ -441,7 +440,21 @@ def binary_exp_mips(binexp, reg1, a1, reg2, a2, reg3, a3):
 
     mips.append(store_reg(reg1, a1, type))
     return mips
-         
+
+def LI(reg,const,type):
+    if type == "int" or type == "char" or type == "short":
+            mips = ["ADDI", reg, "$0", const]
+            return mips
+    elif type == "long":
+            mips = ["DADDI",reg,"$0",const]
+            return mips
+    elif type == "unsigned int" or type == "unsigned char" or type =="unsigned short":
+            mips = ["ADDIU",reg,"$0",const]
+            return mips
+    elif type == "unsigned long":
+            mips = ["DADDIU",reg,"$0",const]
+            return mips
+
 
 def store_reg(reg,addr,type):
     #mips = []
@@ -467,8 +480,28 @@ def load_reg(reg,addr,type):
             return mips      
     mips = [instr, reg, addr]
     return mips
-arr=binary_exp_mips("double<" ,'reg1',	'__tmp_var_3_sp',	'reg2', 'a_sp'	, 'reg3', 'b_sp')
-print(arr)
+
+#Integer constants and variables only
+#int a = 1; int b=a;
+def assign_op(atype,reg,laddr,raddr):
+    mips = []
+    type = atype[:-1]
+    if(is_int(raddr)):
+        mips.append(LI(reg,raddr,type))
+        mips.append(store_reg(reg,laddr,type))
+        return mips
+    else:
+        mips.append(load_reg(reg,raddr,type))
+        mips.append(store_reg(reg, laddr, type))
+        return mips
+
+
+
+#print(assign_op("unsigned long=","reg1","b_addr","a_addr"))
+
+ 
+# arr=binary_exp_mips("double<" ,'reg1',	'__tmp_var_3_sp',	'reg2', 'a_sp'	, 'reg3', 'b_sp')
+# print(arr)
 # for i in Binary_ops.keys():
 #     if i.startswith("float") or i.startswith('double'):
 #         continue
