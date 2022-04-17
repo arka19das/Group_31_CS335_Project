@@ -1,4 +1,34 @@
 
+def mips_generation(code_gen):
+    for line in code_gen:
+        s = code_gen[0]
+        operators = (
+            "<",
+            ">",
+            "<=",
+            ">=",
+            "!=",
+            "==",
+            "+",
+            "-",
+            "*",
+            "/",
+            "%",
+            "&&",
+            "||",
+            "!",
+            "&",
+            "|",
+            "^",
+            "<<",
+            ">>",
+        )
+        if s.endswith(operators):
+            # TODO:for pointers and arrays convert to long instead of float *
+            binary_exp_mips(s, "t0", code_gen[1], "t1", code_gen[2], "t2", code_gen[3])
+        if s.endswith("="):
+            assign_op(s, "t0", code_gen[1], code_gen[2])
+
 def data_section():
     print(".data")
 
