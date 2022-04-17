@@ -961,9 +961,9 @@ def p_postfix_expression_3(p):
                     if scope_table.name == p[1].val:
                         for node in scope_table.nodes:
                             func_size+=node.size
-                            if node.offset == -1:
-                                node.offset = func_offset-offset_update
-                                func_offset+=node.size 
+                            # if node.offset == -1:
+                            #     node.offset = func_offset-offset_update
+                            #     func_offset+=node.size 
                                 
                 code_gen.append([f"call_{func_size}", p[1].val, "", ""])
                 activation_record.append([f"call_{func_size}", p[1].val, "", f"__{p[1].val}"])
@@ -1589,7 +1589,6 @@ def p_additive_expression(p):
             offset_string3 = cal_offset(p[3])
             tmp_offset_string1 = offset_string1
             tmp_offset_string3 = offset_string3
-            
             if p[1].type != p[0].type:
                 tmp_var1, tmp_offset_string1 = ST.get_tmp_var(p[0].type)
                 code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
@@ -3019,7 +3018,6 @@ def p_declarator_1(p):
     rule_name = "declarator_1"
     if len(p) == 2:
         p[0] = p[1]
-
         p[0].name = "Declarator"
         p[0].ast = build_AST(p, rule_name)
 
@@ -3206,13 +3204,18 @@ def p_parameter_list(p):
     p[0] = Node(name="ParameterList", val="", type="", children=[], lno=p.lineno(1))
     if len(p) == 2:
         p[0].ast = build_AST(p, rule_name)
+        node = ST.find(p[1].val)
+        node.offset=0
+        p[1].offset=0
         p[0].children.append(p[1])
     else:
         p[0].ast = build_AST(p, rule_name)
         p[0].children = p[1].children
+        node = ST.find(p[3].val)
+        node.offset=p[1].children[-1].offset+get_data_type_size(p[1].children[-1].type)
+        p[3].offset=node.offset
         p[0].children.append(p[3])
-
-
+    
 def p_parameter_declaration(p):
     """parameter_declaration : declaration_specifiers declarator
     | declaration_specifiers abstract_declarator
@@ -3249,7 +3252,6 @@ def p_parameter_declaration(p):
                     f"Parameter {p[2].val} already declared",
                 )
             )
-
         node = Node(name=p[2].val, type=p[1].type)
         ST.current_table.insert(node)
         if len(p[2].type) > 0:
@@ -3622,7 +3624,6 @@ def p_statement_list(p):
     rule_name = "statement_list"
     if len(p) == 2:
         p[0] = p[1]
-
         p[0].ast = build_AST(p, rule_name)
     else:
 
@@ -3635,7 +3636,6 @@ def p_statement_list(p):
         p[0].children.append(p[2])
         p[0].label = p[1].label + p[2].label
         p[0].expr = p[1].expr + p[2].expr
-
 
 def p_expression_statement(p):
     """expression_statement : SEMICOLON
