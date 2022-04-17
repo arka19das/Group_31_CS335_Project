@@ -14,13 +14,21 @@ def is_int(x):
     except: 
      return False
         
-#print(is_int("140"))        
+       
+#TODO float constant
+
+LABEL_COUNTER = 0
+def get_mips_label() -> str:
+        global LABEL_COUNTER
+        LABEL_COUNTER += 1
+        # return f"__tmp_label_{TMP_LABEL_COUNTER}"
+        return f"__labelm_{LABEL_COUNTER}"
 
 TYPE_INTEGER = [
     "char", "unsigned char", "short", "unsigned short", "int", "unsigned int", "long", "unsigned long"
 ]
 
-#TYPE_LONG = []
+TYPE_FLOAT = ["float","double"]
 
 BIN_BIT_OP = ["&","|","<<",">>","^"]
 
@@ -30,7 +38,7 @@ STORE_INSTRUCTIONS = {
     "short": "SH",
     "void": "SW",
     "long": "SD",
-    "float": "SD",
+    "float": "SWC1",
     "double": "SDC1",
     "unsigned char": "SW",
     "unsigned int": "SW",
@@ -268,33 +276,33 @@ Binary_ops = {
     # DOUBLE, FLOAT, NOT HANDLED WITH NEW OPERATORS
     #<=, >, >=,!= pata nahi kya karenge
     "double+": ["ADD.D", 8],
-    "double-": ["SUB.D", 8],
+    "double-": ["SUB.D", 8],   
     "double*": ["MUL.D", 8],
     "double/": ["DIV.D", 8],
-    "double<=": ["SLE", 8],
+    
+    "double<=": ["C.LT.D", 8],
     "double<": ["C.LT.D", 8],
-    "double>=": ["SGE", 8],
-    "double>": ["SLT", 8],
+    "double>=": ["C.LT.D", 8],
+    "double>": ["C.LT.D", 8],
     "double==": ["C.EQ.D", 8],
-    "double!=": ["SNE", 8],
+    "double!=": ["C.EQ.D", 8],
 
     #<=, >, >=,!= pata nahi kya karenge
     "float+": ["ADD.D", 4],
     "float-": ["SUB.D", 4],
     "float*": ["MUL.D", 4],
     "float/": ["DIV.D", 4],
-    "float<=": ["SLE", 4],
+    
+    "float<=": ["C.LT.D", 4],
     "float<": ["C.LT.D", 4],
-    "float>=": ["SGE", 4],
-    "float>": ["SLT", 4],
+    "float>=": ["C.LT.D", 4],
+    "float>": ["C.LT.D", 4],
     "float==": ["C.EQ.D", 4],
-    "float!=": ["SNE", 4],
+    "float!=": ["C.EQ.D", 4],
     
 
 }
 
-#Handled type_int
-#TODO float and double
 def binary_exp_mips(binexp, reg1, a1, reg2, a2, reg3, a3):
     mips = []
     type = ""
@@ -304,6 +312,7 @@ def binary_exp_mips(binexp, reg1, a1, reg2, a2, reg3, a3):
             type += i
         else:
             op+= i
+    print(type,op)        
     # mips.append(load_reg(reg1, a1, type))
     mips.append(load_reg(reg2, a2, type))
     mips.append(load_reg(reg3, a3, type))        
@@ -359,6 +368,77 @@ def binary_exp_mips(binexp, reg1, a1, reg2, a2, reg3, a3):
     elif op == "!" and type in TYPE_INTEGER:
         op = Binary_ops[binexp][0]
         mips.append([op,reg1,reg1,"1"])
+    #only 2 registers case, constants case not handled
+    elif (op =="+" or op == "-" or op == "/" or op =="*") and type in TYPE_FLOAT :        
+        op = Binary_ops[binexp][0]
+        mips.append([op,reg1,reg2,reg3])  
+    elif op == "<" and type in TYPE_FLOAT:
+        op = Binary_ops[binexp][0]
+        mips.append([op,"2",reg2,reg3])  
+        l0 = get_mips_label()
+        mips.append(["BC1F","2",l0])
+        mips.append(["ADDI", reg1, "$0", "1"])
+        l1 = get_mips_label()
+        mips.append(["J",l1])
+        mips.append([l0])
+        mips.append(["XOR", reg1, reg1, reg1])
+        mips.append([l1])
+    elif op == ">" and type in TYPE_FLOAT:
+        op = Binary_ops[binexp][0]
+        mips.append([op, "2", reg3, reg2])
+        l0 = get_mips_label()
+        mips.append(["BC1F", "2", l0])
+        mips.append(["ADDI", reg1, "$0", "1"])
+        l1 = get_mips_label()
+        mips.append(["J", l1])
+        mips.append([l0])
+        mips.append(["XOR", reg1, reg1, reg1])
+        mips.append([l1])
+    elif op == ">=" and type in TYPE_FLOAT:
+        op = Binary_ops[binexp][0]
+        mips.append([op, "2", reg2, reg3])
+        l0 = get_mips_label()
+        mips.append(["BC1F", "2", l0])
+        mips.append(["XOR", reg1, reg1, reg1])
+        l1 = get_mips_label()
+        mips.append(["J", l1])
+        mips.append([l0])
+        mips.append(["ADDI", reg1, "$0", "1"])
+        mips.append([l1])
+    elif op == "<=" and type in TYPE_FLOAT:
+        op = Binary_ops[binexp][0]
+        mips.append([op, "2", reg3, reg2])
+        l0 = get_mips_label()
+        mips.append(["BC1F", "2", l0])
+        mips.append(["XOR", reg1, reg1, reg1])
+        l1 = get_mips_label()
+        mips.append(["J", l1])
+        mips.append([l0])
+        mips.append(["ADDI", reg1, "$0", "1"])
+        mips.append([l1])
+    elif op == "!=" and type in TYPE_FLOAT:
+        op = Binary_ops[binexp][0]
+        mips.append([op, "7", reg2, reg3])
+        l0 = get_mips_label()
+        mips.append(["BC1F", "7", l0])
+        mips.append(["XOR", reg1, reg1, reg1])
+        l1 = get_mips_label()
+        mips.append(["J", l1])
+        mips.append([l0])
+        mips.append(["ADDI", reg1, "$0", "1"])
+        mips.append([l1])
+    elif op == "==" and type in TYPE_FLOAT:
+        op = Binary_ops[binexp][0]
+        mips.append([op, "7", reg2, reg3])
+        l0 = get_mips_label()
+        mips.append(["BC1F", "7", l0])
+        mips.append(["ADDI", reg1, "$0", "1"])
+        l1 = get_mips_label()
+        mips.append(["J", l1])
+        mips.append([l0])
+        mips.append(["XOR", reg1, reg1, reg1])
+        mips.append([l1])
+
     mips.append(store_reg(reg1, a1, type))
     return mips
          
@@ -387,7 +467,8 @@ def load_reg(reg,addr,type):
             return mips      
     mips = [instr, reg, addr]
     return mips
-
+arr=binary_exp_mips("double<" ,'reg1',	'__tmp_var_3_sp',	'reg2', 'a_sp'	, 'reg3', 'b_sp')
+print(arr)
 # for i in Binary_ops.keys():
 #     if i.startswith("float") or i.startswith('double'):
 #         continue
