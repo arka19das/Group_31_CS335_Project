@@ -553,6 +553,15 @@ def addr_load(reg1,addr1,offset_var):
     mips.append(["SD",reg1,addr1])
     return mips
 
+ #beq	__tmp_var_3	0	__label_1
+def beq_mips(type,reg,addr,label):
+    mips = []
+    load_instr = LOAD_INSTRUCTIONS[type]
+    mips.append([load_instr, reg, addr])
+    mips.append(["BEQ",reg,"$0",label])
+    return mips
+
+
 
 
 #print(assign_op("unsigned long=","reg1","b_addr","a_addr"))
