@@ -1,3 +1,6 @@
+from dis import code_info
+
+
 def data_section():
     print(".data")
 
@@ -510,50 +513,53 @@ def conversion(type1, addr1, type2, addr2):
         type1 = "long"
     if type2.endswith("*"):
         type2 = "long"
-    if type1 in TYPE_INTEGER + TYPE_CHAR:
+    if type1 in TYPE_INTEGER:
         mips.append(load_reg("t0", addr1, type1))
     elif type1 in TYPE_FLOAT:
         mips.append(load_reg("f2", addr1, type1))
 
     if (
         type1
-        in ("int", "short", "unsigned_short", "unsigned int", "char", "unsigned char")
+        in ("int", "short", "unsigned short", "unsigned int", "char", "unsigned char")
         and type2 in TYPE_FLOAT
     ):
         mips.append(["MTC1", "t0", "f2"])
         mips.append(["CVT.D.W", "f2", "f2"])
 
-    elif type1 in ("long", "unsigned_long") and type2 in TYPE_FLOAT:
+    elif type1 in ("long", "unsigned long") and type2 in TYPE_FLOAT:
         mips.append(["DMTC1", "t0", "f2"])
         mips.append(["CVT.D.L", "f2", "f2"])
 
     elif (
         type2
-        in ("int", "short", "unsigned_short", "unsigned int", "char", "unsigned char")
+        in ("int", "short", "unsigned short", "unsigned int", "char", "unsigned char")
         and type1 in TYPE_FLOAT
     ):
         mips.append(["CVT.W.D", "f2", "f2"])
         mips.append(["MFC1", "t0", "f2"])
-
-        pass
-    elif type2 in ("long", "unsigned_long") and type1 in TYPE_FLOAT:
+    elif type2 in ("long", "unsigned long") and type1 in TYPE_FLOAT:
         mips.append(["CVT.L.D", "f2", "f2"])
         mips.append(["DMFC1", "t0", "f2"])
+    elif (type1 in TYPE_FLOAT and type2 in TYPE_FLOAT) or (
+        type1 in TYPE_INTEGER and type2 in TYPE_INTEGER
+    ):
+        pass
 
     else:
         print(f"TYPECASTING NOT POSSIBLE {type1},{type2}")
 
-    if type2 in TYPE_INTEGER + TYPE_CHAR:
+    if type2 in TYPE_INTEGER:
         mips.append(store_reg("t0", addr2, type2))
     elif type2 in TYPE_FLOAT:
         mips.append(store_reg("f2", addr2, type2))
 
-    pass
+    return mips
 
 
-def mips_generation(code_gen):
-    for line in code_gen:
-        s = line[0]
+def mips_generation(full_code_gen):
+    mips_set = []
+    for code_gen in full_code_gen:
+        s = code_gen[0]
         operators = (
             "<",
             ">",
@@ -579,14 +585,22 @@ def mips_generation(code_gen):
             conversion_type = s.split("2")
             if "float" in conversion_type:
                 print("ERROR: float  conversion not supported")
+            else:
+                print(code_gen)
+                mips_set += conversion(
+                    conversion_type[0], code_gen[2], conversion_type[1], code_gen[1]
+                )
 
-            conversion(conversion_type[0], code_gen[2], conversion_type[1], code_gen[1])
         if s.endswith(operators):
 
             # TODO:for pointers and arrays convert to long instead of float *
-            binary_exp_mips(s, "t0", code_gen[1], "t1", code_gen[2], "t2", code_gen[3])
+            mips_set += binary_exp_mips(
+                s, "t0", code_gen[1], "t1", code_gen[2], "t2", code_gen[3]
+            )
+
         if s.endswith("="):
-            assign_op(s, "t0", code_gen[1], code_gen[2])
+            mips_set.extend(assign_op(s, "t0", code_gen[1], code_gen[2]))
+    return mips_set
 
 
 # print(assign_op("unsigned long=","reg1","b_addr","a_addr"))
@@ -603,3 +617,5 @@ def mips_generation(code_gen):
 #         for x in a:
 #             print(x,end='\t')
 #         print("\n")
+code_gen = [["double2unsigned long", "__tmp_var_6", "a"]]
+print(mips_generation(code_gen))
