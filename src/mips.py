@@ -25,10 +25,11 @@ def mips_generation(code_gen):
         )
         if s.endswith(operators):
             # TODO:for pointers and arrays convert to long instead of float *
-            binary_exp_mips(s, "t0", code_gen[1], "t1", code_gen[2], "t2", code_gen[3])
+            binary_exp_mips(
+                s, "t0", code_gen[1], "t1", code_gen[2], "t2", code_gen[3])
         if s.endswith("="):
             assign_op(s, "t0", code_gen[1], code_gen[2])
-
+            
 def data_section():
     print(".data")
 
@@ -51,7 +52,7 @@ def get_mips_label() -> str:
         global LABEL_COUNTER
         LABEL_COUNTER += 1
         # return f"__tmp_label_{TMP_LABEL_COUNTER}"
-        return f"__labelm_{LABEL_COUNTER}"
+        return f".__labelm_{LABEL_COUNTER}"
 
 TYPE_INTEGER = [
     "char", "unsigned char", "short", "unsigned short", "int", "unsigned int", "long", "unsigned long"
@@ -409,9 +410,9 @@ def binary_exp_mips(binexp, reg1, a1, reg2, a2, reg3, a3):
         mips.append(["ADDI", reg1, "$0", "1"])
         l1 = get_mips_label()
         mips.append(["J",l1])
-        mips.append([l0])
+        mips.append([f"{l0}:"])
         mips.append(["XOR", reg1, reg1, reg1])
-        mips.append([l1])
+        mips.append([f"{l1}:"])
     elif op == ">" and type in TYPE_FLOAT:
         op = Binary_ops[binexp][0]
         mips.append([op, "2", reg3, reg2])
@@ -420,9 +421,9 @@ def binary_exp_mips(binexp, reg1, a1, reg2, a2, reg3, a3):
         mips.append(["ADDI", reg1, "$0", "1"])
         l1 = get_mips_label()
         mips.append(["J", l1])
-        mips.append([l0])
+        mips.append([f"{l0}:"])
         mips.append(["XOR", reg1, reg1, reg1])
-        mips.append([l1])
+        mips.append([f"{l1}:"])
     elif op == ">=" and type in TYPE_FLOAT:
         op = Binary_ops[binexp][0]
         mips.append([op, "2", reg2, reg3])
@@ -431,9 +432,9 @@ def binary_exp_mips(binexp, reg1, a1, reg2, a2, reg3, a3):
         mips.append(["XOR", reg1, reg1, reg1])
         l1 = get_mips_label()
         mips.append(["J", l1])
-        mips.append([l0])
+        mips.append([f"{l0}:"])
         mips.append(["ADDI", reg1, "$0", "1"])
-        mips.append([l1])
+        mips.append([f"{l1}:"])
     elif op == "<=" and type in TYPE_FLOAT:
         op = Binary_ops[binexp][0]
         mips.append([op, "2", reg3, reg2])
@@ -442,9 +443,9 @@ def binary_exp_mips(binexp, reg1, a1, reg2, a2, reg3, a3):
         mips.append(["XOR", reg1, reg1, reg1])
         l1 = get_mips_label()
         mips.append(["J", l1])
-        mips.append([l0])
+        mips.append([f"{l0}:"])
         mips.append(["ADDI", reg1, "$0", "1"])
-        mips.append([l1])
+        mips.append([f"{l1}:"])
     elif op == "!=" and type in TYPE_FLOAT:
         op = Binary_ops[binexp][0]
         mips.append([op, "7", reg2, reg3])
@@ -453,9 +454,9 @@ def binary_exp_mips(binexp, reg1, a1, reg2, a2, reg3, a3):
         mips.append(["XOR", reg1, reg1, reg1])
         l1 = get_mips_label()
         mips.append(["J", l1])
-        mips.append([l0])
+        mips.append([f"{l0}:"])
         mips.append(["ADDI", reg1, "$0", "1"])
-        mips.append([l1])
+        mips.append([f"{l1}:"])
     elif op == "==" and type in TYPE_FLOAT:
         op = Binary_ops[binexp][0]
         mips.append([op, "7", reg2, reg3])
@@ -464,9 +465,11 @@ def binary_exp_mips(binexp, reg1, a1, reg2, a2, reg3, a3):
         mips.append(["ADDI", reg1, "$0", "1"])
         l1 = get_mips_label()
         mips.append(["J", l1])
-        mips.append([l0])
+        mips.append([f"{l0}:"])
         mips.append(["XOR", reg1, reg1, reg1])
-        mips.append([l1])
+        mips.append([f"{l1}:"])
+    #elif op == "*=" and type in TYPE_INTEGER:
+
 
     mips.append(store_reg(reg1, a1, type))
     return mips
@@ -535,7 +538,20 @@ def assign_op_ptr(atype,reg1,laddr,reg2,raddr):
     mips.append(["SD",reg2,f"0({reg1})"])
     return mips
 
-#TODO int*=
+#int*=  var tmp_var
+def addr_str(reg1,laddr,raddr):
+    mips = []
+    mips.append(["LD",reg1,raddr])
+    mips.append(["SD",reg1,laddr])
+    return mips
+
+
+#addr tmp_var var
+def addr_load(reg1,addr1,offset_var):
+    mips = []
+    mips.append(["ADDIU",reg1,"$fp",offset_var])
+    mips.append(["SD",reg1,addr1])
+    return mips
 
 
 
