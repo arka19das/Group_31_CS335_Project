@@ -452,7 +452,7 @@ def p_postfix_expression_3(p):
             if p[1].type.endswith("*"):
                 code_gen.append(
                     [
-                        "long+",
+                        "long-",
                         p[1].place,
                         p[1].place,
                         str(get_data_type_size(p[1].type[:-2])),
@@ -460,7 +460,7 @@ def p_postfix_expression_3(p):
                 )
                 activation_record.append(
                     [
-                        "long+",
+                        "long-",
                         offset_string,
                         offset_string,
                         str(get_data_type_size(p[1].type[:-2])),
@@ -477,7 +477,7 @@ def p_postfix_expression_3(p):
             if p[1].type.endswith("*"):
                 code_gen.append(
                     [
-                        "long+",
+                        "long-",
                         p[1].place,
                         p[1].place,
                         f"-{get_data_type_size(p[1].type[:-2])}",
@@ -485,7 +485,7 @@ def p_postfix_expression_3(p):
                 )
                 activation_record.append(
                     [
-                        "long+",
+                        "long-",
                         offset_string,
                         offset_string,
                         f"-{get_data_type_size(p[1].type[:-2])}",
@@ -656,9 +656,9 @@ def p_postfix_expression_3(p):
                     )
 
                     # if curr_list[3] > 0:
-                    code_gen.append(["long+", tmp, curr_list[3], tmp])
+                    code_gen.append(["long-", tmp, curr_list[3], tmp])
                     activation_record.append(
-                        ["long+", tmp_offset_string, curr_list[3], tmp_offset_string,]
+                        ["long-", tmp_offset_string, curr_list[3], tmp_offset_string,]
                     )
                     # print(type1)
                     # if len(p[0].array) > 0:
@@ -843,9 +843,9 @@ def p_postfix_expression_3(p):
                         ["addr", v2_offset_string, offset_string[0:-5], ""]
                     )
 
-                code_gen.append(["long+", v2, v1, v2])
+                code_gen.append(["long-", v2, v1, v2])
                 activation_record.append(
-                    ["long+", v2_offset_string, v_offset_string, tmp_offset_string,]
+                    ["long-", v2_offset_string, v_offset_string, tmp_offset_string,]
                 )
 
                 type1 = p[0].type  # TODO: BUGGED
@@ -1091,13 +1091,13 @@ def p_unary_expression(p):
             # p[]
             # code_gen.append(["OKAY"])
             code_gen.append(["addr", v2, p[1].place, ""])
-            code_gen.append(["long+", v2, code_gen[-2][1], v2])
+            code_gen.append(["long-", v2, code_gen[-2][1], v2])
             offset_string = cal_offset(p[1])
             activation_record.append(
                 ["addr", v2_offset_string, offset_string[0:-5], ""]
             )
             activation_record.append(
-                ["long+", v2_offset_string, code_gen[-2][1], v2_offset_string]
+                ["long-", v2_offset_string, code_gen[-2][1], v2_offset_string]
             )
             p[0].val = p[0].place = v2
         else:
@@ -1136,7 +1136,7 @@ def p_unary_expression(p):
                 if p[2].type.endswith("*"):
                     code_gen.append(
                         [
-                            "long+",
+                            "long-",
                             p[2].place,
                             p[2].place,
                             str(get_data_type_size(p[2].type[:-2])),
@@ -1144,7 +1144,7 @@ def p_unary_expression(p):
                     )
                     activation_record.append(
                         [
-                            "long+",
+                            "long-",
                             offset_string,
                             offset_string,
                             str(get_data_type_size(p[2].type[:-2])),
@@ -1161,7 +1161,7 @@ def p_unary_expression(p):
                 if p[2].type.endswith("*"):
                     code_gen.append(
                         [
-                            "long+",
+                            "long-",
                             p[2].place,
                             p[2].place,
                             -get_data_type_size(p[2].type[:-2]),
@@ -1169,7 +1169,7 @@ def p_unary_expression(p):
                     )
                     activation_record.append(
                         [
-                            "long+",
+                            "long-",
                             offset_string,
                             offset_string,
                             str(get_data_type_size(p[2].type[:-2])),

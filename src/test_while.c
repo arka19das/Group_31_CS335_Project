@@ -53,8 +53,10 @@ int main()
     // func(a, x, d, b);
     // int y, x;
     // y = *(&y);
-    int c = (&d1)->b;
-    int m = c;
+    // int c = (&d1)->b;
+    // int m = c;//ERRROR
+    d1.b;
+    d1.d1;
     // int d = arr[12];
     return 0;
 }
