@@ -2,6 +2,7 @@ from dis import code_info
 from utils import *
 
 comment_variable = ";"
+error_variable = "----------error----------\n"
 
 
 def data_section():
@@ -444,14 +445,14 @@ def LI(reg, const, type):
 
 def store_reg(reg, addr, type):
     # mips = []
-    instr = STORE_INSTRUCTIONS.get(type, f"{type}_store not found")
+    instr = STORE_INSTRUCTIONS.get(type, f"{error_variable} {type}_store not found")
     mips = [instr, reg, addr]
     return mips
 
 
 def load_reg(reg, addr, type):
     # mips = []
-    instr = LOAD_INSTRUCTIONS.get(type, f"{type}not found")
+    instr = LOAD_INSTRUCTIONS.get(type, f"{error_variable} {type}not found")
     if is_int(addr):
         if type == "int" or type == "char" or type == "short":
             mips = ["ADDI", reg, "$0", addr]
@@ -492,7 +493,7 @@ def assign_op(atype, reg, laddr, raddr):
 def assign_op_ptr(atype, reg1, laddr, reg2, raddr):
     mips = []
     type = atype[:-1]
-    load_instr = LOAD_INSTRUCTIONS.get(type, f"{atype} not found")
+    load_instr = LOAD_INSTRUCTIONS.get(type, f"{error_variable} {atype} not found")
     mips.append([load_instr, reg2, raddr])
     mips.append(["LD", reg1, laddr])
     mips.append(["SD", reg2, f"0({reg1})"])
