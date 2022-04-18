@@ -582,8 +582,9 @@ def p_postfix_expression_3(p):
                     )
                 )
                 return
-            if (struct_name.endswith("*") and p[2][0] == ".") or (
-                not struct_name.endswith("*") and p[2][0] == "->"
+
+            if (struct_name.endswith("*") and p[2] == ".") or (
+                not struct_name.endswith("*") and p[2] == "->"
             ):
                 ST.error(
                     Error(
@@ -651,7 +652,7 @@ def p_postfix_expression_3(p):
                     #     tmp2.array = copy.deepcopy(curr_list[4])
                     code_gen.append(["addr", tmp, p[1].place, ""])
                     activation_record.append(
-                        ["addr", tmp_offset_string, offset_string, "",]
+                        ["addr", tmp_offset_string, offset_string[0:-5], "",]
                     )
 
                     # if curr_list[3] > 0:
@@ -833,13 +834,13 @@ def p_postfix_expression_3(p):
                 if p[1].place[0:10] == "__tmp_var_":
                     code_gen.append(["addr", v2, p[1].addr, ""])
                     activation_record.append(
-                        ["addr", v2_offset_string, offset_string, ""]
+                        ["addr", v2_offset_string, offset_string[0:-5], ""]
                     )
 
                 else:
                     code_gen.append(["addr", v2, p[1].place, ""])
                     activation_record.append(
-                        ["addr", v2_offset_string, offset_string, ""]
+                        ["addr", v2_offset_string, offset_string[0:-5], ""]
                     )
 
                 code_gen.append(["long+", v2, v1, v2])
@@ -1092,7 +1093,9 @@ def p_unary_expression(p):
             code_gen.append(["addr", v2, p[1].place, ""])
             code_gen.append(["long+", v2, code_gen[-2][1], v2])
             offset_string = cal_offset(p[1])
-            activation_record.append(["addr", v2_offset_string, offset_string, ""])
+            activation_record.append(
+                ["addr", v2_offset_string, offset_string[0:-5], ""]
+            )
             activation_record.append(
                 ["long+", v2_offset_string, code_gen[-2][1], v2_offset_string]
             )
@@ -1227,7 +1230,9 @@ def p_unary_expression(p):
             temp_var, tmp_offset_string = ST.get_tmp_var(p[2].type + " *")
             p[0].place = temp_var
             code_gen.append(["addr", temp_var, p[2].place, ""])
-            activation_record.append(["addr", tmp_offset_string, offset_string, ""])
+            activation_record.append(
+                ["addr", tmp_offset_string, offset_string[0:-5], ""]
+            )
 
         elif p[1].val == "*":
             # TODO:3ac
@@ -1492,7 +1497,7 @@ def p_cast_expression(p):
         if p[2].type == p[4].type:
             p[0] = p[4]
             return
-        if p[2].type.startswith("struct") and p[4].type.startswith("struct"):
+        if p[2].type.startswith("struct ") and p[4].type.startswith("struct "):
             ST.error(
                 Error(
                     p.lineno(1),
@@ -1501,7 +1506,7 @@ def p_cast_expression(p):
                     f"Cannot cast {p[2].type} to {p[4].type}",
                 )
             )
-        elif p[2].type.startswith("struct") or p[4].type.startswith("struct"):
+        elif p[2].type.startswith("struct ") or p[4].type.startswith("struct "):
             ST.error(
                 Error(
                     p.lineno(1),
@@ -2385,16 +2390,47 @@ def p_assignment_expression(p):
 
             else:
                 if len(p[1].array) == 0 and p[1].name != "PointerVariable":
+                    # print("if", p[0].type, temp_node.type)
+
                     code_gen.append(
                         [temp_node.type + "=", p[1].place, temp_node.place, ""]
                     )
-                    activation_record.append(
-                        [temp_node.type + "=", offset_string1, offset_string3, "",]
-                    )
+                    if temp_node.type.endswith("*"):
+                        activation_record.append(
+                            ["long=", offset_string1, offset_string3, "",]
+                        )
+                    elif temp_node.type.startswith("struct "):
+                        activation_record.append(
+                            [
+                                ";",
+                                temp_node.type + "=",
+                                offset_string1,
+                                offset_string3,
+                                "",
+                            ]
+                        )
+                        size_of_struct = ST.find(temp_node.type).size
+                        for long_offset in range(0, size_of_struct, 8):
+                            activation_record.append(
+                                [
+                                    "long=",
+                                    f"{int(offset_string1[0:-5])-long_offset}($fp)",
+                                    f"{int(offset_string3[0:-5])-long_offset}($fp)",
+                                    "",
+                                ]
+                            )
+
+                    else:
+                        activation_record.append(
+                            [temp_node.type + "=", offset_string1, offset_string3, "",]
+                        )
                 else:
+                    # ARKA DOUBTS
+                    print("else", p[0].type, temp_node.type)
                     code_gen.append(
                         [temp_node.type + "=", p[1].addr, temp_node.place, "*"]
                     )
+
                     activation_record.append(
                         [temp_node.type + "=", offset_string1, offset_string3, "*",]
                     )
