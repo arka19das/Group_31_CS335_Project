@@ -23,16 +23,16 @@ struct t1
 //     }
 //     return temp;
 // }
-int func(int p, long int j, struct t1 d, int k) //(int a, struct t1 b, int c, int d, int e, int f)
-{
-    int m, n;
-    // d++;
-    p++;
-    j++;
-    k++;
-    m++;
-    n++;
-}
+// int func(int p, long int j, struct t1 d, int k) //(int a, struct t1 b, int c, int d, int e, int f)
+// {
+//     int m, n;
+//     // d++;
+//     p++;
+//     j++;
+//     k++;
+//     m++;
+//     n++;
+// }
 int main()
 {
     // float a, b;
@@ -47,10 +47,14 @@ int main()
     // (unsigned long long int)a;
 
     // func(t2, p); //(a, t2, a, b, a, b);
-    struct t1 d;
-    double c, a, b;
-    int x;
+    struct t1 d1;
+    int arr[12];
+    // double c, a, b;
     // func(a, x, d, b);
-
+    // int y, x;
+    // y = *(&y);
+    int c = (&d1)->b;
+    int m = c;
+    // int d = arr[12];
     return 0;
 }

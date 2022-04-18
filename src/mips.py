@@ -687,6 +687,8 @@ def mips_generation(full_code_gen):
                 node = ST.find(code_gen[1])
                 _type = node.type
             params.append(store_reg("$t0", code_gen[2], _type))
+        elif s == ";":
+            pass
         else:
             mips_set.append([comment_variable] + code_gen)
 
