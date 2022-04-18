@@ -177,7 +177,7 @@ class Node:
     scope: int = 0
     array: List[int] = field(default_factory=list)
     max_depth: int = 0
-    is_array:bool = False
+    is_array: bool = False
     is_func: int = 0
     parentStruct: str = ""
     argument_list: Union[None, List[Any]] = None
@@ -335,7 +335,7 @@ class SymbolTable:
             # symTab.insert(
             #     {"name": vname, "type": vartype, "is_array": False, "dimensions": []}
             # )
-            tmp_offset_string = f"_-{offsets[scope]}($fp)"
+            tmp_offset_string = f"{-offsets[scope]}($fp)"
         return vname, tmp_offset_string
 
     def get_tmp_closure(self, rettype: str, argtypes: list = []) -> str:
@@ -381,11 +381,11 @@ def type_util(op1: Node, op2: Node, op: str):
         children=[],
         place=dummy_var,
         lhs=1,
-        in_whose_scope = scope_table,
-        offset = int(dummy_offset_string[2:-5])
+        in_whose_scope=scope_table,
+        offset=int(dummy_offset_string[2:-5]),
     )
 
-    #Where are we using it @Martha ?
+    # Where are we using it @Martha ?
     if op1.type == "" or op2.type == "":
         dummy_node.type = "int"
         return dummy_node
@@ -428,7 +428,7 @@ def type_util(op1: Node, op2: Node, op: str):
                 )
             )
             # return dummy_node
-        
+
         tmp_var, tmp_offset_string = ST.get_tmp_var(op1.type)
         scope_table = ST.scope_tables[ST.currentScope].name
         temp = Node(
@@ -440,9 +440,8 @@ def type_util(op1: Node, op2: Node, op: str):
             children=[],
             place=tmp_var,
             lhs=1,
-            in_whose_scope = scope_table,
-            offset = int(tmp_offset_string[2:-5])
-
+            in_whose_scope=scope_table,
+            offset=int(tmp_offset_string[2:-5]),
         )
 
     elif op1.level > 0 or op2.level > 0:
@@ -467,7 +466,7 @@ def type_util(op1: Node, op2: Node, op: str):
                     )
                 )
                 # return dummy_node
-            
+
             tmp_var, tmp_offset_string = ST.get_tmp_var(op1.type)
             scope_table = ST.scope_tables[ST.currentScope].name
             temp = Node(
@@ -479,9 +478,8 @@ def type_util(op1: Node, op2: Node, op: str):
                 children=[],
                 place=tmp_var,
                 lhs=1,
-                in_whose_scope = scope_table,
-                offset = int(tmp_offset_string[2:-5])
-
+                in_whose_scope=scope_table,
+                offset=int(tmp_offset_string[2:-5]),
             )
 
         elif op2.level > 0 and tp1 in TYPE_FLOAT:
@@ -517,8 +515,8 @@ def type_util(op1: Node, op2: Node, op: str):
                 children=[],
                 place=tmp_var,
                 lhs=1,
-                in_whose_scope = scope_table,
-                offset = int(tmp_offset_string[2:-5])
+                in_whose_scope=scope_table,
+                offset=int(tmp_offset_string[2:-5]),
             )
 
     elif top1.startswith("struct") or top2.startswith("struct"):
@@ -573,20 +571,14 @@ def type_util(op1: Node, op2: Node, op: str):
             if size1 > size2:
                 ST.error(
                     Error(
-                        -1,
-                        rule_name,
-                        "warning",
-                        f"Implicit type casting of {op2.val}",
+                        -1, rule_name, "warning", f"Implicit type casting of {op2.val}",
                     )
                 )
-            
+
             elif size2 > size1:
                 ST.error(
                     Error(
-                        -1,
-                        rule_name,
-                        "warning",
-                        f"Implicit type casting of {op1.val}",
+                        -1, rule_name, "warning", f"Implicit type casting of {op1.val}",
                     )
                 )
                 op_type = op2.type
@@ -614,10 +606,10 @@ def type_util(op1: Node, op2: Node, op: str):
                 children=[],
                 place=tmp_var,
                 lhs=1,
-                in_whose_scope = scope_table,
-                offset = int(tmp_offset_string[2:-5])
+                in_whose_scope=scope_table,
+                offset=int(tmp_offset_string[2:-5]),
             )
-    
+
     p_node = ST.find(op1.val)
     if (p_node is not None) and (op1.is_func == 1):
         ST.error(
@@ -721,16 +713,65 @@ def dump_symbol_table_csv(verbose: bool = False):
                 writer.writerow(node.to_dict(True))
 
 
-node1 = Node(name="printf", type="int", val="", is_func=1, argument_list = ["int"], lno=-1, in_whose_scope="#global")
-node2 = Node(name="scanf", type="int", val="", is_func=1, argument_list = ["int"], lno=-1, in_whose_scope="#global")
-node3 = Node(name="malloc", type="void *", val="", is_func=1, argument_list = ["int"], lno=-1, in_whose_scope="#global")
-node4 = Node(name="sqrt", type="float", val="", is_func=1, argument_list = ["int"], lno=-1, in_whose_scope="#global")
-node5 = Node(name="pow", type="float", val="", is_func=1, argument_list = ["int"], lno=-1, in_whose_scope="#global")
-node6 = Node(name="abs", type="float", val="", is_func=1, argument_list = ["int"], lno=-1, in_whose_scope="#global")
+node1 = Node(
+    name="printf",
+    type="int",
+    val="",
+    is_func=1,
+    argument_list=["int"],
+    lno=-1,
+    in_whose_scope="#global",
+)
+node2 = Node(
+    name="scanf",
+    type="int",
+    val="",
+    is_func=1,
+    argument_list=["int"],
+    lno=-1,
+    in_whose_scope="#global",
+)
+node3 = Node(
+    name="malloc",
+    type="void *",
+    val="",
+    is_func=1,
+    argument_list=["int"],
+    lno=-1,
+    in_whose_scope="#global",
+)
+node4 = Node(
+    name="sqrt",
+    type="float",
+    val="",
+    is_func=1,
+    argument_list=["int"],
+    lno=-1,
+    in_whose_scope="#global",
+)
+node5 = Node(
+    name="pow",
+    type="float",
+    val="",
+    is_func=1,
+    argument_list=["int"],
+    lno=-1,
+    in_whose_scope="#global",
+)
+node6 = Node(
+    name="abs",
+    type="float",
+    val="",
+    is_func=1,
+    argument_list=["int"],
+    lno=-1,
+    in_whose_scope="#global",
+)
 node7 = Node(name="NULL", type="void *", val="0", lno=-1, in_whose_scope="#global")
 
 
 pre_append_array = [node1, node2, node3, node4, node5, node6, node7]
+
 
 def pre_append_to_table():
     for node in pre_append_array:

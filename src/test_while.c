@@ -23,9 +23,13 @@ struct t1
 // }
 int func(int p, long int j, int k) //(int a, struct t1 b, int c, int d, int e, int f)
 {
+    int m, n;
+
     p++;
     j++;
     k++;
+    m++;
+    n++;
 }
 int main()
 {
@@ -41,7 +45,8 @@ int main()
     // (unsigned long long int)a;
 
     // func(t2, p); //(a, t2, a, b, a, b);
-    int *c, a, b;
+    int c, a, b;
     func(a, a, b);
+
     return 0;
 }
