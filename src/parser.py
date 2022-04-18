@@ -10,6 +10,7 @@ from graphviz import Digraph
 
 from scanner import *
 from utils import *
+from mips import mips_generation
 
 # Get the token map from the lexer.  This is required.
 lexer = Lexer()
@@ -4375,6 +4376,8 @@ if __name__ == "__main__":
         write_code(code_gen, file)
         file = open("activation_record.txt", "w")
         write_code(activation_record, file)
+        file = open("mips_generated.s", "w")
+        write_code(mips_generation(activation_record), file)
 
     dump_symbol_table_csv(args.v)
 

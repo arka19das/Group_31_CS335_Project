@@ -2,7 +2,9 @@
 struct t1
 {
     int a;
+    struct t1 *next;
     int b;
+    double d1;
     // struct t1 *next;
 };
 // char *strchr(char *str, char ch)
@@ -21,10 +23,10 @@ struct t1
 //     }
 //     return temp;
 // }
-int func(int p, long int j, int k) //(int a, struct t1 b, int c, int d, int e, int f)
+int func(int p, long int j, struct t1 d, int k) //(int a, struct t1 b, int c, int d, int e, int f)
 {
     int m, n;
-
+    // d++;
     p++;
     j++;
     k++;
@@ -45,8 +47,10 @@ int main()
     // (unsigned long long int)a;
 
     // func(t2, p); //(a, t2, a, b, a, b);
-    int c, a, b;
-    func(a, a, b);
+    struct t1 d;
+    double c, a, b;
+    int x;
+    // func(a, x, d, b);
 
     return 0;
 }
