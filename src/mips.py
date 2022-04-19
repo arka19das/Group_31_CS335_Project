@@ -30,11 +30,13 @@ def is_char(x):
 
 
 def is_num(x):
-    try:
-        if s.isnumeric():
-            return True
-    except:
-        return False
+    #TODO Has to modify
+    return x.isdigit() or '.' in x
+    # try:
+    #     if s.isnumeric():
+    #         return True
+    # except:
+    #     return False
 
 
 # print(is_int("140"))
@@ -623,7 +625,7 @@ def mips_generation(full_code_gen):
             "<<",
             ">>",
         )
-        if "2" in s:
+        if "2" in s and "_" not in s:
             conversion_type = s.split("2")
             if "float" in conversion_type:
                 print("ERROR: float  conversion not supported")
@@ -651,27 +653,29 @@ def mips_generation(full_code_gen):
             mips_set.extend(assign_op(s, "t0", code_gen[1], code_gen[2]))
         elif s.endswith("=") and code_gen[3]=="":
             mips_set.extend(assign_op_ptr(s, "t0", code_gen[1], code_gen[2]))
+        
         elif s == "funcstart":
-            mips_set.append(["SW", "$fp", "-4($sp)"])
-            mips_set.append(["SW", "$ra", "-8($sp)"])
-            mips_set.append(["LA", "$fp", "0($sp)"])
-            # DOUBT
-            # akshay sorry for commenting this line -- ARKA
-            # offset = 2 * int(s.split("_")[1]) - 12
-            offset = 168757454
-            mips_set.append(["LA", "$sp", f"-{offset}($fp)"])
-
+            pass
+            
         elif s == "endfunc":
-            # load_registers_on_function_return("sp")
-            mips_set.append(["LA", "$sp", "0($fp)"])
-            mips_set.append(["LW", "$ra", "-8($sp)"])
-            mips_set.append(["LA", "$fp", "-4($sp)"])
-            mips_set.append(["JR", "$ra", ""])
-            # free register
+            pass
+
         elif "return" in s:
 
-            # if s[-1]=="0":
-
+            if s[-1]=="0":
+                mips_set.append(["ADDI", "-16($fp)", "$0", "$0"])
+            elif is_char(code_gen[1]):
+                mips_set.append(["ADDI", "-16($fp)", "$0", code_gen[3]])
+            elif is_num(code_gen[1]):
+                if "." in s:
+                    #instruction nahi pata float ke liye
+                    mips_set.append(["ADDI", "-16($fp)", "$0", code_gen[3]])
+                else:
+                    mips_set.append(["ADDI", "-16($fp)", "$0", code_gen[3]])
+            else:
+                #TO_DO
+                _type = _type = s.split("_")[1]
+            
             # load_registers_on_function_return("sp")
             mips_set.append(["LA", "$sp", "0($fp)"])
             mips_set.append(["LW", "$ra", "-8($sp)"])
@@ -679,43 +683,40 @@ def mips_generation(full_code_gen):
             mips_set.append(["JR", "$ra", ""])
 
         elif "call" in s:
+            node_type = s.split("_")
+            
+            mips_set.append(["SW", "$fp", "-4($sp)"])
+            mips_set.append(["SW", "$ra", "-8($sp)"])
+            sz = get_data_type_size(node_type[1])
+            
+            if node_type[1] in ["float", "double"]:
+                mips_set.append([LOAD_INSTRUCTIONS[node_type[1]], f"{-8-sz}($sp)", "$f0"])
+            elif node_type[1] in ["int", "long", "doublchar"]:
+                mips_set.append([LOAD_INSTRUCTIONS[node_type[1]], f"{-8-sz}($sp)", "$v0"])
+            elif node_type[1] != "void":
+                # non_primitive_load jaisa
+                pass
+            
             for p in params:
                 mips_set.append(p)
             params = []
+            mips_set.append(["LA","$fp",f"{-int(node_type[2])}($sp)"])
             mips_set.append(["JAL", code_gen[1], ""])
-
-            node_type = "int"
-            # Has to add a function for symbol tabel find, ST.find will not work
-            node = ST.find(code_gen[1])
-
-            if node.type in ["float", "double"]:
-                mips_set.append([LOAD_INSTRUCTIONS[node.type], "$t0", "$f0"])
-            elif node.type in ["int", "doublchar"]:
-                mips_set.append([LOAD_INSTRUCTIONS[node.type], "$t0", "$v0"])
-            elif node.type != "void":
-                # non_primitive_load jaisa
-                pass
-            sz = get_data_type_size(node_type)
-            mips_set.append(["LA", "$sp", f"{sz}($sp)"])
-            # remember $t0
-
+     
         elif "param" in s:
-            if is_char(code_gen[2]):
-                mips_set.append(["ADDI", "$t0", "$0", code_gen[2]])
-                _type = "char"
-            elif is_num(code_gen[2]):
-                if s.isnumeric():
-                    _type = "float"
-                    # INstruction nahi pta
-                    mips_set.append([])
+            if is_char(code_gen[1]):
+                mips_set.append(["ADDI", code_gen[2], "$0", code_gen[3]])
+            elif is_num(code_gen[1]):
+                if "." in s:
+                    #instruction nahi pata float ke liye
+                    mips_set.append(["ADDI", code_gen[2], "$0", code_gen[3]])
                 else:
-                    _type = "int"
-                    mips_set.append(["ADDI", "$t0", "$0", code_gen[2]])
-
+                    mips_set.append(["ADDI", code_gen[2], "$0", code_gen[3]])
             else:
-                node = ST.find(code_gen[1])
-                _type = node.type
-            params.append(store_reg("$t0", code_gen[2], _type))
+                _type = _type = s.split("_")[1]
+                params.append(load_reg("$t0",code_gen[3],_type))
+                params.append(store_reg("$t0", code_gen[2], _type))
+        
         elif s == ";":
             pass
         else:

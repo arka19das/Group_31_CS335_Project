@@ -537,15 +537,11 @@ def p_postfix_expression_3(p):
                     )
                 )
                 return
-            func_size = 0
-            for scope_table in ST.scope_tables:
-                if scope_table.name == p[1].val:
-                    for node in scope_table.nodes:
-                        func_size += node.size
-
-            code_gen.append([f"call_{func_size}", p[1].val, "", ""])
+            return_size = get_data_type_size(p1v_node.type)
+            return_size+=(8-return_size%8)%8
+            code_gen.append([f"call_{offsets[ST.currentScope]}", p[1].val, "", ""])
             activation_record.append(
-                [f"call_{func_size}", p[1].val, "", f"__{p[1].val}"]
+                [f"call_{p1v_node.type}_{offsets[ST.currentScope]+8+return_size}", p[1].val, "", f"__{p[1].val}"]
             )
 
         else:
@@ -962,6 +958,7 @@ def p_postfix_expression_3(p):
                                 " ",
                             ]
                         )
+                        # tmp_offset_string[-3]="s"
                         temp_3ac.append([f"param", p[1].val, " ", tmp_var])
                         temp_act.append(
                             [f"param", p[1].val, func_offset, tmp_offset_string]
@@ -996,9 +993,10 @@ def p_postfix_expression_3(p):
                         return
 
                     else:
+                        # offset_string[-3]="s"
                         temp_3ac.append([f"param", p[1].val, " ", p[3].children[i].val])
                         temp_act.append(
-                            [f"param", p[1].val, func_offset, offset_string]
+                            [f"param_{p[3].children[i].type}", p[3].children[i].place, func_offset, offset_string]
                         )
 
                     if p[3].children[i].type.upper() in PRIMITIVE_TYPES or p[
@@ -1012,8 +1010,9 @@ def p_postfix_expression_3(p):
                     
                 func_size = 0
                 func_offset = offsets[ST.currentScope] + 8
-                func_offset += get_data_type_size(p1v_node.type)
-                func_offset += (8 - func_offset % 8) % 8
+                return_size = get_data_type_size(p1v_node.type)
+                return_size += (8 - func_offset % 8) % 8
+                func_offset += return_size
 
                 for t3ac, tact in zip(temp_3ac, temp_act):
                     code_gen.append(t3ac)
@@ -1023,7 +1022,7 @@ def p_postfix_expression_3(p):
                     ] = f"{-(func_offset + activation_record[-1][2])}($fp)"
                 code_gen.append([f"call_{offsets[ST.currentScope]}", p[1].val, "", ""])
                 activation_record.append(
-                    [f"call_{offsets[ST.currentScope]}", p[1].val, "", f"__{p[1].val}"]
+                    [f"call_{p1v_node.type}_{offsets[ST.currentScope]+8+return_size}", p[1].val, "", f"__{p[1].val}"]
                 )
 
 

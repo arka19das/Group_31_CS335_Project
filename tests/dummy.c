@@ -1,15 +1,12 @@
 
 // #include<stdio.h>
 // int j=0;
-int foo(int a){
+int foo(int a,int b){
     return 0;
 }
 int main(){
     // foo(1);
-    int *p,a;
-    p=&1;
-    p=&(1);
-    p=&(a+1);
-    p=&a;
+    int a;
+    foo(a,1);
     return 0;
 }
