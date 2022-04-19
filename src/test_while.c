@@ -8,20 +8,16 @@ struct t1
     // struct t1 *next;
 };
 
-int func(int p, long int j, struct t1 d, int k) //(int a, struct t1 b, int c, int d, int e, int f)
+int func(int p,  int j, struct t1 d, int k) //(int a, struct t1 b, int c, int d, int e, int f)
 {
-    int m, n;
+    p+j+k;
     // d++;
-    m = p;
-    // j++;
-    // k++;
-    // m++;
-    n = n + 1;
+    
 }
 int main()
 {
     struct t1 d1;
-    double a, x, b, *c, **d;
+    int a, x, b, *c, **d;
     int c1;
     // c = c + (float *)1;
     // c = &(a);
@@ -29,7 +25,7 @@ int main()
     // *c = a; // ERROR
     // d = d + c1 + c1;
     // printf("%ld %ld", d, (float *)1);
-    func(*(&a), x, d1, b);
+    func(a, x, d1, b);
 
     return 0;
 }
