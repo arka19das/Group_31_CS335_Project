@@ -930,7 +930,7 @@ def p_postfix_expression_3(p):
                     ST.curType.append(p[3].children[i].type)
                     # according to akshay TODO
                     offset_string = cal_offset(p[3].children[i])
-                    tmp_var, tmp_offset_string = ST.get_tmp_var(arguments)
+                    # tmp_var, tmp_offset_string = ST.get_tmp_var(arguments)
 
                     if (
                         ST.curType[-1].split()[-1] != arguments.split()[-1]
@@ -945,6 +945,7 @@ def p_postfix_expression_3(p):
                                 f"Type mismatch in argument {i+1} of function call. Expected: {arguments}, Received: {ST.curType[-1]}",
                             )
                         )
+                        tmp_var, tmp_offset_string = ST.get_tmp_var(arguments)
                         code_gen.append(
                             [
                                 f"{ST.curType[-1]}2{arguments}",
@@ -1220,6 +1221,9 @@ def p_unary_expression(p):
             )
             temp_var, tmp_offset_string = ST.get_tmp_var(p[2].type + " *")
             p[0].place = temp_var
+            p[0].val = temp_var
+            p[0].offset = ST.find(temp_var).offset
+
             code_gen.append(["addr", temp_var, p[2].place, ""])
             activation_record.append(
                 ["addr", tmp_offset_string, offset_string[0:-5], ""]
@@ -1248,6 +1252,7 @@ def p_unary_expression(p):
             temp_var, tmp_offset_string = ST.get_tmp_var(p[2].type[:-2])
             p[0].place = temp_var
             p[0].addr = p[2].place
+            p[0].offset = ST.find(temp_var).offset
             type1 = p[2].type[:-2]
             if type1.upper() in PRIMITIVE_TYPES:
                 code_gen.append(

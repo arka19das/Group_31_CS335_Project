@@ -21,14 +21,15 @@ int func(int p, long int j, struct t1 d, int k) //(int a, struct t1 b, int c, in
 int main()
 {
     struct t1 d1;
-    float a, x, b, *c, **d;
+    double a, x, b, *c, **d;
     int c1;
     // c = c + (float *)1;
-    c = &(a);
-    a = *c;
-    d = d + c1;
+    // c = &(a);
+    // a = *c;
+    // *c = a; // ERROR
+    // d = d + c1 + c1;
     // printf("%ld %ld", d, (float *)1);
-    // func(*(&a), x, d1, b);
+    func(*(&a), x, d1, b);
 
     return 0;
 }

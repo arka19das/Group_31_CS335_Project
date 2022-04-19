@@ -328,6 +328,7 @@ class SymbolTable:
                 offset=offsets[scope],
             )
             scope_table.insert(node)
+            tmp_offset_string = f"{-offsets[scope]}($fp)"
             offsets[scope] += get_data_type_size(vartype)
             offsets[scope] += (8 - offsets[scope] % 8) % 8
 
@@ -335,7 +336,6 @@ class SymbolTable:
             # symTab.insert(
             #     {"name": vname, "type": vartype, "is_array": False, "dimensions": []}
             # )
-            tmp_offset_string = f"{-offsets[scope]}($fp)"
         return vname, tmp_offset_string
 
     def get_tmp_closure(self, rettype: str, argtypes: list = []) -> str:
@@ -532,7 +532,7 @@ def type_util(op1: Node, op2: Node, op: str):
 
         # typ = op1.type if top1.startswith("struct") else op2.type
         # temp.type = typ
-        # return dummy_node
+        return dummy_node
 
     else:
         temp_1 = op1.type.split(" ")
@@ -563,7 +563,7 @@ def type_util(op1: Node, op2: Node, op: str):
                     f"Incompatible data type {op} operator",
                 )
             )
-            # return dummy_node
+            return dummy_node
 
         else:
             size1 = SIZE_OF_TYPE[tp1]
@@ -626,7 +626,7 @@ def type_util(op1: Node, op2: Node, op: str):
                 f"Invalid operation on {op1.val}",
             )
         )
-
+        return dummy_node
     p_node = ST.find(op2.val)
     if (p_node is not None) and (op2.is_func == 1):
         ST.error(
@@ -637,6 +637,7 @@ def type_util(op1: Node, op2: Node, op: str):
                 f"Invalid operation on {op2.val}",
             )
         )
+        return dummy_node
     return temp
 
 

@@ -688,9 +688,9 @@ def mips_generation(full_code_gen):
             node = ST.find(code_gen[1])
 
             if node.type in ["float", "double"]:
-                mips_set.append(LOAD_INSTRUCTIONS[node.type], "$t0", "$f0")
+                mips_set.append([LOAD_INSTRUCTIONS[node.type], "$t0", "$f0"])
             elif node.type in ["int", "doublchar"]:
-                mips_set.append(LOAD_INSTRUCTIONS[node.type], "$t0", "$v0")
+                mips_set.append([LOAD_INSTRUCTIONS[node.type], "$t0", "$v0"])
             elif node.type != "void":
                 # non_primitive_load jaisa
                 pass
