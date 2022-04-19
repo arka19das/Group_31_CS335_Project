@@ -527,12 +527,33 @@ def beq_mips(type, reg, addr, label):
 
 def conversion(type1, addr1, type2, addr2):
     mips = []
+    size = -0.2
+    if type1 in TYPE_INTEGER and type2.endswith("*"):
+        if type2[0:-2].endswith("*"):
+            size = -8
+        elif type2[0:-2] in TYPE_INTEGER + TYPE_FLOAT:
+            size = -4
+            if (
+                type2[0:-2] == "long"
+                or type2[0:-2] == "unsigned long"
+                or type2[0:-2] == "double"
+            ):
+                size = -8
+            elif type2[0:-2] == "short" or type2[0:-2] == "unsigned short":
+                size = -2
+        else:
+            size = ST.find(type2[0:-2])
+
     if type1.endswith("*"):
         type1 = "long"
     if type2.endswith("*"):
         type2 = "long"
     if type1 in TYPE_INTEGER:
         mips.append(load_reg("t0", addr1, type1))
+        if size != -0.2:
+            op = "DMULTI"
+            mips.append([op, "t0", str(size)])
+            mips.append(["MFLO  ", "t0"])
     elif type1 in TYPE_FLOAT:
         mips.append(load_reg("f2", addr1, type1))
 
@@ -584,21 +605,21 @@ def mips_generation(full_code_gen):
         operators = (
             "<",
             ">",
-            "<=",
-            ">=",
-            "!=",
-            "==",
             "+",
             "-",
             "*",
             "/",
             "%",
-            "&&",
-            "||",
             "!",
             "&",
             "|",
             "^",
+            "<=",
+            ">=",
+            "!=",
+            "==",
+            "&&",
+            "||",
             "<<",
             ">>",
         )
@@ -613,6 +634,13 @@ def mips_generation(full_code_gen):
                 )
 
         elif s.endswith(operators):
+
+            if s.endswith(("<=", ">=", "!=", "==", "&&", "||", "<<", ">>",)):
+                if s[0:-2].endswith("*"):
+                    s = "long" + s[-2:]
+            else:
+                if s[0:-1].endswith("*"):
+                    s = "long" + s[-1:]
 
             # TODO:for pointers and arrays convert to long instead of float *
             mips_set += binary_exp_mips(

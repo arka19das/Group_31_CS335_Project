@@ -37,9 +37,10 @@ def is_const(p):
 def cal_offset(p):
     # if (isinstance(p, Node) and p.place.startswith("__tmp")) or (isinstance(p, str)):
     #     return ""
-    if isinstance(p, str) or is_const(p.place):
-        return ""
-
+    if isinstance(p, str):
+        return p
+    if is_const(p.place):
+        return p.place
     if p.in_whose_scope == "#global":
         offset = p.offset
         if offset:
@@ -780,12 +781,7 @@ def p_postfix_expression_3(p):
             if isinstance(p[0].array[0], str):
                 code_gen.append(["int+", v1, v1, temp_var])
                 activation_record.append(
-                    [
-                        "int+",
-                        v_offset_string,
-                        v_offset_string,
-                        temp_var + temp_offset_string,
-                    ]
+                    ["int+", v_offset_string, v_offset_string, temp_offset_string,]
                 )
 
                 code_gen.append(["long*", v1, v1, str(get_data_type_size(p[0].type))])
@@ -800,12 +796,7 @@ def p_postfix_expression_3(p):
             elif isinstance(p[1].array[-1], int):
                 code_gen.append(["int+", v1, v1, temp_var])
                 activation_record.append(
-                    [
-                        "int+",
-                        v_offset_string,
-                        v_offset_string,
-                        temp_var + temp_offset_string,
-                    ]
+                    ["int+", v_offset_string, v_offset_string, temp_offset_string,]
                 )
 
                 code_gen.append(["int*", v1, v1, str(p[1].array[0])])
@@ -1541,12 +1532,7 @@ def p_cast_expression(p):
         offset_string = cal_offset(p[4])
         code_gen.append([f"{p[4].type}2{p[2].type}", tmp_var, p[4].place, " "])
         activation_record.append(
-            [
-                f"{p[4].type}2{p[2].type}",
-                tmp_var + tmp_offset_string,
-                p[4].place + offset_string,
-                " ",
-            ]
+            [f"{p[4].type}2{p[2].type}", tmp_offset_string, offset_string, " ",]
         )
 
         # p[0].ast = build_AST(p, rule_name)
@@ -1596,11 +1582,7 @@ def p_multipicative_expression(p):
                 tmp_var1, tmp_offset_string1 = ST.get_tmp_var(p[0].type)
                 code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
                 activation_record.append(
-                    [
-                        p[1].type + "2" + p[0].type,
-                        tmp_var1 + tmp_offset_string1,
-                        p[1].place + offset_string1,
-                    ]
+                    [p[1].type + "2" + p[0].type, tmp_offset_string1, offset_string1,]
                 )
 
             if p[3].type != p[0].type:
@@ -1616,7 +1598,12 @@ def p_multipicative_expression(p):
 
             code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
             activation_record.append(
-                [p[0].type + _op, p[0].place, tmp_offset_string1, tmp_offset_string3,]
+                [
+                    p[0].type + _op,
+                    cal_offset(p[0]),
+                    tmp_offset_string1,
+                    tmp_offset_string3,
+                ]
             )
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
@@ -1670,7 +1657,12 @@ def p_additive_expression(p):
 
             code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
             activation_record.append(
-                [p[0].type + _op, p[0].place, tmp_offset_string1, tmp_offset_string3,]
+                [
+                    p[0].type + _op,
+                    cal_offset(p[0]),
+                    tmp_offset_string1,
+                    tmp_offset_string3,
+                ]
             )
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
@@ -1706,11 +1698,7 @@ def p_shift_expression(p):
                 tmp_var1, tmp_offset_string1 = ST.get_tmp_var(p[0].type)
                 code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
                 activation_record.append(
-                    [
-                        p[1].type + "2" + p[0].type,
-                        tmp_offset_string1,
-                        p[1].place + offset_string1,
-                    ]
+                    [p[1].type + "2" + p[0].type, tmp_offset_string1, offset_string1,]
                 )
 
             if p[3].type != p[0].type:
@@ -1722,7 +1710,12 @@ def p_shift_expression(p):
 
             code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
             activation_record.append(
-                [p[0].type + _op, p[0].place, tmp_offset_string1, tmp_offset_string3,]
+                [
+                    p[0].type + _op,
+                    cal_offset(p[0]),
+                    tmp_offset_string1,
+                    tmp_offset_string3,
+                ]
             )
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
@@ -1791,7 +1784,12 @@ def p_relational_expression(p):
 
             code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
             activation_record.append(
-                [p[0].type + _op, p[0].place, tmp_offset_string1, tmp_offset_string3,]
+                [
+                    p[0].type + _op,
+                    cal_offset(p[0]),
+                    tmp_offset_string1,
+                    tmp_offset_string3,
+                ]
             )
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
@@ -1845,7 +1843,12 @@ def p_equality_expresssion(p):
 
             code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
             activation_record.append(
-                [p[0].type + _op, p[0].place, tmp_offset_string1, tmp_offset_string3,]
+                [
+                    p[0].type + _op,
+                    cal_offset(p[0]),
+                    tmp_offset_string1,
+                    tmp_offset_string3,
+                ]
             )
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
@@ -1890,7 +1893,12 @@ def p_and_expression(p):
 
             code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
             activation_record.append(
-                [p[0].type + _op, p[0].place, tmp_offset_string1, tmp_offset_string3,]
+                [
+                    p[0].type + _op,
+                    cal_offset(p[0]),
+                    tmp_offset_string1,
+                    tmp_offset_string3,
+                ]
             )
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
@@ -1934,7 +1942,12 @@ def p_exclusive_or_expression(p):
 
             code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
             activation_record.append(
-                [p[0].type + _op, p[0].place, tmp_offset_string1, tmp_offset_string3,]
+                [
+                    p[0].type + _op,
+                    cal_offset(p[0]),
+                    tmp_offset_string1,
+                    tmp_offset_string3,
+                ]
             )
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
@@ -1978,7 +1991,12 @@ def p_inclusive_or_expression(p):
 
             code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
             activation_record.append(
-                [p[0].type + _op, p[0].place, tmp_offset_string1, tmp_offset_string3,]
+                [
+                    p[0].type + _op,
+                    cal_offset(p[0]),
+                    tmp_offset_string1,
+                    tmp_offset_string3,
+                ]
             )
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
@@ -2021,7 +2039,12 @@ def p_logical_and_expression(p):
 
             code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
             activation_record.append(
-                [p[0].type + _op, p[0].place, tmp_offset_string1, tmp_offset_string3,]
+                [
+                    p[0].type + _op,
+                    cal_offset(p[0]),
+                    tmp_offset_string1,
+                    tmp_offset_string3,
+                ]
             )
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
@@ -2076,7 +2099,12 @@ def p_logical_or_expression(p):
 
             code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
             activation_record.append(
-                [p[0].type + _op, p[0].place, tmp_offset_string1, tmp_offset_string3,]
+                [
+                    p[0].type + _op,
+                    cal_offset(p[0]),
+                    tmp_offset_string1,
+                    tmp_offset_string3,
+                ]
             )
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
 
@@ -2313,7 +2341,7 @@ def p_assignment_expression(p):
             activation_record.append(
                 [
                     temp_node.type + _op,
-                    temp_node.place + temp_offset_string,
+                    temp_offset_string,
                     tmp_offset_string1,
                     tmp_offset_string3,
                 ]
@@ -2334,12 +2362,7 @@ def p_assignment_expression(p):
                 if len(p[1].array) == 0 and p[1].name != "PointerVariable":
                     code_gen.append([p[0].type + "=", p[1].place, temp_node1, ""])
                     activation_record.append(
-                        [
-                            p[0].type + "=",
-                            p[1].place + offset_string1,
-                            temp_node1 + tmp_offset_string,
-                            "",
-                        ]
+                        [p[0].type + "=", offset_string1, tmp_offset_string, "",]
                     )
                 else:
                     code_gen.append([p[0].type + "=", p[1].addr, temp_node1, "*"])
@@ -4167,12 +4190,7 @@ def p_jump_statemen_2(p):
 
         code_gen.append([f"return{get_data_type_size(p[2].type)}", p[2].place, "", ""])
         activation_record.append(
-            [
-                f"return{get_data_type_size(p[2].type)}",
-                p[2].place + offset_string,
-                "",
-                "",
-            ]
+            [f"return{get_data_type_size(p[2].type)}", offset_string, "", "",]
         )
 
 

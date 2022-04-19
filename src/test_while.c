@@ -7,56 +7,28 @@ struct t1
     double d1;
     // struct t1 *next;
 };
-// char *strchr(char *str, char ch)
-// {
-//     char *temp = 0; // NULL
-//     int i = 0;
-//     char ch1 = '\\';
-//     printf("%c 1\n", ch1);
-//     while (*(str + i) != '\0')
-//     {
-//         if (*(str + i) == ch)
-//         {
-//             temp = str + i;
-//         }
-//         i++;
-//     }
-//     return temp;
-// }
-// int func(int p, long int j, struct t1 d, int k) //(int a, struct t1 b, int c, int d, int e, int f)
-// {
-//     int m, n;
-//     // d++;
-//     p++;
-//     j++;
-//     k++;
-//     m++;
-//     n++;
-// }
+
+int func(int p, long int j, struct t1 d, int k) //(int a, struct t1 b, int c, int d, int e, int f)
+{
+    int m, n;
+    // d++;
+    m = p;
+    // j++;
+    // k++;
+    // m++;
+    n = n + 1;
+}
 int main()
 {
-    // float a, b;
-    // struct t1 t2;
-    // int **x, y;
-    // char ch = 'n';
-    // // printf("%c\n", ch);
-    // int *p;
-    // // a = 0;
-    // // a = a + b;
-    // y = **x;
-    // (unsigned long long int)a;
-
-    // func(t2, p); //(a, t2, a, b, a, b);
     struct t1 d1;
-    int arr[12];
-    // double c, a, b;
-    // func(a, x, d, b);
-    // int y, x;
-    // y = *(&y);
-    // int c = (&d1)->b;
-    // int m = c;//ERRROR
-    d1.b;
-    d1.d1;
-    // int d = arr[12];
+    float a, x, b, *c, **d;
+    int c1;
+    // c = c + (float *)1;
+    c = &(a);
+    a = *c;
+    d = d + c1;
+    // printf("%ld %ld", d, (float *)1);
+    // func(*(&a), x, d1, b);
+
     return 0;
 }
