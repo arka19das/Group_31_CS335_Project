@@ -647,9 +647,10 @@ def mips_generation(full_code_gen):
                 s, "t0", code_gen[1], "t1", code_gen[2], "t2", code_gen[3]
             )
 
-        elif s.endswith("="):
+        elif s.endswith("=") and code_gen[3]=="":
             mips_set.extend(assign_op(s, "t0", code_gen[1], code_gen[2]))
-
+        elif s.endswith("=") and code_gen[3]=="":
+            mips_set.extend(assign_op_ptr(s, "t0", code_gen[1], code_gen[2]))
         elif s == "funcstart":
             mips_set.append(["SW", "$fp", "-4($sp)"])
             mips_set.append(["SW", "$ra", "-8($sp)"])
