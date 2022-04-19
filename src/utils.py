@@ -328,6 +328,7 @@ class SymbolTable:
                 offset=offsets[scope],
             )
             scope_table.insert(node)
+            tmp_offset_string = f"_-{offsets[scope]}($fp)"
             offsets[scope] += get_data_type_size(vartype)
             offsets[scope] += (8 - offsets[scope] % 8) % 8
 
@@ -335,7 +336,6 @@ class SymbolTable:
             # symTab.insert(
             #     {"name": vname, "type": vartype, "is_array": False, "dimensions": []}
             # )
-            tmp_offset_string = f"_-{offsets[scope]}($fp)"
         return vname, tmp_offset_string
 
     def get_tmp_closure(self, rettype: str, argtypes: list = []) -> str:
