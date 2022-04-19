@@ -1197,7 +1197,7 @@ def p_unary_expression(p):
             if type_size == -1:
                 ST.error(
                     Error(
-                        p.lineno(1),
+                        p[2].lno,
                         rule_name,
                         "Syntax error",
                         f"Size of doesn't exist for '{p[2].type}' type",
@@ -1218,6 +1218,15 @@ def p_unary_expression(p):
                 lhs=1,
                 offset=p[2].offset,
             )
+            if "__tmp" in p[2].place or is_const(p[2].place):
+                ST.error(
+                    Error(
+                        p[2].lno,
+                        rule_name,
+                        "Compilation error",
+                        f"Invalid operator {p[1].val} for '{p[2].type}' type",
+                    )
+                )
             temp_var, tmp_offset_string = ST.get_tmp_var(p[2].type + " *")
             p[0].place = temp_var
             p[0].val = temp_var
