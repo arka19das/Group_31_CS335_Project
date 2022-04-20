@@ -14,8 +14,8 @@ unique_types=set(type_of_instruction)
 for i in sorted(unique_types):
     print(i[::-1])
 # instr_dict={}
-# instr_dict["4="]=""
-# instr_dict["8="]=""
+# instr_dict["int="]=""
+# instr_dict["load="]=""
 # instr_dict["label"]="label"
 # instr_dict["goto"]=
 # instr_dict[]=

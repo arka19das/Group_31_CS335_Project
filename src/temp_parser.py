@@ -432,8 +432,8 @@ def p_postfix_expression_3(p):
         check_identifier(p[1], p.lineno(1))
         offset_string = cal_offset(p[1])
         if p[1].type.endswith("*"):
-            code_gen.append(["8=", p[1].place, tmp_var])
-            activation_record.append(["8=", p[1].place + offset_string, tmp_var+tmp_offset_string])
+            code_gen.append(["long=", p[1].place, tmp_var])
+            activation_record.append(["long=", p[1].place + offset_string, tmp_var+tmp_offset_string])
 
         else:
             code_gen.append(
@@ -1144,8 +1144,8 @@ def p_unary_expression(p):
                         f"Size of doesn't exist for '{p[2].type}' type",
                     )
                 )
-            code_gen.append(["4=", tmp_var, type_size])
-            activation_record.append(["4=", tmp_var+tmp_offset_string, type_size])
+            code_gen.append(["int=", tmp_var, type_size])
+            activation_record.append(["int=", tmp_var+tmp_offset_string, type_size])
 
         elif p[1].val == "&":
             # TODO:3ac
@@ -1334,19 +1334,19 @@ def p_unary_expression(p):
                 label2 = ST.get_tmp_label()
                 # print(p[2].place, 1)
                 code_gen.append(["beq", p[2].place, "0", label1])
-                code_gen.append(["4=", tmp_var, "1", ""])
+                code_gen.append(["int=", tmp_var, "1", ""])
                 code_gen.append(["goto", "", "", label2])
                 code_gen.append(["label", label1, ":", ""])
-                code_gen.append(["4=", tmp_var, "0", ""])
+                code_gen.append(["int=", tmp_var, "0", ""])
                 code_gen.append(["label", label2, ":", ""])
 
                 activation_record.append(
                     ["beq", p[2].place + offset_string, "0", label1]
                 )
-                activation_record.append(["4=", tmp_var+tmp_offset_string, "1", ""])
+                activation_record.append(["int=", tmp_var+tmp_offset_string, "1", ""])
                 activation_record.append(["goto", "", "", label2])
                 activation_record.append(["label", label1, ":", ""])
-                activation_record.append(["4=", tmp_var+tmp_offset_string, "0", ""])
+                activation_record.append(["int=", tmp_var+tmp_offset_string, "0", ""])
                 activation_record.append(["label", label2, ":", ""])
 
                 # code_gen.append([p[2].type + "!", tmp_var, p[2].place, ""])
@@ -1401,8 +1401,8 @@ def p_unary_expression(p):
                     f"Size of doesn't exist for '{p[3].type}' type",
                 )
             )
-        code_gen.append(["4=", tmp_var, str(type_size)])
-        activation_record.append(["4=", tmp_var+tmp_offset_string, str(type_size)])
+        code_gen.append(["int=", tmp_var, str(type_size)])
+        activation_record.append(["int=", tmp_var+tmp_offset_string, str(type_size)])
 
         p[0].ast = build_AST_2(p, [1, 3], p[2])
 
