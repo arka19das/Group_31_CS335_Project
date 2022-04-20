@@ -551,11 +551,11 @@ def conversion(type1, addr1, type2, addr2):
     if type2.endswith("*"):
         type2 = "long"
     if type1 in TYPE_INTEGER:
-        mips.append(load_reg("t0", addr1, type1))
+        mips.append(load_reg("$t0", addr1, type1))
         if size != -0.2:
             op = "DMULTI"
-            mips.append([op, "t0", str(size)])
-            mips.append(["MFLO  ", "t0"])
+            mips.append([op, "$t0", str(size)])
+            mips.append(["MFLO  ", "$t0"])
     elif type1 in TYPE_FLOAT:
         mips.append(load_reg("f2", addr1, type1))
 
@@ -564,11 +564,11 @@ def conversion(type1, addr1, type2, addr2):
         in ("int", "short", "unsigned short", "unsigned int", "char", "unsigned char")
         and type2 in TYPE_FLOAT
     ):
-        mips.append(["MTC1", "t0", "f2"])
+        mips.append(["MTC1", "$t0", "f2"])
         mips.append(["CVT.D.W", "f2", "f2"])
 
     elif type1 in ("long", "unsigned long") and type2 in TYPE_FLOAT:
-        mips.append(["DMTC1", "t0", "f2"])
+        mips.append(["DMTC1", "$t0", "f2"])
         mips.append(["CVT.D.L", "f2", "f2"])
 
     elif (
@@ -577,10 +577,10 @@ def conversion(type1, addr1, type2, addr2):
         and type1 in TYPE_FLOAT
     ):
         mips.append(["CVT.W.D", "f2", "f2"])
-        mips.append(["MFC1", "t0", "f2"])
+        mips.append(["MFC1", "$t0", "f2"])
     elif type2 in ("long", "unsigned long") and type1 in TYPE_FLOAT:
         mips.append(["CVT.L.D", "f2", "f2"])
-        mips.append(["DMFC1", "t0", "f2"])
+        mips.append(["DMFC1", "$t0", "f2"])
     elif (type1 in TYPE_FLOAT and type2 in TYPE_FLOAT) or (
         type1 in TYPE_INTEGER and type2 in TYPE_INTEGER
     ):
@@ -590,7 +590,7 @@ def conversion(type1, addr1, type2, addr2):
         print(f"TYPECASTING NOT POSSIBLE {type1},{type2}")
 
     if type2 in TYPE_INTEGER:
-        mips.append(store_reg("t0", addr2, type2))
+        mips.append(store_reg("$t0", addr2, type2))
     elif type2 in TYPE_FLOAT:
         mips.append(store_reg("f2", addr2, type2))
 
@@ -630,7 +630,7 @@ def non_prim_load(type,reg1,reg2,laddr,raddr):
     return mips        
 
 
-#print(non_prim_load("t0","t1","-160($fp)","-152($fp)","104non_primitive_load"))
+#print(non_prim_load("$t0","$t1","-160($fp)","-152($fp)","104non_primitive_load"))
 
 
 def mips_generation(full_code_gen):
@@ -682,22 +682,22 @@ def mips_generation(full_code_gen):
 
             # TODO:for pointers and arrays convert to long instead of float *
             mips_set += binary_exp_mips(
-                s, "t0", code_gen[1], "t1", code_gen[2], "t2", code_gen[3]
+                s, "$t0", code_gen[1], "$t1", code_gen[2], "$t2", code_gen[3]
             )
 
         elif s.endswith("=") and code_gen[3]=="":
-            mips_set.extend(assign_op(s, "t0", code_gen[1], code_gen[2]))
+            mips_set.extend(assign_op(s, "$t0", code_gen[1], code_gen[2]))
         elif s.endswith("=") and code_gen[3]=="*":
-            mips_set.extend(assign_op_ptr(s, "t0", code_gen[1], code_gen[2]))
+            mips_set.extend(assign_op_ptr(s, "$t0", code_gen[1], code_gen[2]))
         elif s == "4load" or s == "8load":
-            mips_set.extend(nload(s,"t0","t1",code_gen[1],code_gen[2]))
+            mips_set.extend(nload(s,"$t0","$t1",code_gen[1],code_gen[2]))
         elif s.endswith("non_primitive_load"):
-            mips_set.extend(non_prim_load(s,"t0","t1",code_gen[1],code_gen[2]))    
+            mips_set.extend(non_prim_load(s,"$t0","$t1",code_gen[1],code_gen[2]))    
         elif s == "funcstart":
             mips_set.append(["label",code_gen[1],":",""])
             pass
         elif s == "addr":
-            mips_set.extend(addr_load("t0",code_gen[1],code_gen[2]))    
+            mips_set.extend(addr_load("$t0",code_gen[1],code_gen[2]))    
         elif s == "endfunc":
             pass
         
