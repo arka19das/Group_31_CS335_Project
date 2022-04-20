@@ -692,6 +692,19 @@ def write_code(code, file):
     file.close()
 
 
+def write_mips(code, file):
+    for line in code:
+        if line[0] == ";":
+            continue
+        elif line[0] != "label":
+            file.write(f"\t\t{line[0].lower()}\t")
+            file.write(",".join(line[1:]))
+        else:
+            file.write(f"{line[1]}\t{line[2]}") 
+        file.write("\n")
+    file.close()
+
+
 def dump_symbol_table_csv(verbose: bool = False):
     if ST.error_flag:
         return

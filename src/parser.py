@@ -4482,7 +4482,7 @@ if __name__ == "__main__":
         file = open("activation_record.txt", "w")
         write_code(activation_record, file)
         file = open("mips_generated.s", "w")
-        write_code(mips_generation(activation_record), file)
+        write_mips(mips_generation(activation_record), file)
 
     dump_symbol_table_csv(args.v)
 
