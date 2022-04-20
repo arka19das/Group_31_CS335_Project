@@ -172,6 +172,7 @@ def p_float_constant(p):
         lhs=1,
     )
     rule_name = "float_constant"
+    p[0].in_whose_scope = ST.scope_tables[ST.currentScope].name
     p[0].ast = build_AST(p, rule_name)
     if "l" in p[1] or "L" in p[1]:
         p[0].type = "double"
@@ -195,6 +196,8 @@ def p_hex_constant(p):
     temp = re.findall("[0-9a-fA-F]+", p[1][2:])
     p[0].val = int(temp[0], 16)
     p[0].place = int(temp[0], 16)
+    p[0].in_whose_scope = ST.scope_tables[ST.currentScope].name
+    
     if "l" in p[1] or "L" in p[1]:
         p[0].type = "long"
 
@@ -217,6 +220,8 @@ def p_oct_constant(p):
     temp = re.findall("[0-7]+", p[1][1:])
     p[0].val = int(temp[0], 8)
     p[0].place = int(temp[0], 8)
+    p[0].in_whose_scope = ST.scope_tables[ST.currentScope].name
+    
     if "l" in p[1] or "L" in p[1]:
         p[0].type = "long"
 
@@ -240,6 +245,7 @@ def p_int_constant(p):
     )
     temp = re.findall("[0-9]+", p[1])
     p[0].val = temp[0]
+    p[0].in_whose_scope = ST.scope_tables[ST.currentScope].name
     if "l" in p[1] or "L" in p[1]:
         p[0].type = "long"
 
@@ -331,6 +337,7 @@ def p_char_constant(p):
         code="",
         lhs=1,
     )
+    p[0].in_whose_scope = ST.scope_tables[ST.currentScope].name
     rule_name = "char_constant"
     p[0].ast = build_AST(p, rule_name)
 
@@ -350,7 +357,8 @@ def p_string_literal(p):
     )
     rule_name = "string_literal"
     p[0].ast = build_AST(p, rule_name)
-
+    p[0].in_whose_scope = ST.scope_tables[ST.currentScope].name
+    
 
 def p_identifier(p):
     """identifier : IDENTIFIER"""
@@ -432,8 +440,8 @@ def p_postfix_expression_3(p):
         check_identifier(p[1], p.lineno(1))
         offset_string = cal_offset(p[1])
         if p[1].type.endswith("*"):
-            code_gen.append(["long=", p[1].place, tmp_var])
-            activation_record.append(["long=", offset_string, tmp_offset_string])
+            code_gen.append(["8=", p[1].place, tmp_var])
+            activation_record.append(["8=", offset_string, tmp_offset_string])
 
         else:
             code_gen.append(
@@ -1015,10 +1023,10 @@ def p_postfix_expression_3(p):
                     #     func_offset += (8 - func_offset % 8) % 8
                     i -= 1
                     
-                func_size = 0
-                func_offset = offsets[ST.currentScope] + 8
+                param_size = func_offset
+                func_offset = offsets[ST.currentScope] + 16
                 return_size = get_data_type_size(p1v_node.type)
-                return_size += (8 - func_offset % 8) % 8
+                return_size += ((8 - return_size % 8) % 8)
                 func_offset += return_size
 
                 for t3ac, tact in zip(temp_3ac, temp_act):
@@ -1026,10 +1034,10 @@ def p_postfix_expression_3(p):
                     activation_record.append(tact)
                     activation_record[-1][2] = f"{-(func_offset + activation_record[-1][2])}($fp)"
 
-                func_offset+=offsets[ST.currentScope]
+                func_offset+=param_size
                 code_gen.append([f"call_{offsets[ST.currentScope]}", p[1].val, "", ""])
                 activation_record.append(
-                    [f"call_{p1v_node.type}_{func_offset}", p[1].val, "", f"__{p[1].val}"]
+                    [f"call_{p1v_node.type}_{func_offset}_{param_size+16+return_size}", p[1].val, "", f"__{p[1].val}"]
                 )
 
 
@@ -1209,8 +1217,8 @@ def p_unary_expression(p):
                         f"Size of doesn't exist for '{p[2].type}' type",
                     )
                 )
-            code_gen.append(["int=", tmp_var, type_size])
-            activation_record.append(["int=", tmp_offset_string, type_size])
+            code_gen.append(["4=", tmp_var, type_size])
+            activation_record.append(["4=", tmp_offset_string, type_size])
 
         elif p[1].val == "&":
             # TODO:3ac
@@ -1404,17 +1412,17 @@ def p_unary_expression(p):
                 label2 = ST.get_tmp_label()
                 # print(p[2].place, 1)
                 code_gen.append(["beq", p[2].place, "0", label1])
-                code_gen.append(["int=", tmp_var, "1", ""])
+                code_gen.append(["4=", tmp_var, "1", ""])
                 code_gen.append(["goto", "", "", label2])
                 code_gen.append(["label", label1, ":", ""])
-                code_gen.append(["int=", tmp_var, "0", ""])
+                code_gen.append(["4=", tmp_var, "0", ""])
                 code_gen.append(["label", label2, ":", ""])
 
                 activation_record.append(["beq", offset_string, "0", label1])
-                activation_record.append(["int=", tmp_offset_string, "1", ""])
+                activation_record.append(["4=", tmp_offset_string, "1", ""])
                 activation_record.append(["goto", "", "", label2])
                 activation_record.append(["label", label1, ":", ""])
-                activation_record.append(["int=", tmp_offset_string, "0", ""])
+                activation_record.append(["4=", tmp_offset_string, "0", ""])
                 activation_record.append(["label", label2, ":", ""])
 
                 # code_gen.append([p[2].type + "!", tmp_var, p[2].place, ""])
@@ -1467,8 +1475,8 @@ def p_unary_expression(p):
                     f"Size of doesn't exist for '{p[3].type}' type",
                 )
             )
-        code_gen.append(["int=", tmp_var, str(type_size)])
-        activation_record.append(["int=", tmp_offset_string, str(type_size)])
+        code_gen.append(["4=", tmp_var, str(type_size)])
+        activation_record.append(["4=", tmp_offset_string, str(type_size)])
 
         p[0].ast = build_AST_2(p, [1, 3], p[2])
 
@@ -3178,6 +3186,8 @@ def p_direct_declarator_2(p):
             node1.offset = total_size
             total_size += get_data_type_size(child.type)
             total_size += (8 - total_size % 8) % 8
+            node1.in_whose_scope=p[1].val
+        # print(p[1])
         node.argument_list = tempList
         node.type = ST.curType[-1 - len(tempList)]
         ST.parent_table.insert(node)
@@ -4195,8 +4205,15 @@ def p_jump_statemen_2(p):
                     "Function return type is not void",
                 )
             )
+        temp = p[2].in_whose_scope.split("_")[0]
+        node =ST.find(temp),temp 
+        param_size = 0
+        for argument in node.argument_list:
+            param_size+=get_data_type_size(argument)
+            param_size+=(8-param_size%8)%8
+
         code_gen.append(["return0", "", "", ""])
-        activation_record.append(["return0", "", "", ""])
+        activation_record.append([f"return0_8_{param_size+24}", "", "", ""])
 
     else:
         offset_string = cal_offset(p[2])
@@ -4209,10 +4226,19 @@ def p_jump_statemen_2(p):
                     f"Function return type is not {p[2].type}",
                 )
             )
+        # return_size=param_size=0
+        temp = p[2].in_whose_scope.split("_")[0]
+        node =ST.find(temp)
+        param_size = 0
+        for argument in node.argument_list:
+            param_size+=get_data_type_size(argument)
+            param_size+=(8-param_size%8)%8
 
+        return_size = get_data_type_size(p[2].type)
+        return_size+=(8-return_size%8)%8
         code_gen.append([f"return{get_data_type_size(p[2].type)}", p[2].place, "", ""])
         activation_record.append(
-            [f"return{get_data_type_size(p[2].type)}", offset_string, "", "",]
+            [f"return_{return_size}_{p[2].type}_{param_size+return_size+16}", offset_string, "", "",]
         )
 
 
@@ -4283,6 +4309,9 @@ def p_function_definition_2(p):
     )
     p[0].ast = build_AST_2(p, [1, 2, 4], rule_name)
     code_gen.append(["endfunc", "", "", ""])
+    # print(p[1])
+    # print(p[2])
+
     activation_record.append(["endfunc", "", "", ""])
     # funcstack.pop()
 

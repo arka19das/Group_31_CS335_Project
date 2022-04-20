@@ -636,7 +636,7 @@ def non_prim_load(type,reg1,reg2,laddr,raddr):
 def mips_generation(full_code_gen):
     mips_set = []
     params = []
-
+    return_offset = 0
     for code_gen in full_code_gen:
         mips_set.append([comment_variable] + code_gen)
         s = code_gen[0]
@@ -687,8 +687,12 @@ def mips_generation(full_code_gen):
 
         elif s.endswith("=") and code_gen[3]=="":
             mips_set.extend(assign_op(s, "t0", code_gen[1], code_gen[2]))
-        elif s.endswith("=") and code_gen[3]=="*":
-            mips_set.extend(assign_op_ptr(s, "t0", code_gen[1],"$t1", code_gen[2])
+        elif s.endswith("=") and code_gen[3]=="":
+            mips_set.extend(assign_op_ptr(s, "t0", code_gen[1], code_gen[2]))
+        elif s.endswith("=") and code_gen[3]=="":
+            mips_set.extend(assign_op(s, "t0", code_gen[1], code_gen[2]))
+        elif s.endswith("=") and code_gen[3]=="":
+            mips_set.extend(assign_op_ptr(s, "t0", code_gen[1], code_gen[2]))
         elif s == "4load" or s == "8load":
             mips_set.extend(nload(s,"t0","t1",code_gen[1],code_gen[2]))
         elif s.endswith("non_primitive_load"):
@@ -702,57 +706,75 @@ def mips_generation(full_code_gen):
             pass
         
         elif "return" in s:
-
+            
+            node_split =s.split("_")
+            return_offset = int(node_split[-1])-16
             if s[-1]=="0":
-                mips_set.append(["ADDI", "-16($fp)", "$0", "$0"])
+                mips_set.append(["ADDI", f"{return_offset}($fp)", "$0", "$0"])
             elif is_char(code_gen[1]):
-                mips_set.append(["ADDI", "-16($fp)", "$0", code_gen[3]])
+                mips_set.append(["ADDI", f"{return_offset}($fp)", "$0", code_gen[3]])
             elif is_num(code_gen[1]):
                 if "." in s:
                     #instruction nahi pata float ke liye
-                    mips_set.append(["ADDI", "-16($fp)", "$0", code_gen[3]])
+                    mips_set.append(["ADDI", "0($v0)", "$0", code_gen[3]])
                 else:
-                    mips_set.append(["ADDI", "-16($fp)", "$0", code_gen[3]])
+                    mips_set.append(["ADDI", f"{return_offset}($fp)", "$0", code_gen[3]])
             else:
-                #TO_DO
-                _type = _type = s.split("_")[1]
+                # node_split = s.split("_")
+                offset = int(code_gen[1].split('(')[0])
+                sz = int(node_split[1])
+                # sz+=(8-sz%8)%8
+                for i in range(0,sz,8):
+                    mips_set.append(load_reg("$t0",f"{offset-i}($fp)",node_split[2]))
+                    mips_set.append(store_reg("$t0", f"{return_offset-i}($v0)", node_split[2]))
             
+            return_offset+=16
+            return_size=-return_offset
             # load_registers_on_function_return("sp")
-            # mips_set.append(["LA", "$sp", "0($fp)"])
-            # mips_set.append(["LW", "$ra", "-8($sp)"])
-            # mips_set.append(["LA", "$fp", "-4($sp)"])
-            # mips_set.append(["JR", "$ra", ""])
+            mips_set.append(["ADDIU","$t0","$fp",f"{return_size}"])
+            mips_set.append(["MOVZ","$fp","$t0","$0"])
+            mips_set.append(["LW", "$ra", "-16($fp)"])
+            mips_set.append(["MOVZ","$sp","$fp","$0"])
+            mips_set.append(["LA", "$fp", "-8($fp)"])
+            mips_set.append(["JR", "$ra", ""])
 
         elif "call" in s:
             node_type = s.split("_")
             
-            mips_set.append(["SW", "$fp", "-4($sp)"])
-            mips_set.append(["SW", "$ra", "-8($sp)"])
-            sz = get_data_type_size(node_type[1])
-            
-            if node_type[1] in ["float", "double"]:
-                mips_set.append([LOAD_INSTRUCTIONS[node_type[1]], f"{-8-sz}($sp)", "$f0"])
-            elif node_type[1] in ["int", "long", "doublchar"]:
-                mips_set.append([LOAD_INSTRUCTIONS[node_type[1]], f"{-8-sz}($sp)", "$v0"])
-            elif node_type[1] != "void":
-                # non_primitive_load jaisa
-                pass
+            mips_set.append(["SW", "$fp", "-8($sp)"])
+            mips_set.append(["SW", "$ra", "-16($sp)"])
+            # sz = get_data_type_size(node_type[1])
+            # sz+=(8-sz%8)%8
+            #Agr address strore krna hai to kya krenge ?
+            # if node_type[1] in ["float", "double"]:
+            # mips_set.append(["DADDI","$v0","$sp",f"{-16-sz}"])
+            #mips_set.extend(("$t0",f"{-16-sz}($sp)", "$v0"))
+                # mips_set.append([LOAD_INSTRUCTIONS[node_type[1]], f"{-16-sz}($sp)", "$f0"])
+            # elif node_type[1] in ["int", "long", "doublchar"]:
+            #     mips_set.append(addr_load("$t0",f"{-16-sz}($sp)", "$v0"))
+            #     # mips_set.append([LOAD_INSTRUCTIONS[node_type[1]], f"{-16-sz}($sp)", "$v0"])
+            # elif node_type[1] != "void":
+            #     # non_primitive_load jaisa
+            #     pass
             
             for p in params:
                 mips_set.append(p)
             params = []
+            # mips_set.append(["ADDI","$t7","$0",int(node_type[-1])])
             mips_set.append(["LA","$fp",f"{-int(node_type[2])}($sp)"])
+            mips_set.append(["MOVZ","$sp","$fp","$0"])
             mips_set.append(["JAL", code_gen[1], ""])
-     
+            # return_offset = node_type[3]
+
         elif "param" in s:
             if is_char(code_gen[1]):
-                mips_set.append(["ADDI", code_gen[2], "$0", code_gen[3]])
+                params.append(["ADDI", code_gen[2], "$0", code_gen[3]])
             elif is_num(code_gen[1]):
                 if "." in s:
                     #instruction nahi pata float ke liye
-                    mips_set.append(["ADDI", code_gen[2], "$0", code_gen[3]])
+                    params.append(["ADDI", code_gen[2], "$0", code_gen[3]])
                 else:
-                    mips_set.append(["ADDI", code_gen[2], "$0", code_gen[3]])
+                    params.append(["ADDI", code_gen[2], "$0", code_gen[3]])
             else:
                 _type = _type = s.split("_")[1]
                 params.append(load_reg("$t0",code_gen[3],_type))
