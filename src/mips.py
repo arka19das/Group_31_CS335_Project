@@ -633,7 +633,6 @@ def non_prim_load(type,reg1,reg2,laddr,raddr):
 #print(non_prim_load("t0","t1","-160($fp)","-152($fp)","104non_primitive_load"))
 
 
-
 def mips_generation(full_code_gen):
     mips_set = []
     params = []
@@ -690,6 +689,10 @@ def mips_generation(full_code_gen):
             mips_set.extend(assign_op(s, "t0", code_gen[1], code_gen[2]))
         elif s.endswith("=") and code_gen[3]=="":
             mips_set.extend(assign_op_ptr(s, "t0", code_gen[1], code_gen[2]))
+        elif s.endswith("=") and code_gen[3]=="":
+            mips_set.extend(assign_op(s, "t0", code_gen[1], code_gen[2]))
+        elif s.endswith("=") and code_gen[3]=="":
+            mips_set.extend(assign_op_ptr(s, "t0", code_gen[1], code_gen[2]))
         elif s == "4load" or s == "8load":
             mips_set.extend(nload(s,"t0","t1",code_gen[1],code_gen[2]))
         elif s.endswith("non_primitive_load"):
@@ -701,7 +704,7 @@ def mips_generation(full_code_gen):
             mips_set.extend(addr_load("t0",code_gen[1],code_gen[2]))    
         elif s == "endfunc":
             pass
-
+        
         elif "return" in s:
 
             if s[-1]=="0":
@@ -719,10 +722,10 @@ def mips_generation(full_code_gen):
                 _type = _type = s.split("_")[1]
             
             # load_registers_on_function_return("sp")
-            mips_set.append(["LA", "$sp", "0($fp)"])
-            mips_set.append(["LW", "$ra", "-8($sp)"])
-            mips_set.append(["LA", "$fp", "-4($sp)"])
-            mips_set.append(["JR", "$ra", ""])
+            # mips_set.append(["LA", "$sp", "0($fp)"])
+            # mips_set.append(["LW", "$ra", "-8($sp)"])
+            # mips_set.append(["LA", "$fp", "-4($sp)"])
+            # mips_set.append(["JR", "$ra", ""])
 
         elif "call" in s:
             node_type = s.split("_")
