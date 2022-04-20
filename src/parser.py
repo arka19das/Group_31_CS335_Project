@@ -961,9 +961,11 @@ def p_postfix_expression_3(p):
                         # tmp_offset_string[-3]="s"
                         temp_3ac.append([f"param", p[1].val, " ", tmp_var])
                         temp_act.append(
-                            [f"param", p[1].val, func_offset, tmp_offset_string]
+                            [f"param_{p[3].children[i].type}", p[1].val, func_offset, tmp_offset_string]
                         )
-
+                        # temp_offset = get_data_type_size(arguments)
+                        func_offset += 8
+                        
                     elif (p[3].children[i].type.upper() in PRIMITIVE_TYPES) ^ (
                         arguments.upper() in PRIMITIVE_TYPES
                     ):
@@ -982,6 +984,7 @@ def p_postfix_expression_3(p):
                         and p[3].children[i].type.upper() not in PRIMITIVE_TYPES
                         and arguments.upper() not in PRIMITIVE_TYPES
                     ):
+                        print(ST.curType[-1] ,arguments)
                         ST.error(
                             Error(
                                 p[1].lno,
@@ -994,18 +997,22 @@ def p_postfix_expression_3(p):
 
                     else:
                         # offset_string[-3]="s"
-                        temp_3ac.append([f"param", p[1].val, " ", p[3].children[i].val])
-                        temp_act.append(
-                            [f"param_{p[3].children[i].type}", p[3].children[i].place, func_offset, offset_string]
-                        )
+                        temp_offset = get_data_type_size(arguments)
+                        temp_offset += (8-temp_offset%8)%8
+                        for j in range(0,temp_offset,8):
+                            temp_3ac.append([f"param", p[1].val, " ", p[3].children[i].val])
+                            temp_act.append(
+                                [f"param_long", p[1].val, func_offset+j, offset_string]
+                            )
 
-                    if p[3].children[i].type.upper() in PRIMITIVE_TYPES or p[
-                        3
-                    ].children[i].type.endswith("*"):
-                        func_offset += 8
-                    else:
-                        func_offset += get_data_type_size(arguments)
-                        func_offset += (8 - func_offset % 8) % 8
+                        func_offset+=temp_offset
+                    # if p[3].children[i].type.upper() in PRIMITIVE_TYPES or p[
+                    #     3
+                    # ].children[i].type.endswith("*"):
+                    #     func_offset += 8
+                    # else:
+                    #     func_offset += get_data_type_size(arguments)
+                    #     func_offset += (8 - func_offset % 8) % 8
                     i -= 1
                     
                 func_size = 0
@@ -1017,12 +1024,12 @@ def p_postfix_expression_3(p):
                 for t3ac, tact in zip(temp_3ac, temp_act):
                     code_gen.append(t3ac)
                     activation_record.append(tact)
-                    activation_record[-1][
-                        2
-                    ] = f"{-(func_offset + activation_record[-1][2])}($fp)"
+                    activation_record[-1][2] = f"{-(func_offset + activation_record[-1][2])}($fp)"
+
+                func_offset+=offsets[ST.currentScope]
                 code_gen.append([f"call_{offsets[ST.currentScope]}", p[1].val, "", ""])
                 activation_record.append(
-                    [f"call_{p1v_node.type}_{offsets[ST.currentScope]+8+return_size}", p[1].val, "", f"__{p[1].val}"]
+                    [f"call_{p1v_node.type}_{func_offset}", p[1].val, "", f"__{p[1].val}"]
                 )
 
 
@@ -2371,7 +2378,7 @@ def p_assignment_expression(p):
                         offset_string1,
                     ]
                 )
-                if len(p[1].array) == 0 and p[1].name != "PointerVariable":
+                if len(p[1].array) == 0 and p[1].name != "PointerVariable"and p[1].name!="DotOrPTRExpression":
                     code_gen.append([p[0].type + "=", p[1].place, temp_node1, ""])
                     activation_record.append(
                         [p[0].type + "=", offset_string1, tmp_offset_string, "",]
@@ -2382,7 +2389,7 @@ def p_assignment_expression(p):
                         [p[0].type + "=", offset_string1, tmp_offset_string, "*",]
                     )
             else:
-                if len(p[1].array) == 0 and p[1].name != "PointerVariable":
+                if len(p[1].array) == 0 and p[1].name != "PointerVariable"and p[1].name!="DotOrPTRExpression":
                     code_gen.append(
                         [temp_node.type + "=", p[1].place, temp_node.place, ""]
                     )
@@ -2411,7 +2418,7 @@ def p_assignment_expression(p):
                     ]
                 )
 
-                if len(p[1].array) == 0 and p[1].name != "PointerVariable":
+                if len(p[1].array) == 0 and p[1].name != "PointerVariable" and p[1].name!="DotOrPTRExpression":
                     code_gen.append([p[0].type + "=", p[1].place, temp_node1, ""])
                     activation_record.append(
                         [p[0].type + "=", offset_string1, tmp_offset_string, "",]
@@ -2424,7 +2431,7 @@ def p_assignment_expression(p):
                     )
 
             else:
-                if len(p[1].array) == 0 and p[1].name != "PointerVariable":
+                if len(p[1].array) == 0 and p[1].name != "PointerVariable" and p[1].name!="DotOrPTRExpression":
                     # print("if", p[0].type, temp_node.type)
 
                     code_gen.append(
@@ -3319,7 +3326,10 @@ def p_parameter_declaration(p):
         )
         p[0].ast = build_AST(p, rule_name)
         if len(p[2].type) > 0:
-            p[0].type = p[1].type + " " + p[2].type
+            if "*" in p[2].type:
+                p[0].type = p[1].type + p[2].type
+            else:
+                p[0].type = p[1].type + " " + p[2].type
     if p[2].name == "Declarator":
         p2v_node = ST.current_table.find(p[2].val)
         if p2v_node is not None:
