@@ -513,7 +513,7 @@ def addr_str(reg1, laddr, raddr):
 # addr tmp_var var
 def addr_load(reg1, addr1, offset_var):
     mips = []
-    mips.append(["ADDIU", reg1, "$fp", offset_var])
+    mips.append(["DADDI", reg1, "$fp", offset_var])
     mips.append(["SD", reg1, addr1])
     return mips
 
@@ -596,6 +596,43 @@ def conversion(type1, addr1, type2, addr2):
 
     return mips
 
+def nload(type,reg1,reg2,laddr,raddr):
+    mips = []
+    size  = int(type[0])
+    mips.append(["LD",reg2,raddr])
+    if(size == 4):
+       mips.append(["LW",reg1,f"0({reg2})"])
+       mips.append(["SW",reg1,laddr])
+    else:
+       mips.append(["LD",reg1,f"0({reg2})"])
+       mips.append(["SD",reg1,laddr])
+    return mips   
+
+def non_prim_load(type,reg1,reg2,laddr,raddr):
+    mips = []
+    x=""
+    l_offset=int(laddr[0:-5])
+    for i in type:
+        if i.isnumeric():
+            x+=i
+    size = int(x)
+    # mips.append(["LD",reg2,laddr])
+    mips.append(["LD",reg2,raddr])
+    for i in range(0,size,8):
+        if i == 0:
+            mips.append(["LD",reg1,f"0({reg2})"])
+            mips.append(["SD",reg1,f"{l_offset}($fp)"])
+        else:
+            mips.append(["DADDI",reg2,reg2,"-8"])
+            mips.append(["LD",reg1,f"0({reg2})"])
+            l_offset = l_offset-8
+            mips.append(["SD",reg1,f"{l_offset}($fp)"])
+    return mips        
+
+
+#print(non_prim_load("t0","t1","-160($fp)","-152($fp)","104non_primitive_load"))
+
+
 
 def mips_generation(full_code_gen):
     mips_set = []
@@ -653,10 +690,15 @@ def mips_generation(full_code_gen):
             mips_set.extend(assign_op(s, "t0", code_gen[1], code_gen[2]))
         elif s.endswith("=") and code_gen[3]=="":
             mips_set.extend(assign_op_ptr(s, "t0", code_gen[1], code_gen[2]))
-        
+        elif s == "4load" or s == "8load":
+            mips_set.extend(nload(s,"t0","t1",code_gen[1],code_gen[2]))
+        elif s.endswith("non_primitive_load"):
+            mips_set.extend(non_prim_load(s,"t0","t1",code_gen[1],code_gen[2]))    
         elif s == "funcstart":
+            mips_set.append(["label",code_gen[1],":",""])
             pass
-            
+        elif s == "addr":
+            mips_set.extend(addr_load("t0",code_gen[1],code_gen[2]))    
         elif s == "endfunc":
             pass
 
