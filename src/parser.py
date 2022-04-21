@@ -51,10 +51,17 @@ def cal_offset(p):
 
     count_ = p.in_whose_scope.count("_")
     offset = 0
+
+    # print(p.val,p.lno, ST.scope_tables[ST.currentScope].name,p.in_whose_scope)
+    temp=1
+    temp=table_name_to_num[p.in_whose_scope]
     for c_ in range(count_):  # CHECK ARKA BC
-        offset += offsets[1 + c_]
+        
+        temp=ST.parent[temp]
+        offset+=offsets[temp]
 
     offset += p.offset
+    # print(offset ,p.place,p.in_whose_scope,offsets[1])
     if offset:
         offset_string = f"{-offset}($fp)"
     else:
@@ -1010,7 +1017,7 @@ def p_postfix_expression_3(p):
                             arg_split = arguments.split()[0] 
                             temp_3ac.append([f"param", p[1].val, " ", p[3].children[i].val])
                             temp_act.append(
-                                [f"param_{arg_split}", p[1].val, func_offset+j, offset_string]
+                                [f"param_{arg_split}", p[1].val, func_offset, offset_string]
                             )
                         else:
                             temp_offset = get_data_type_size(arguments)
@@ -1033,7 +1040,12 @@ def p_postfix_expression_3(p):
                     i -= 1
                     
                 param_size = func_offset
-                func_offset = offsets[ST.currentScope] + 16
+                func_offset=16
+                temp=ST.currentScope
+                while temp!=0:
+                    func_offset+=offsets[temp]
+                    temp=ST.parent[temp]
+                # func_offset = offsets[ST.currentScope] + 16
                 return_size = get_data_type_size(p1v_node.type)
                 return_size += ((8 - return_size % 8) % 8)
                 func_offset += return_size
@@ -1041,8 +1053,7 @@ def p_postfix_expression_3(p):
                 for t3ac, tact in zip(temp_3ac, temp_act):
                     code_gen.append(t3ac)
                     activation_record.append(tact)
-                    activation_record[-1][2] = f"{-(func_offset + acti
-vation_record[-1][2])}($fp)"
+                    activation_record[-1][2] = f"{-(func_offset + activation_record[-1][2])}($fp)"
 
                 func_offset+=param_size
                 code_gen.append([f"call_{offsets[ST.currentScope]}", p[1].val, "", ""])
@@ -2590,6 +2601,7 @@ def p_declaration(p):
                     val=child.children[1].val,
                     size=get_data_type_size(p[1].type),
                     offset=offsets[ST.currentScope],
+                    in_whose_scope=ST.scope_tables[ST.currentScope].name,
                 )
                 # print(offsets[ST.currentScope])
                 ST.current_table.insert(node)
@@ -2614,6 +2626,8 @@ def p_declaration(p):
                     )
                 if child.children[0].offset == -1465465465:
                     child.children[0].offset = offsets[ST.currentScope]
+                    
+                    child.children[0].in_whose_scope=ST.scope_tables[ST.currentScope].name
                 # print(child.type,child.val,offsets[ST.currentScope])
                 
                 node.size *= totalEle
@@ -3207,6 +3221,7 @@ def p_direct_declarator_2(p):
         ST.parent_table.insert(node)
         ST.curFuncReturnType = copy.deepcopy(ST.curType[-1 - len(tempList)])
         ST.current_table.name = p[1].val
+        table_name_to_num[p[1].val] = ST.currentScope
         # code_gen.append(["funcstart", p[1].val, "", ""])
         funcstack.append(p[1].val)
 
@@ -3263,6 +3278,7 @@ def p_direct_declarator_4(p):
         ST.parent_table.insert(node)
         ST.curFuncReturnType = copy.deepcopy(ST.curType[-1])
         ST.current_table.name = p[1].val
+        table_name_to_num[p[1].val] = ST.currentScope
 
         # code_gen.append(["funcstart", p[1].val, "", ""])
         funcstack.append(p[1].val)
