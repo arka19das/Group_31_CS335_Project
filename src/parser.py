@@ -1005,13 +1005,22 @@ def p_postfix_expression_3(p):
 
                     else:
                         # offset_string[-3]="s"
-                        temp_offset = get_data_type_size(arguments)
-                        temp_offset += (8-temp_offset%8)%8
-                        for j in range(0,temp_offset,8):
+                        if arguments.upper() in PRIMITIVE_TYPES or arguments.endswith("*"):
+                            temp_offset = get_data_type_size(arguments)
+                            arg_split = arguments.split()[0] 
                             temp_3ac.append([f"param", p[1].val, " ", p[3].children[i].val])
                             temp_act.append(
-                                [f"param_long", p[1].val, func_offset+j, offset_string]
+                                [f"param_{arg_split}", p[1].val, func_offset+j, offset_string]
                             )
+                        else:
+                            temp_offset = get_data_type_size(arguments)
+                            temp_offset += (8-temp_offset%8)%8                       
+                            offset = int(offset_string.split('(')[0])
+                            for j in range(0,temp_offset,8):
+                                temp_3ac.append([f"param", p[1].val, " ", p[3].children[i].val])
+                                temp_act.append(
+                                    [f"param_long", p[1].val, func_offset+j, f"{-offset-j}($fp)"]
+                                )
 
                         func_offset+=temp_offset
                     # if p[3].children[i].type.upper() in PRIMITIVE_TYPES or p[
@@ -1032,7 +1041,8 @@ def p_postfix_expression_3(p):
                 for t3ac, tact in zip(temp_3ac, temp_act):
                     code_gen.append(t3ac)
                     activation_record.append(tact)
-                    activation_record[-1][2] = f"{-(func_offset + activation_record[-1][2])}($fp)"
+                    activation_record[-1][2] = f"{-(func_offset + acti
+vation_record[-1][2])}($fp)"
 
                 func_offset+=param_size
                 code_gen.append([f"call_{offsets[ST.currentScope]}", p[1].val, "", ""])
@@ -2602,6 +2612,10 @@ def p_declaration(p):
                             f"Identifier {child.children[0].val} cannot have type void",
                         )
                     )
+                if child.children[0].offset == -1465465465:
+                    child.children[0].offset = offsets[ST.currentScope]
+                # print(child.type,child.val,offsets[ST.currentScope])
+                
                 node.size *= totalEle
                 offsets[ST.currentScope] += node.size
                 offsets[ST.currentScope] += (8 - offsets[ST.currentScope] % 8) % 8
@@ -3204,6 +3218,7 @@ def p_direct_declarator_3(p):
         name="ArrayDeclarator", val=p[1].val, type="", lno=p.lineno(1), children=[],
     )
     p[0].ast = build_AST(p, rule_name)
+    p[0].level=p[1].level+1
     p[0].array = copy.deepcopy(p[1].array)
     p[0].array.append(int(p[3].place))
 
@@ -3229,6 +3244,7 @@ def p_direct_declarator_4(p):
                     )
                 )
             p[0].array.append(0)
+        p[0].level=p[1].level+1
         p[0].ast = build_AST(p, rule_name)
 
     if p[3] == ")":
