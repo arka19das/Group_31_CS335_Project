@@ -102,7 +102,7 @@ class Lexer(object):
     ]
 
     TYPE_NAMES = []
-
+    data = ""
     def t_TRUE(self, t):
         r"true"
         t.type = "INT_CONSTANT"
@@ -199,13 +199,12 @@ class Lexer(object):
     t_ignore = " \t"
 
     def t_error(self, t):
-        print("Illegal character '%s' at %d" % (t.value[0], self.find_column(data, t)))
+        print("Illegal character '%s' at %d" % (t.value[0], self.find_column( t)))
         self.error_flag = True
         t.lexer.skip(1)
 
-    @staticmethod
-    def find_column(input, token):
-        line_start = input.rfind("\n", 0, token.lexpos) + 1
+    def find_column(self, token):
+        line_start = self.data.rfind("\n", 0, token.lexpos) + 1
         return (token.lexpos - line_start) + 1
 
     # Build the lexer
@@ -216,6 +215,7 @@ class Lexer(object):
 
     def test(self, data):
         self.lexer.input(data)
+        self.data=data
         while self.error_flag == False:
             tok = self.lexer.token()
             if self.error_flag == True or not tok:

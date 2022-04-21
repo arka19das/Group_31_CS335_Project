@@ -10,6 +10,7 @@ from graphviz import Digraph
 
 from scanner import *
 from utils import *
+from mips import mips_generation
 
 # Get the token map from the lexer.  This is required.
 lexer = Lexer()
@@ -36,27 +37,35 @@ def is_const(p):
 def cal_offset(p):
     # if (isinstance(p, Node) and p.place.startswith("__tmp")) or (isinstance(p, str)):
     #     return ""
-    if isinstance(p, str) or is_const(p.place):
-        return ""
-
+    if isinstance(p, str):
+        return p
+    if is_const(p.place):
+        return p.place
     if p.in_whose_scope == "#global":
         offset = p.offset
         if offset:
-            offset_string = f"_{offset}($static)"
+            offset_string = f"{-offset}($static)"
         else:
-            offset_string = "_0($static)"
+            offset_string = "0($static)"
         return offset_string
 
     count_ = p.in_whose_scope.count("_")
     offset = 0
+
+    #print(p.val,p.lno, ST.scope_tables[ST.currentScope].name,p.in_whose_scope)
+    temp=1
+    temp=table_name_to_num[p.in_whose_scope]
     for c_ in range(count_):  # CHECK ARKA BC
-        offset += offsets[1 + c_]
+        
+        temp=ST.parent[temp]
+        offset+=offsets[temp]
 
     offset += p.offset
+    # print(offset ,p.place,p.in_whose_scope,offsets[1])
     if offset:
-        offset_string = f"_{offset}($fp)"
+        offset_string = f"{-offset}($fp)"
     else:
-        offset_string = "_0($fp)"
+        offset_string = "0($fp)"
 
     return offset_string
 
@@ -170,6 +179,7 @@ def p_float_constant(p):
         lhs=1,
     )
     rule_name = "float_constant"
+    p[0].in_whose_scope = ST.scope_tables[ST.currentScope].name
     p[0].ast = build_AST(p, rule_name)
     if "l" in p[1] or "L" in p[1]:
         p[0].type = "double"
@@ -193,6 +203,8 @@ def p_hex_constant(p):
     temp = re.findall("[0-9a-fA-F]+", p[1][2:])
     p[0].val = int(temp[0], 16)
     p[0].place = int(temp[0], 16)
+    p[0].in_whose_scope = ST.scope_tables[ST.currentScope].name
+    
     if "l" in p[1] or "L" in p[1]:
         p[0].type = "long"
 
@@ -215,6 +227,8 @@ def p_oct_constant(p):
     temp = re.findall("[0-7]+", p[1][1:])
     p[0].val = int(temp[0], 8)
     p[0].place = int(temp[0], 8)
+    p[0].in_whose_scope = ST.scope_tables[ST.currentScope].name
+    
     if "l" in p[1] or "L" in p[1]:
         p[0].type = "long"
 
@@ -238,6 +252,7 @@ def p_int_constant(p):
     )
     temp = re.findall("[0-9]+", p[1])
     p[0].val = temp[0]
+    p[0].in_whose_scope = ST.scope_tables[ST.currentScope].name
     if "l" in p[1] or "L" in p[1]:
         p[0].type = "long"
 
@@ -329,6 +344,7 @@ def p_char_constant(p):
         code="",
         lhs=1,
     )
+    p[0].in_whose_scope = ST.scope_tables[ST.currentScope].name
     rule_name = "char_constant"
     p[0].ast = build_AST(p, rule_name)
 
@@ -348,7 +364,8 @@ def p_string_literal(p):
     )
     rule_name = "string_literal"
     p[0].ast = build_AST(p, rule_name)
-
+    p[0].in_whose_scope = ST.scope_tables[ST.currentScope].name
+    
 
 def p_identifier(p):
     """identifier : IDENTIFIER"""
@@ -430,10 +447,8 @@ def p_postfix_expression_3(p):
         check_identifier(p[1], p.lineno(1))
         offset_string = cal_offset(p[1])
         if p[1].type.endswith("*"):
-            code_gen.append(["8=", p[1].place, tmp_var])
-            activation_record.append(
-                ["8=", p[1].place + offset_string, tmp_var + tmp_offset_string]
-            )
+            code_gen.append(["long=", p[1].place, tmp_var])
+            activation_record.append(["long=", offset_string, tmp_offset_string])
 
         else:
             code_gen.append(
@@ -442,8 +457,8 @@ def p_postfix_expression_3(p):
             activation_record.append(
                 [
                     str(get_data_type_size(p[1].type)) + "=",
-                    p[1].place + offset_string,
-                    tmp_var + tmp_offset_string,
+                    offset_string,
+                    tmp_offset_string,
                 ]
             )
 
@@ -453,7 +468,7 @@ def p_postfix_expression_3(p):
             if p[1].type.endswith("*"):
                 code_gen.append(
                     [
-                        "long+",
+                        "long-",
                         p[1].place,
                         p[1].place,
                         str(get_data_type_size(p[1].type[:-2])),
@@ -461,21 +476,16 @@ def p_postfix_expression_3(p):
                 )
                 activation_record.append(
                     [
-                        "long+",
-                        p[1].place + offset_string,
-                        p[1].place + offset_string,
+                        "long-",
+                        offset_string,
+                        offset_string,
                         str(get_data_type_size(p[1].type[:-2])),
                     ]
                 )
             else:
                 code_gen.append([p[1].type + "+", p[1].place, p[1].place, "1"])
                 activation_record.append(
-                    [
-                        p[1].type + "+",
-                        p[1].place + offset_string,
-                        p[1].place + offset_string,
-                        "1",
-                    ]
+                    [p[1].type + "+", offset_string, offset_string, "1",]
                 )
 
             # code_gen.append(f"{p[1].place} := {p[1].place} + 1")
@@ -483,7 +493,7 @@ def p_postfix_expression_3(p):
             if p[1].type.endswith("*"):
                 code_gen.append(
                     [
-                        "long+",
+                        "long-",
                         p[1].place,
                         p[1].place,
                         f"-{get_data_type_size(p[1].type[:-2])}",
@@ -491,21 +501,16 @@ def p_postfix_expression_3(p):
                 )
                 activation_record.append(
                     [
-                        "long+",
-                        p[1].place + offset_string,
-                        p[1].place + offset_string,
+                        "long-",
+                        offset_string,
+                        offset_string,
                         f"-{get_data_type_size(p[1].type[:-2])}",
                     ]
                 )
             else:
                 code_gen.append([p[1].type + "+", p[1].place, p[1].place, "-1"])
                 activation_record.append(
-                    [
-                        p[1].type + "+",
-                        p[1].place + offset_string,
-                        p[1].place + offset_string,
-                        "-1",
-                    ]
+                    [p[1].type + "+", offset_string, offset_string, "-1",]
                 )
 
             # code_gen.append(f"{p[1].place} := {p[1].place} - 1")
@@ -547,15 +552,11 @@ def p_postfix_expression_3(p):
                     )
                 )
                 return
-            func_size = 0
-            for scope_table in ST.scope_tables:
-                if scope_table.name == p[1].val:
-                    for node in scope_table.nodes:
-                        func_size += node.size
-
-            code_gen.append([f"call_{func_size}", p[1].val, "", ""])
+            return_size = get_data_type_size(p1v_node.type)
+            return_size+=(8-return_size%8)%8
+            code_gen.append([f"call_{offsets[ST.currentScope]}", p[1].val, "", ""])
             activation_record.append(
-                [f"call_{func_size}", p[1].val, "", f"__{p[1].val}"]
+                [f"call_{p1v_node.type}_{offsets[ST.currentScope]+8+return_size}", p[1].val, "", f"__{p[1].val}"]
             )
 
         else:
@@ -593,8 +594,9 @@ def p_postfix_expression_3(p):
                     )
                 )
                 return
-            if (struct_name.endswith("*") and p[2][0] == ".") or (
-                not struct_name.endswith("*") and p[2][0] == "->"
+
+            if (struct_name.endswith("*") and p[2] == ".") or (
+                not struct_name.endswith("*") and p[2] == "->"
             ):
                 ST.error(
                     Error(
@@ -662,23 +664,13 @@ def p_postfix_expression_3(p):
                     #     tmp2.array = copy.deepcopy(curr_list[4])
                     code_gen.append(["addr", tmp, p[1].place, ""])
                     activation_record.append(
-                        [
-                            "addr",
-                            tmp + tmp_offset_string,
-                            p[1].place + offset_string,
-                            "",
-                        ]
+                        ["addr", tmp_offset_string, offset_string[0:-5], "",]
                     )
 
                     # if curr_list[3] > 0:
-                    code_gen.append(["long+", tmp, curr_list[3], tmp])
+                    code_gen.append(["long-", tmp, curr_list[3], tmp])
                     activation_record.append(
-                        [
-                            "long+",
-                            tmp + tmp_offset_string,
-                            curr_list[3],
-                            tmp + tmp_offset_string,
-                        ]
+                        ["long-", tmp_offset_string, curr_list[3], tmp_offset_string,]
                     )
                     # print(type1)
                     # if len(p[0].array) > 0:
@@ -692,8 +684,8 @@ def p_postfix_expression_3(p):
                         activation_record.append(
                             [
                                 f"{get_data_type_size(type1)}load",
-                                tmp2 + tmp_offset_string2,
-                                tmp + tmp_offset_string,
+                                tmp_offset_string2,
+                                tmp_offset_string,
                                 "",
                             ]
                         )
@@ -710,8 +702,8 @@ def p_postfix_expression_3(p):
                         activation_record.append(
                             [
                                 f"{get_data_type_size(type1)}non_primitive_load",
-                                tmp2 + tmp_offset_string2,
-                                tmp + tmp_offset_string,
+                                tmp_offset_string2,
+                                tmp_offset_string,
                                 "",
                             ]
                         )
@@ -782,11 +774,7 @@ def p_postfix_expression_3(p):
                 temp_var, tmp_offset_string = ST.get_tmp_var("int")
                 code_gen.append([p[3].type + "2" + "int", temp_var, p[3].place])
                 activation_record.append(
-                    [
-                        p[3].type + "2" + "int",
-                        temp_var + tmp_offset_string,
-                        p[3].place + offset_string,
-                    ]
+                    [p[3].type + "2" + "int", tmp_offset_string, offset_string,]
                 )
 
             d = len(p[1].array) - p[0].level - 1
@@ -795,12 +783,7 @@ def p_postfix_expression_3(p):
             if isinstance(p[1].array[-1], int):
                 code_gen.append(["int^", v1, v1, v1])
                 activation_record.append(
-                    [
-                        "int^",
-                        v1 + v_offset_string,
-                        v1 + v_offset_string,
-                        v1 + v_offset_string,
-                    ]
+                    ["int^", v_offset_string, v_offset_string, v_offset_string,]
                 )
 
             # if d != 0:
@@ -809,64 +792,39 @@ def p_postfix_expression_3(p):
             if isinstance(p[0].array[0], str):
                 code_gen.append(["int+", v1, v1, temp_var])
                 activation_record.append(
-                    [
-                        "int+",
-                        v1 + v_offset_string,
-                        v1 + v_offset_string,
-                        temp_var + temp_offset_string,
-                    ]
+                    ["int+", v_offset_string, v_offset_string, temp_offset_string,]
                 )
 
                 code_gen.append(["long*", v1, v1, str(get_data_type_size(p[0].type))])
                 activation_record.append(
                     [
                         "long*",
-                        v1 + v_offset_string,
-                        v1 + v_offset_string,
+                        v_offset_string,
+                        v_offset_string,
                         str(get_data_type_size(p[0].type)),
                     ]
                 )
             elif isinstance(p[1].array[-1], int):
                 code_gen.append(["int+", v1, v1, temp_var])
                 activation_record.append(
-                    [
-                        "int+",
-                        v1 + v_offset_string,
-                        v1 + v_offset_string,
-                        temp_var + temp_offset_string,
-                    ]
+                    ["int+", v_offset_string, v_offset_string, temp_offset_string,]
                 )
 
                 code_gen.append(["int*", v1, v1, str(p[1].array[0])])
                 activation_record.append(
-                    [
-                        "int*",
-                        v1 + v_offset_string,
-                        v1 + v_offset_string,
-                        str(p[1].array[0]),
-                    ]
+                    ["int*", v_offset_string, v_offset_string, str(p[1].array[0]),]
                 )
                 p[0].index = v1
 
             else:
                 code_gen.append(["int+", v1, p[1].index, temp_var])
                 activation_record.append(
-                    [
-                        "int+",
-                        v1 + v_offset_string,
-                        p[1].index,
-                        temp_var + temp_offset_string,
-                    ]
+                    ["int+", v_offset_string, p[1].index, temp_offset_string,]
                 )
 
                 code_gen.append(["int*", v1, v1, str(p[1].array[0])])
                 activation_record.append(
-                    [
-                        "int*",
-                        v1 + v_offset_string,
-                        v1 + v_offset_string,
-                        str(p[1].array[0]),
-                    ]
+                    ["int*", v_offset_string, v_offset_string, str(p[1].array[0]),]
                 )
                 p[0].index = v1
 
@@ -878,23 +836,18 @@ def p_postfix_expression_3(p):
                 if p[1].place[0:10] == "__tmp_var_":
                     code_gen.append(["addr", v2, p[1].addr, ""])
                     activation_record.append(
-                        ["addr", v2 + v2_offset_string, p[1].addr + offset_string, ""]
+                        ["addr", v2_offset_string, offset_string[0:-5], ""]
                     )
 
                 else:
                     code_gen.append(["addr", v2, p[1].place, ""])
                     activation_record.append(
-                        ["addr", v2 + v2_offset_string, p[1].place + offset_string, ""]
+                        ["addr", v2_offset_string, offset_string[0:-5], ""]
                     )
 
-                code_gen.append(["long+", v2, v1, v2])
+                code_gen.append(["long-", v2, v1, v2])
                 activation_record.append(
-                    [
-                        "long+",
-                        v2 + v2_offset_string,
-                        v1 + v_offset_string,
-                        v2 + tmp_offset_string,
-                    ]
+                    ["long-", v2_offset_string, v_offset_string, tmp_offset_string,]
                 )
 
                 type1 = p[0].type  # TODO: BUGGED
@@ -908,8 +861,8 @@ def p_postfix_expression_3(p):
                     activation_record.append(
                         [
                             f"{get_data_type_size(type1)}load",
-                            v3 + v3_offset_string,
-                            v2 + v2_offset_string,
+                            v3_offset_string,
+                            v2_offset_string,
                             "",
                         ]
                     )
@@ -921,8 +874,8 @@ def p_postfix_expression_3(p):
                     activation_record.append(
                         [
                             f"{get_data_type_size(type1)}non_primitive_load",
-                            v3 + v3_offset_string,
-                            v2 + v2_offset_string,
+                            v3_offset_string,
+                            v2_offset_string,
                             "",
                         ]
                     )
@@ -943,6 +896,7 @@ def p_postfix_expression_3(p):
                 is_func=0,
                 place=p[1].place,
                 lhs=1,
+                in_whose_scope=ST.scope_tables[ST.currentScope].name
             )
             p[0].ast = build_AST_2(p, [1, 3], "()")
             # p[0].ast = build_AST(p, rule_name)
@@ -988,7 +942,7 @@ def p_postfix_expression_3(p):
                     ST.curType.append(p[3].children[i].type)
                     # according to akshay TODO
                     offset_string = cal_offset(p[3].children[i])
-                    tmp_var, tmp_offset_string = ST.get_tmp_var(arguments)
+                    # tmp_var, tmp_offset_string = ST.get_tmp_var(arguments)
 
                     if (
                         ST.curType[-1].split()[-1] != arguments.split()[-1]
@@ -1003,6 +957,7 @@ def p_postfix_expression_3(p):
                                 f"Type mismatch in argument {i+1} of function call. Expected: {arguments}, Received: {ST.curType[-1]}",
                             )
                         )
+                        tmp_var, tmp_offset_string = ST.get_tmp_var(arguments)
                         code_gen.append(
                             [
                                 f"{ST.curType[-1]}2{arguments}",
@@ -1014,12 +969,19 @@ def p_postfix_expression_3(p):
                         activation_record.append(
                             [
                                 f"{ST.curType[-1]}2{arguments}",
-                                tmp_var + tmp_offset_string,
-                                p[3].children[i].val + offset_string,
+                                tmp_offset_string,
+                                offset_string,
                                 " ",
                             ]
                         )
-
+                        # tmp_offset_string[-3]="s"
+                        temp_3ac.append([f"param", p[1].val, " ", tmp_var])
+                        temp_act.append(
+                            [f"param_{p[3].children[i].type}", p[1].val, func_offset, tmp_offset_string]
+                        )
+                        # temp_offset = get_data_type_size(arguments)
+                        func_offset += 8
+                        
                     elif (p[3].children[i].type.upper() in PRIMITIVE_TYPES) ^ (
                         arguments.upper() in PRIMITIVE_TYPES
                     ):
@@ -1038,6 +1000,7 @@ def p_postfix_expression_3(p):
                         and p[3].children[i].type.upper() not in PRIMITIVE_TYPES
                         and arguments.upper() not in PRIMITIVE_TYPES
                     ):
+                        print(ST.curType[-1] ,arguments)
                         ST.error(
                             Error(
                                 p[1].lno,
@@ -1049,46 +1012,54 @@ def p_postfix_expression_3(p):
                         return
 
                     else:
-                        code_gen.append(
-                            [f"{arguments}=", tmp_var, p[3].children[i].val, ""]
-                        )
-                        activation_record.append(
-                            [
-                                f"{arguments}=",
-                                tmp_var + tmp_offset_string,
-                                p[3].children[i].val + offset_string,
-                                "",
-                            ]
-                        )
+                        # offset_string[-3]="s"
+                        if arguments.upper() in PRIMITIVE_TYPES or arguments.endswith("*"):
+                            temp_offset = get_data_type_size(arguments)
+                            arg_split = arguments.split()[0] 
+                            temp_3ac.append([f"param", p[1].val, " ", p[3].children[i].val])
+                            temp_act.append(
+                                [f"param_{arg_split}", p[1].val, func_offset, offset_string]
+                            )
+                        else:
+                            temp_offset = get_data_type_size(arguments)
+                            temp_offset += (8-temp_offset%8)%8                       
+                            offset = int(offset_string.split('(')[0])
+                            for j in range(0,temp_offset,8):
+                                temp_3ac.append([f"param", p[1].val, " ", p[3].children[i].val])
+                                temp_act.append(
+                                    [f"param_long", p[1].val, func_offset+j, f"{-offset-j}($fp)"]
+                                )
 
-                    temp_3ac.append(
-                        [f"param", p[1].val, tmp_var, " ",]
-                    )
-                    temp_act.append(
-                        [f"param", p[1].val, tmp_var + f"_{func_offset}($fp)", " "]
-                    )
-                    if p[1].type.upper() in PRIMITIVE_TYPES or p[1].type.endswith("*"):
-                        func_offset += 8
-                    else:
-                        t = get_data_type_size(arguments)
-                        t += (8 - t % 8) % 8
-                        func_offset += t
+                        func_offset+=temp_offset
+                    # if p[3].children[i].type.upper() in PRIMITIVE_TYPES or p[
+                    #     3
+                    # ].children[i].type.endswith("*"):
+                    #     func_offset += 8
+                    # else:
+                    #     func_offset += get_data_type_size(arguments)
+                    #     func_offset += (8 - func_offset % 8) % 8
                     i -= 1
+                    
+                param_size = func_offset
+                func_offset=16
+                temp=ST.currentScope
+                while temp!=0:
+                    func_offset+=offsets[temp]
+                    temp=ST.parent[temp]
+                # func_offset = offsets[ST.currentScope] + 16
+                return_size = get_data_type_size(p1v_node.type)
+                return_size += ((8 - return_size % 8) % 8)
+                func_offset += return_size
 
                 for t3ac, tact in zip(temp_3ac, temp_act):
                     code_gen.append(t3ac)
                     activation_record.append(tact)
+                    activation_record[-1][2] = f"{-(func_offset + activation_record[-1][2])}($fp)"
 
-                func_size = 0
-                offset_update = 0
-                for scope_table in ST.scope_tables:
-                    if scope_table.name == p[1].val:
-                        for node in scope_table.nodes:
-                            func_size+=node.size
-
-                code_gen.append([f"call_{func_size}", p[1].val, "", ""])
+                func_offset+=param_size
+                code_gen.append([f"call_{offsets[ST.currentScope]}", p[1].val, "", ""])
                 activation_record.append(
-                    [f"call_{func_size}", p[1].val, "", f"__{p[1].val}"]
+                    [f"call_{p1v_node.type}_{func_offset}_{param_size+16+return_size}", p[1].val, "", f"__{p[1].val}"]
                 )
 
 
@@ -1147,13 +1118,13 @@ def p_unary_expression(p):
             # p[]
             # code_gen.append(["OKAY"])
             code_gen.append(["addr", v2, p[1].place, ""])
-            code_gen.append(["long+", v2, code_gen[-2][1], v2])
+            code_gen.append(["long-", v2, code_gen[-2][1], v2])
             offset_string = cal_offset(p[1])
             activation_record.append(
-                ["addr", v2 + v2_offset_string, p[1].place + offset_string, ""]
+                ["addr", v2_offset_string, offset_string[0:-5], ""]
             )
             activation_record.append(
-                ["long+", v2 + v2_offset_string, code_gen[-2][1], v2 + v2_offset_string]
+                ["long-", v2_offset_string, code_gen[-2][1], v2_offset_string]
             )
             p[0].val = p[0].place = v2
         else:
@@ -1192,7 +1163,7 @@ def p_unary_expression(p):
                 if p[2].type.endswith("*"):
                     code_gen.append(
                         [
-                            "long+",
+                            "long-",
                             p[2].place,
                             p[2].place,
                             str(get_data_type_size(p[2].type[:-2])),
@@ -1200,21 +1171,16 @@ def p_unary_expression(p):
                     )
                     activation_record.append(
                         [
-                            "long+",
-                            p[2].place + offset_string,
-                            p[2].place + offset_string,
+                            "long-",
+                            offset_string,
+                            offset_string,
                             str(get_data_type_size(p[2].type[:-2])),
                         ]
                     )
                 else:
                     code_gen.append([p[2].type + "+", p[2].place, p[2].place, "1"])
                     activation_record.append(
-                        [
-                            p[2].type + "+",
-                            p[2].place + offset_string,
-                            p[2].place + offset_string,
-                            "1",
-                        ]
+                        [p[2].type + "+", offset_string, offset_string, "1",]
                     )
 
                 # code_gen.append(f"{p[1].place} := {p[1].place} + 1")
@@ -1222,7 +1188,7 @@ def p_unary_expression(p):
                 if p[2].type.endswith("*"):
                     code_gen.append(
                         [
-                            "long+",
+                            "long-",
                             p[2].place,
                             p[2].place,
                             -get_data_type_size(p[2].type[:-2]),
@@ -1230,21 +1196,16 @@ def p_unary_expression(p):
                     )
                     activation_record.append(
                         [
-                            "long+",
-                            p[2].place + offset_string,
-                            p[2].place + offset_string,
+                            "long-",
+                            offset_string,
+                            offset_string,
                             str(get_data_type_size(p[2].type[:-2])),
                         ]
                     )
                 else:
                     code_gen.append([p[2].type + "+", p[2].place, p[2].place, "-1"])
                     activation_record.append(
-                        [
-                            p[2].type + "+",
-                            p[2].place + offset_string,
-                            p[2].place + offset_string,
-                            "1",
-                        ]
+                        [p[2].type + "+", offset_string, offset_string, "1",]
                     )
 
                 # code_gen.append(f"{p[1].place} := {p[1].place} - 1")
@@ -1272,14 +1233,14 @@ def p_unary_expression(p):
             if type_size == -1:
                 ST.error(
                     Error(
-                        p.lineno(1),
+                        p[2].lno,
                         rule_name,
                         "Syntax error",
                         f"Size of doesn't exist for '{p[2].type}' type",
                     )
                 )
-            code_gen.append(["4=", tmp_var, type_size])
-            activation_record.append(["4=", tmp_var + tmp_offset_string, type_size])
+            code_gen.append(["int=", tmp_var, type_size])
+            activation_record.append(["int=", tmp_offset_string, type_size])
 
         elif p[1].val == "&":
             # TODO:3ac
@@ -1293,11 +1254,23 @@ def p_unary_expression(p):
                 lhs=1,
                 offset=p[2].offset,
             )
+            if "__tmp" in p[2].place or is_const(p[2].place):
+                ST.error(
+                    Error(
+                        p[2].lno,
+                        rule_name,
+                        "Compilation error",
+                        f"Invalid operator {p[1].val} for '{p[2].type}' type",
+                    )
+                )
             temp_var, tmp_offset_string = ST.get_tmp_var(p[2].type + " *")
             p[0].place = temp_var
+            p[0].val = temp_var
+            p[0].offset = ST.find(temp_var).offset
+
             code_gen.append(["addr", temp_var, p[2].place, ""])
             activation_record.append(
-                ["addr", temp_var + tmp_offset_string, p[2].place + offset_string, ""]
+                ["addr", tmp_offset_string, offset_string[0:-5], ""]
             )
 
         elif p[1].val == "*":
@@ -1323,6 +1296,7 @@ def p_unary_expression(p):
             temp_var, tmp_offset_string = ST.get_tmp_var(p[2].type[:-2])
             p[0].place = temp_var
             p[0].addr = p[2].place
+            p[0].offset = ST.find(temp_var).offset
             type1 = p[2].type[:-2]
             if type1.upper() in PRIMITIVE_TYPES:
                 code_gen.append(
@@ -1331,8 +1305,8 @@ def p_unary_expression(p):
                 activation_record.append(
                     [
                         f"{get_data_type_size(type1)}load",
-                        temp_var + tmp_offset_string,
-                        p[2].place + offset_string,
+                        tmp_offset_string,
+                        offset_string,
                         "",
                     ]
                 )
@@ -1343,12 +1317,7 @@ def p_unary_expression(p):
                         ["long^", temp_var, p[2].place, "0",]
                     )
                     activation_record.append(
-                        [
-                            "long^",
-                            temp_var + tmp_offset_string,
-                            p[2].place + offset_string,
-                            "0",
-                        ]
+                        ["long^", tmp_offset_string, offset_string, "0",]
                     )
                 else:
                     code_gen.append(
@@ -1362,8 +1331,8 @@ def p_unary_expression(p):
                     activation_record.append(
                         [
                             f"{get_data_type_size(type1)}non_primitive_load",
-                            temp_var + tmp_offset_string,
-                            p[2].place + offset_string,
+                            tmp_offset_string,
+                            offset_string,
                             "",
                         ]
                     )
@@ -1395,12 +1364,7 @@ def p_unary_expression(p):
             )
             code_gen.append([p[2].type + "_uminus", tmp_var, "0", p[2].place])
             activation_record.append(
-                [
-                    p[2].type + "_uminus",
-                    tmp_var + tmp_offset_string,
-                    "0",
-                    p[2].place + offset_string,
-                ]
+                [p[2].type + "_uminus", tmp_offset_string, "0", offset_string,]
             )
 
         elif p[1].val == "+":
@@ -1439,12 +1403,7 @@ def p_unary_expression(p):
                 )
                 code_gen.append([p[2].type + "~", tmp_var, p[2].place, ""])
                 activation_record.append(
-                    [
-                        p[2].type + "~",
-                        tmp_var + tmp_offset_string,
-                        p[2].place + offset_string,
-                        "",
-                    ]
+                    [p[2].type + "~", tmp_offset_string, offset_string, "",]
                 )
 
         elif p[1].val == "!":
@@ -1475,19 +1434,17 @@ def p_unary_expression(p):
                 label2 = ST.get_tmp_label()
                 # print(p[2].place, 1)
                 code_gen.append(["beq", p[2].place, "0", label1])
-                code_gen.append(["4=", tmp_var, "1", ""])
+                code_gen.append(["int=", tmp_var, "1", ""])
                 code_gen.append(["goto", "", "", label2])
                 code_gen.append(["label", label1, ":", ""])
-                code_gen.append(["4=", tmp_var, "0", ""])
+                code_gen.append(["int=", tmp_var, "0", ""])
                 code_gen.append(["label", label2, ":", ""])
 
-                activation_record.append(
-                    ["beq", p[2].place + offset_string, "0", label1]
-                )
-                activation_record.append(["4=", tmp_var + tmp_offset_string, "1", ""])
+                activation_record.append(["beq", offset_string, "0", label1])
+                activation_record.append(["int=", tmp_offset_string, "1", ""])
                 activation_record.append(["goto", "", "", label2])
                 activation_record.append(["label", label1, ":", ""])
-                activation_record.append(["4=", tmp_var + tmp_offset_string, "0", ""])
+                activation_record.append(["int=", tmp_offset_string, "0", ""])
                 activation_record.append(["label", label2, ":", ""])
 
                 # code_gen.append([p[2].type + "!", tmp_var, p[2].place, ""])
@@ -1540,8 +1497,8 @@ def p_unary_expression(p):
                     f"Size of doesn't exist for '{p[3].type}' type",
                 )
             )
-        code_gen.append(["4=", tmp_var, str(type_size)])
-        activation_record.append(["4=", tmp_var + tmp_offset_string, str(type_size)])
+        code_gen.append(["int=", tmp_var, str(type_size)])
+        activation_record.append(["int=", tmp_offset_string, str(type_size)])
 
         p[0].ast = build_AST_2(p, [1, 3], p[2])
 
@@ -1580,7 +1537,7 @@ def p_cast_expression(p):
         if p[2].type == p[4].type:
             p[0] = p[4]
             return
-        if p[2].type.startswith("struct") and p[4].type.startswith("struct"):
+        if p[2].type.startswith("struct ") and p[4].type.startswith("struct "):
             ST.error(
                 Error(
                     p.lineno(1),
@@ -1589,7 +1546,7 @@ def p_cast_expression(p):
                     f"Cannot cast {p[2].type} to {p[4].type}",
                 )
             )
-        elif p[2].type.startswith("struct") or p[4].type.startswith("struct"):
+        elif p[2].type.startswith("struct ") or p[4].type.startswith("struct "):
             ST.error(
                 Error(
                     p.lineno(1),
@@ -1624,12 +1581,7 @@ def p_cast_expression(p):
         offset_string = cal_offset(p[4])
         code_gen.append([f"{p[4].type}2{p[2].type}", tmp_var, p[4].place, " "])
         activation_record.append(
-            [
-                f"{p[4].type}2{p[2].type}",
-                tmp_var + tmp_offset_string,
-                p[4].place + offset_string,
-                " ",
-            ]
+            [f"{p[4].type}2{p[2].type}", tmp_offset_string, offset_string, " ",]
         )
 
         # p[0].ast = build_AST(p, rule_name)
@@ -1679,11 +1631,7 @@ def p_multipicative_expression(p):
                 tmp_var1, tmp_offset_string1 = ST.get_tmp_var(p[0].type)
                 code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
                 activation_record.append(
-                    [
-                        p[1].type + "2" + p[0].type,
-                        tmp_var1 + tmp_offset_string1,
-                        p[1].place + offset_string1,
-                    ]
+                    [p[1].type + "2" + p[0].type, tmp_offset_string1, offset_string1,]
                 )
 
             if p[3].type != p[0].type:
@@ -1692,7 +1640,7 @@ def p_multipicative_expression(p):
                 activation_record.append(
                     [
                         p[3].type + "2" + p[0].type,
-                        tmp_var3 + tmp_offset_string3,
+                        tmp_offset_string3,
                         p[3].place + offset_string3,
                     ]
                 )
@@ -1701,9 +1649,9 @@ def p_multipicative_expression(p):
             activation_record.append(
                 [
                     p[0].type + _op,
-                    p[0].place,
-                    tmp_var1 + tmp_offset_string1,
-                    tmp_var3 + tmp_offset_string3,
+                    cal_offset(p[0]),
+                    tmp_offset_string1,
+                    tmp_offset_string3,
                 ]
             )
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
@@ -1746,31 +1694,23 @@ def p_additive_expression(p):
                 tmp_var1, tmp_offset_string1 = ST.get_tmp_var(p[0].type)
                 code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
                 activation_record.append(
-                    [
-                        p[1].type + "2" + p[0].type,
-                        tmp_var1 + tmp_offset_string1,
-                        p[1].place + offset_string1,
-                    ]
+                    [p[1].type + "2" + p[0].type, tmp_offset_string1, offset_string1,]
                 )
 
             if p[3].type != p[0].type:
                 tmp_var3, tmp_offset_string3 = ST.get_tmp_var(p[0].type)
                 code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
                 activation_record.append(
-                    [
-                        p[3].type + "2" + p[0].type,
-                        tmp_var3 + tmp_offset_string3,
-                        p[3].place + offset_string3,
-                    ]
+                    [p[3].type + "2" + p[0].type, tmp_offset_string3, offset_string3,]
                 )
 
             code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
             activation_record.append(
                 [
                     p[0].type + _op,
-                    p[0].place,
-                    tmp_var1 + tmp_offset_string1,
-                    tmp_var3 + tmp_offset_string3,
+                    cal_offset(p[0]),
+                    tmp_offset_string1,
+                    tmp_offset_string3,
                 ]
             )
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
@@ -1807,31 +1747,23 @@ def p_shift_expression(p):
                 tmp_var1, tmp_offset_string1 = ST.get_tmp_var(p[0].type)
                 code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
                 activation_record.append(
-                    [
-                        p[1].type + "2" + p[0].type,
-                        tmp_var1 + tmp_offset_string1,
-                        p[1].place + offset_string1,
-                    ]
+                    [p[1].type + "2" + p[0].type, tmp_offset_string1, offset_string1,]
                 )
 
             if p[3].type != p[0].type:
                 tmp_var3, tmp_offset_string3 = ST.get_tmp_var(p[0].type)
                 code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
                 activation_record.append(
-                    [
-                        p[3].type + "2" + p[0].type,
-                        tmp_var3 + tmp_offset_string3,
-                        p[3].place + offset_string3,
-                    ]
+                    [p[3].type + "2" + p[0].type, tmp_offset_string3, offset_string3,]
                 )
 
             code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
             activation_record.append(
                 [
                     p[0].type + _op,
-                    p[0].place,
-                    tmp_var1 + tmp_offset_string1,
-                    tmp_var3 + tmp_offset_string3,
+                    cal_offset(p[0]),
+                    tmp_offset_string1,
+                    tmp_offset_string3,
                 ]
             )
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
@@ -1889,31 +1821,23 @@ def p_relational_expression(p):
                 tmp_var1, tmp_offset_string1 = ST.get_tmp_var(p[0].type)
                 code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
                 activation_record.append(
-                    [
-                        p[1].type + "2" + p[0].type,
-                        tmp_var1 + tmp_offset_string1,
-                        p[1].place + offset_string1,
-                    ]
+                    [p[1].type + "2" + p[0].type, tmp_offset_string1, offset_string1,]
                 )
 
             if p[3].type != p[0].type:
                 tmp_var3, tmp_offset_string3 = ST.get_tmp_var(p[0].type)
                 code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
                 activation_record.append(
-                    [
-                        p[3].type + "2" + p[0].type,
-                        tmp_var3 + tmp_offset_string3,
-                        p[3].place + offset_string3,
-                    ]
+                    [p[3].type + "2" + p[0].type, tmp_offset_string3, offset_string3,]
                 )
 
             code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
             activation_record.append(
                 [
                     p[0].type + _op,
-                    p[0].place,
-                    tmp_var1 + tmp_offset_string1,
-                    tmp_var3 + tmp_offset_string3,
+                    cal_offset(p[0]),
+                    tmp_offset_string1,
+                    tmp_offset_string3,
                 ]
             )
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
@@ -1956,31 +1880,23 @@ def p_equality_expresssion(p):
                 tmp_var1, tmp_offset_string1 = ST.get_tmp_var(p[0].type)
                 code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
                 activation_record.append(
-                    [
-                        p[1].type + "2" + p[0].type,
-                        tmp_var1 + tmp_offset_string1,
-                        p[1].place + offset_string1,
-                    ]
+                    [p[1].type + "2" + p[0].type, tmp_offset_string1, offset_string1,]
                 )
 
             if p[3].type != p[0].type:
                 tmp_var3, tmp_offset_string3 = ST.get_tmp_var(p[0].type)
                 code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
                 activation_record.append(
-                    [
-                        p[3].type + "2" + p[0].type,
-                        tmp_var3 + tmp_offset_string3,
-                        p[3].place + offset_string3,
-                    ]
+                    [p[3].type + "2" + p[0].type, tmp_offset_string3, offset_string3,]
                 )
 
             code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
             activation_record.append(
                 [
                     p[0].type + _op,
-                    p[0].place,
-                    tmp_var1 + tmp_offset_string1,
-                    tmp_var3 + tmp_offset_string3,
+                    cal_offset(p[0]),
+                    tmp_offset_string1,
+                    tmp_offset_string3,
                 ]
             )
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
@@ -2014,31 +1930,23 @@ def p_and_expression(p):
                 tmp_var1, tmp_offset_string1 = ST.get_tmp_var(p[0].type)
                 code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
                 activation_record.append(
-                    [
-                        p[1].type + "2" + p[0].type,
-                        tmp_var1 + tmp_offset_string1,
-                        p[1].place + offset_string1,
-                    ]
+                    [p[1].type + "2" + p[0].type, tmp_offset_string1, offset_string1,]
                 )
 
             if p[3].type != p[0].type:
                 tmp_var3, tmp_offset_string3 = ST.get_tmp_var(p[0].type)
                 code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
                 activation_record.append(
-                    [
-                        p[3].type + "2" + p[0].type,
-                        tmp_var3 + tmp_offset_string3,
-                        p[3].place + offset_string3,
-                    ]
+                    [p[3].type + "2" + p[0].type, tmp_offset_string3, offset_string3,]
                 )
 
             code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
             activation_record.append(
                 [
                     p[0].type + _op,
-                    p[0].place,
-                    tmp_var1 + tmp_offset_string1,
-                    tmp_var3 + tmp_offset_string3,
+                    cal_offset(p[0]),
+                    tmp_offset_string1,
+                    tmp_offset_string3,
                 ]
             )
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
@@ -2071,31 +1979,23 @@ def p_exclusive_or_expression(p):
                 tmp_var1, tmp_offset_string1 = ST.get_tmp_var(p[0].type)
                 code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
                 activation_record.append(
-                    [
-                        p[1].type + "2" + p[0].type,
-                        tmp_var1 + tmp_offset_string1,
-                        p[1].place + offset_string1,
-                    ]
+                    [p[1].type + "2" + p[0].type, tmp_offset_string1, offset_string1,]
                 )
 
             if p[3].type != p[0].type:
                 tmp_var3, tmp_offset_string3 = ST.get_tmp_var(p[0].type)
                 code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
                 activation_record.append(
-                    [
-                        p[3].type + "2" + p[0].type,
-                        tmp_var3 + tmp_offset_string3,
-                        p[3].place + offset_string3,
-                    ]
+                    [p[3].type + "2" + p[0].type, tmp_offset_string3, offset_string3,]
                 )
 
             code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
             activation_record.append(
                 [
                     p[0].type + _op,
-                    p[0].place,
-                    tmp_var1 + tmp_offset_string1,
-                    tmp_var3 + tmp_offset_string3,
+                    cal_offset(p[0]),
+                    tmp_offset_string1,
+                    tmp_offset_string3,
                 ]
             )
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
@@ -2128,31 +2028,23 @@ def p_inclusive_or_expression(p):
                 tmp_var1, tmp_offset_string1 = ST.get_tmp_var(p[0].type)
                 code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
                 activation_record.append(
-                    [
-                        p[1].type + "2" + p[0].type,
-                        tmp_var1 + tmp_offset_string1,
-                        p[1].place + offset_string1,
-                    ]
+                    [p[1].type + "2" + p[0].type, tmp_offset_string1, offset_string1,]
                 )
 
             if p[3].type != p[0].type:
                 tmp_var3, tmp_offset_string3 = ST.get_tmp_var(p[0].type)
                 code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
                 activation_record.append(
-                    [
-                        p[3].type + "2" + p[0].type,
-                        tmp_var3 + tmp_offset_string3,
-                        p[3].place + offset_string3,
-                    ]
+                    [p[3].type + "2" + p[0].type, tmp_offset_string3, offset_string3,]
                 )
 
             code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
             activation_record.append(
                 [
                     p[0].type + _op,
-                    p[0].place,
-                    tmp_var1 + tmp_offset_string1,
-                    tmp_var3 + tmp_offset_string3,
+                    cal_offset(p[0]),
+                    tmp_offset_string1,
+                    tmp_offset_string3,
                 ]
             )
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
@@ -2184,31 +2076,23 @@ def p_logical_and_expression(p):
                 tmp_var1, tmp_offset_string1 = ST.get_tmp_var(p[0].type)
                 code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
                 activation_record.append(
-                    [
-                        p[1].type + "2" + p[0].type,
-                        tmp_var1 + tmp_offset_string1,
-                        p[1].place + offset_string1,
-                    ]
+                    [p[1].type + "2" + p[0].type, tmp_offset_string1, offset_string1,]
                 )
 
             if p[3].type != p[0].type:
                 tmp_var3, tmp_offset_string3 = ST.get_tmp_var(p[0].type)
                 code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
                 activation_record.append(
-                    [
-                        p[3].type + "2" + p[0].type,
-                        tmp_var3 + tmp_offset_string3,
-                        p[3].place + offset_string3,
-                    ]
+                    [p[3].type + "2" + p[0].type, tmp_offset_string3, offset_string3,]
                 )
 
             code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
             activation_record.append(
                 [
                     p[0].type + _op,
-                    p[0].place,
-                    tmp_var1 + tmp_offset_string1,
-                    tmp_var3 + tmp_offset_string3,
+                    cal_offset(p[0]),
+                    tmp_offset_string1,
+                    tmp_offset_string3,
                 ]
             )
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
@@ -2252,31 +2136,23 @@ def p_logical_or_expression(p):
                 tmp_var1, tmp_offset_string1 = ST.get_tmp_var(p[0].type)
                 code_gen.append([p[1].type + "2" + p[0].type, tmp_var1, p[1].place])
                 activation_record.append(
-                    [
-                        p[1].type + "2" + p[0].type,
-                        tmp_var1 + tmp_offset_string1,
-                        p[1].place + offset_string1,
-                    ]
+                    [p[1].type + "2" + p[0].type, tmp_offset_string1, offset_string1,]
                 )
 
             if p[3].type != p[0].type:
                 tmp_var3, tmp_offset_string3 = ST.get_tmp_var(p[0].type)
                 code_gen.append([p[3].type + "2" + p[0].type, tmp_var3, p[3].place])
                 activation_record.append(
-                    [
-                        p[3].type + "2" + p[0].type,
-                        tmp_var3 + tmp_offset_string3,
-                        p[3].place + offset_string3,
-                    ]
+                    [p[3].type + "2" + p[0].type, tmp_offset_string3, offset_string3,]
                 )
 
             code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
             activation_record.append(
                 [
                     p[0].type + _op,
-                    p[0].place,
-                    tmp_var1 + tmp_offset_string1,
-                    tmp_var3 + tmp_offset_string3,
+                    cal_offset(p[0]),
+                    tmp_offset_string1,
+                    tmp_offset_string3,
                 ]
             )
         p[0].ast = build_AST_2(p, [1, 3], rule_name)
@@ -2494,8 +2370,8 @@ def p_assignment_expression(p):
                 activation_record.append(
                     [
                         p[1].type + "2" + temp_node.type,
-                        tmp_var1 + tmp_offset_string1,
-                        p[1].place + offset_string1,
+                        tmp_offset_string1,
+                        offset_string1,
                     ]
                 )
             if p[3].type != temp_node.type:
@@ -2506,17 +2382,17 @@ def p_assignment_expression(p):
                 activation_record.append(
                     [
                         p[3].type + "2" + temp_node.type,
-                        tmp_var3 + tmp_offset_string3,
-                        p[3].place + offset_string3,
+                        tmp_offset_string3,
+                        offset_string3,
                     ]
                 )
             code_gen.append([temp_node.type + _op, temp_node.place, tmp_var1, tmp_var3])
             activation_record.append(
                 [
                     temp_node.type + _op,
-                    temp_node.place + temp_offset_string,
-                    tmp_var1 + tmp_offset_string1,
-                    tmp_var3 + tmp_offset_string3,
+                    temp_offset_string,
+                    tmp_offset_string1,
+                    tmp_offset_string3,
                 ]
             )
 
@@ -2528,54 +2404,34 @@ def p_assignment_expression(p):
                 activation_record.append(
                     [
                         temp_node.type + "2" + p[0].type,
-                        temp_node1 + tmp_offset_string,
-                        p[1].place + offset_string1,
+                        tmp_offset_string,
+                        offset_string1,
                     ]
                 )
-                if len(p[1].array) == 0 and p[1].name != "PointerVariable":
+                if len(p[1].array) == 0 and p[1].name != "PointerVariable"and p[1].name!="DotOrPTRExpression":
                     code_gen.append([p[0].type + "=", p[1].place, temp_node1, ""])
                     activation_record.append(
-                        [
-                            p[0].type + "=",
-                            p[1].place + offset_string1,
-                            temp_node1 + tmp_offset_string,
-                            "",
-                        ]
+                        [p[0].type + "=", offset_string1, tmp_offset_string, "",]
                     )
                 else:
                     code_gen.append([p[0].type + "=", p[1].addr, temp_node1, "*"])
                     activation_record.append(
-                        [
-                            p[0].type + "=",
-                            p[1].addr + offset_string1,
-                            temp_node1 + tmp_offset_string,
-                            "*",
-                        ]
+                        [p[0].type + "=", offset_string1, tmp_offset_string, "*",]
                     )
             else:
-                if len(p[1].array) == 0 and p[1].name != "PointerVariable":
+                if len(p[1].array) == 0 and p[1].name != "PointerVariable"and p[1].name!="DotOrPTRExpression":
                     code_gen.append(
                         [temp_node.type + "=", p[1].place, temp_node.place, ""]
                     )
                     activation_record.append(
-                        [
-                            temp_node.type + "=",
-                            p[1].place + offset_string1,
-                            temp_node.place + temp_offset_string,
-                            "",
-                        ]
+                        [temp_node.type + "=", offset_string1, temp_offset_string, "",]
                     )
                 else:
                     code_gen.append(
                         [temp_node.type + "=", p[1].addr, temp_node.place, "*"]
                     )
                     activation_record.append(
-                        [
-                            temp_node.type + "=",
-                            p[1].addr + offset_string1,
-                            temp_node.place + temp_offset_string,
-                            "*",
-                        ]
+                        [temp_node.type + "=", offset_string1, temp_offset_string, "*",]
                     )
 
         else:
@@ -2587,57 +2443,68 @@ def p_assignment_expression(p):
                 activation_record.append(
                     [
                         temp_node.type + "2" + p[0].type,
-                        temp_node1 + tmp_offset_string,
-                        p[3].place + offset_string3,
+                        tmp_offset_string,
+                        offset_string3,
                     ]
                 )
 
-                if len(p[1].array) == 0 and p[1].name != "PointerVariable":
+                if len(p[1].array) == 0 and p[1].name != "PointerVariable" and p[1].name!="DotOrPTRExpression":
                     code_gen.append([p[0].type + "=", p[1].place, temp_node1, ""])
                     activation_record.append(
-                        [
-                            p[0].type + "=",
-                            p[1].place + offset_string1,
-                            temp_node1 + tmp_offset_string,
-                            "",
-                        ]
+                        [p[0].type + "=", offset_string1, tmp_offset_string, "",]
                     )
 
                 else:
                     code_gen.append([p[0].type + "=", p[1].addr, temp_node1, "*"])
                     activation_record.append(
-                        [
-                            p[0].type + "=",
-                            p[1].place + offset_string1,
-                            temp_node1 + tmp_offset_string,
-                            "",
-                        ]
+                        [p[0].type + "=", offset_string1, tmp_offset_string, "",]
                     )
 
             else:
-                if len(p[1].array) == 0 and p[1].name != "PointerVariable":
+                if len(p[1].array) == 0 and p[1].name != "PointerVariable" and p[1].name!="DotOrPTRExpression":
+                    # print("if", p[0].type, temp_node.type)
+
                     code_gen.append(
                         [temp_node.type + "=", p[1].place, temp_node.place, ""]
                     )
-                    activation_record.append(
-                        [
-                            temp_node.type + "=",
-                            p[1].place + offset_string1,
-                            temp_node.place + offset_string3,
-                            "",
-                        ]
-                    )
+                    if temp_node.type.endswith("*"):
+                        activation_record.append(
+                            ["long=", offset_string1, offset_string3, "",]
+                        )
+                    elif temp_node.type.startswith("struct "):
+                        activation_record.append(
+                            [
+                                ";",
+                                temp_node.type + "=",
+                                offset_string1,
+                                offset_string3,
+                                "",
+                            ]
+                        )
+                        size_of_struct = ST.find(temp_node.type).size
+                        for long_offset in range(0, size_of_struct, 8):
+                            activation_record.append(
+                                [
+                                    "long=",
+                                    f"{int(offset_string1[0:-5])-long_offset}($fp)",
+                                    f"{int(offset_string3[0:-5])-long_offset}($fp)",
+                                    "",
+                                ]
+                            )
+
+                    else:
+                        activation_record.append(
+                            [temp_node.type + "=", offset_string1, offset_string3, "",]
+                        )
                 else:
+                    # ARKA DOUBTS
+                    print("else", p[0].type, temp_node.type)
                     code_gen.append(
                         [temp_node.type + "=", p[1].addr, temp_node.place, "*"]
                     )
+
                     activation_record.append(
-                        [
-                            temp_node.type + "=",
-                            p[1].addr + offset_string1,
-                            temp_node.place + offset_string3,
-                            "*",
-                        ]
+                        [temp_node.type + "=", offset_string1, offset_string3, "*",]
                     )
         # p[0].ast = build_AST(p, rule_name)
         p[0].ast = build_AST_2(p, [1, 3], p[2].val)
@@ -2735,6 +2602,7 @@ def p_declaration(p):
                     val=child.children[1].val,
                     size=get_data_type_size(p[1].type),
                     offset=offsets[ST.currentScope],
+                    in_whose_scope=ST.scope_tables[ST.currentScope].name,
                 )
                 # print(offsets[ST.currentScope])
                 ST.current_table.insert(node)
@@ -2757,6 +2625,12 @@ def p_declaration(p):
                             f"Identifier {child.children[0].val} cannot have type void",
                         )
                     )
+                if child.children[0].offset == -1465465465:
+                    child.children[0].offset = offsets[ST.currentScope]
+                    
+                    child.children[0].in_whose_scope=ST.scope_tables[ST.currentScope].name
+                # print(child.type,child.val,offsets[ST.currentScope])
+                
                 node.size *= totalEle
                 offsets[ST.currentScope] += node.size
                 offsets[ST.currentScope] += (8 - offsets[ST.currentScope] % 8) % 8
@@ -2775,8 +2649,8 @@ def p_declaration(p):
                     activation_record.append(
                         [
                             child.children[1].type + "2" + child.type,
-                            temp_node1 + tmp_offset_string,
-                            child.children[1].place + offset_string,
+                            tmp_offset_string,
+                            offset_string,
                         ]
                     )
                     offset_string = cal_offset(child.children[0])
@@ -2785,12 +2659,7 @@ def p_declaration(p):
                             [child.type + "=", child.children[0].place, temp_node1, ""]
                         )
                         activation_record.append(
-                            [
-                                child.type + "=",
-                                child.children[0].place + offset_string,
-                                temp_node1 + tmp_offset_string,
-                                "",
-                            ]
+                            [child.type + "=", offset_string, tmp_offset_string, "",]
                         )
                     else:
                         code_gen.append(
@@ -2801,8 +2670,8 @@ def p_declaration(p):
                             [
                                 child.type + "=",
                                 # child.children[0].place + offset_string,
-                                child.children[0].addr + offset_string,
-                                temp_node1 + tmp_offset_string,
+                                offset_string,
+                                tmp_offset_string,
                                 "*",
                             ]
                         )
@@ -2820,12 +2689,7 @@ def p_declaration(p):
                             ]
                         )
                         activation_record.append(
-                            [
-                                child.type + "=",
-                                child.children[0].place + offset_string0,
-                                child.children[1].place,
-                                "",
-                            ]
+                            [child.type + "=", offset_string0, offset_string1, "",]
                         )
                     else:
                         code_gen.append(
@@ -2837,12 +2701,7 @@ def p_declaration(p):
                             ]
                         )
                         activation_record.append(
-                            [
-                                child.type + "=",
-                                child.children[0].place + offset_string0,
-                                child.children[1].place + offset_string1,
-                                "*",
-                            ]
+                            [child.type + "=", offset_string0, offset_string1, "*",]
                         )
                 # above line maybe necessary to be commented
             else:
@@ -3343,7 +3202,7 @@ def p_direct_declarator_2(p):
                     f"Function {p[1].val} already declared",
                 )
             )
-        node = Node(name=p[1].val, is_func=1)
+        node = Node(name=p[1].val, is_func=1,)
         tempList = []
         total_size = 0
         for child in p[3].children:
@@ -3356,11 +3215,14 @@ def p_direct_declarator_2(p):
             node1.offset = total_size
             total_size += get_data_type_size(child.type)
             total_size += (8 - total_size % 8) % 8
+            node1.in_whose_scope=p[1].val
+        # print(p[1])
         node.argument_list = tempList
         node.type = ST.curType[-1 - len(tempList)]
         ST.parent_table.insert(node)
         ST.curFuncReturnType = copy.deepcopy(ST.curType[-1 - len(tempList)])
         ST.current_table.name = p[1].val
+        table_name_to_num[p[1].val] = ST.currentScope
         # code_gen.append(["funcstart", p[1].val, "", ""])
         funcstack.append(p[1].val)
 
@@ -3372,6 +3234,7 @@ def p_direct_declarator_3(p):
         name="ArrayDeclarator", val=p[1].val, type="", lno=p.lineno(1), children=[],
     )
     p[0].ast = build_AST(p, rule_name)
+    p[0].level=p[1].level+1
     p[0].array = copy.deepcopy(p[1].array)
     p[0].array.append(int(p[3].place))
 
@@ -3397,6 +3260,7 @@ def p_direct_declarator_4(p):
                     )
                 )
             p[0].array.append(0)
+        p[0].level=p[1].level+1
         p[0].ast = build_AST(p, rule_name)
 
     if p[3] == ")":
@@ -3415,6 +3279,7 @@ def p_direct_declarator_4(p):
         ST.parent_table.insert(node)
         ST.curFuncReturnType = copy.deepcopy(ST.curType[-1])
         ST.current_table.name = p[1].val
+        table_name_to_num[p[1].val] = ST.currentScope
 
         # code_gen.append(["funcstart", p[1].val, "", ""])
         funcstack.append(p[1].val)
@@ -3478,7 +3343,8 @@ def p_parameter_list(p):
         p[0].ast = build_AST(p, rule_name)
         p[0].children = p[1].children
         p[0].children.append(p[3])
-    
+
+
 def p_parameter_declaration(p):
     """parameter_declaration : declaration_specifiers declarator
     | declaration_specifiers abstract_declarator
@@ -3503,7 +3369,10 @@ def p_parameter_declaration(p):
         )
         p[0].ast = build_AST(p, rule_name)
         if len(p[2].type) > 0:
-            p[0].type = p[1].type + " " + p[2].type
+            if "*" in p[2].type:
+                p[0].type = p[1].type + p[2].type
+            else:
+                p[0].type = p[1].type + " " + p[2].type
     if p[2].name == "Declarator":
         p2v_node = ST.current_table.find(p[2].val)
         if p2v_node is not None:
@@ -3878,6 +3747,7 @@ def p_statement_list(p):
         p[0].label = p[1].label + p[2].label
         p[0].expr = p[1].expr + p[2].expr
 
+
 def p_expression_statement(p):
     """expression_statement : SEMICOLON
     | expression SEMICOLON
@@ -3946,7 +3816,7 @@ def p_if_M1(p):
     label2 = ST.get_tmp_label()
     offset_string = cal_offset(p[-2])
     code_gen.append(["beq", p[-2].place, "0", label1])
-    activation_record.append(["beq", p[-2].place + offset_string, "0", label1])
+    activation_record.append(["beq", offset_string, "0", label1])
     p[0] = [label1, label2]
 
 
@@ -4107,7 +3977,7 @@ def p_while_M2(p):
     """while_M2 :"""
     offset_string = cal_offset(p[-2])
     code_gen.append(["beq", p[-2].place, "0", p[-4][1]])
-    activation_record.append(["beq", p[-2].place + offset_string, "0", p[-4][1]])
+    activation_record.append(["beq", offset_string, "0", p[-4][1]])
     # code_gen.append(["goto", "", "", p[-4][1]])  ## non useful
     # code_gen.append(["label", p[-4][1], ":", ""])  ## non useful
 
@@ -4151,7 +4021,7 @@ def p_do_M3(p):
     code_gen.append(["beq", p[-2].place, "0", p[-7][2]])
     code_gen.append(["goto", "", "", p[-7][0]])  ## non useful
     code_gen.append(["label", p[-7][2], ":", ""])  ## non useful
-    activation_record.append(["beq", p[-2].place + offset_string, "0", p[-7][2]])
+    activation_record.append(["beq", offset_string, "0", p[-7][2]])
     activation_record.append(["goto", "", "", p[-7][0]])  ## non useful
     activation_record.append(["label", p[-7][2], ":", ""])  ## non useful
 
@@ -4177,7 +4047,7 @@ def p_FM2(p):
     """FM2 :"""
     offset_string = cal_offset(p[-2])
     code_gen.append(["beq", p[-2].place, "0", p[-3][1]])
-    activation_record.append(["beq", p[-2].place + offset_string, "0", p[-3][1]])
+    activation_record.append(["beq", offset_string, "0", p[-3][1]])
 
 
 def p_FM8(p):
@@ -4197,7 +4067,7 @@ def p_FM4(p):
     code_gen.append(["beq", p[-2].place, "0", p[-3][1]])
     code_gen.append(["goto", "", "", p[-3][2]])
     code_gen.append(["label", p[-3][3], ":", ""])
-    activation_record.append(["beq", p[-2].place + offset_string, "0", p[-3][1]])
+    activation_record.append(["beq", offset_string, "0", p[-3][1]])
     activation_record.append(["goto", "", "", p[-3][2]])
     activation_record.append(["label", p[-3][3], ":", ""])
 
@@ -4368,8 +4238,15 @@ def p_jump_statemen_2(p):
                     "Function return type is not void",
                 )
             )
+        temp = p[2].in_whose_scope.split("_")[0]
+        node =ST.find(temp),temp 
+        param_size = 0
+        for argument in node.argument_list:
+            param_size+=get_data_type_size(argument)
+            param_size+=(8-param_size%8)%8
+
         code_gen.append(["return0", "", "", ""])
-        activation_record.append(["return0", "", "", ""])
+        activation_record.append([f"return0_8_{param_size+24}", "", "", ""])
 
     else:
         offset_string = cal_offset(p[2])
@@ -4382,15 +4259,19 @@ def p_jump_statemen_2(p):
                     f"Function return type is not {p[2].type}",
                 )
             )
+        # return_size=param_size=0
+        temp = p[2].in_whose_scope.split("_")[0]
+        node =ST.find(temp)
+        param_size = 0
+        for argument in node.argument_list:
+            param_size+=get_data_type_size(argument)
+            param_size+=(8-param_size%8)%8
 
+        return_size = get_data_type_size(p[2].type)
+        return_size+=(8-return_size%8)%8
         code_gen.append([f"return{get_data_type_size(p[2].type)}", p[2].place, "", ""])
         activation_record.append(
-            [
-                f"return{get_data_type_size(p[2].type)}",
-                p[2].place + offset_string,
-                "",
-                "",
-            ]
+            [f"return_{return_size}_{p[2].type}_{param_size+return_size+16}", offset_string, "", "",]
         )
 
 
@@ -4461,6 +4342,9 @@ def p_function_definition_2(p):
     )
     p[0].ast = build_AST_2(p, [1, 2, 4], rule_name)
     code_gen.append(["endfunc", "", "", ""])
+    # print(p[1])
+    # print(p[2])
+
     activation_record.append(["endfunc", "", "", ""])
     # funcstack.pop()
 
@@ -4630,6 +4514,8 @@ if __name__ == "__main__":
         write_code(code_gen, file)
         file = open("activation_record.txt", "w")
         write_code(activation_record, file)
+        file = open("mips_generated.s", "w")
+        write_mips(mips_generation(activation_record), file)
 
     dump_symbol_table_csv(args.v)
 
