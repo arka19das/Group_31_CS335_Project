@@ -193,7 +193,7 @@ class Node:
     expr: List = field(default_factory=list)
     label: List = field(default_factory=list)
     index: str = ""
-    offset: int = -1  # TODO:default value for all nodes 0 or 1?
+    offset: int = -1465465465  # TODO:default value for all nodes 0 or 1?
     lhs: int = 0
     addr: str = ""
     ast: Any = None
