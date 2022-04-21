@@ -10,6 +10,8 @@ code_gen = []
 contStack = []
 brkStack = []
 funcstack = []
+table_name_to_num={}
+table_name_to_num["#global"]=0
 
 
 TYPE_FLOAT = ["FLOAT", "DOUBLE", "LONG DOUBLE"]
@@ -276,9 +278,9 @@ class SymbolTable:
         self.parent[self.nextScope] = self.currentScope
         self.currentScope = self.nextScope
         self.nextScope = self.nextScope + 1
-
         value = self.parent_table.subscope_counter.get(self.subscope_name, 1)
         table_name = f"{self.parent_table.name}_{self.subscope_name}{value}"
+        table_name_to_num[table_name]=ST.currentScope
         self.parent_table.subscope_counter[self.subscope_name] = value + 1
         self.scope_tables.append(
             ScopeTable(name=table_name)
@@ -286,8 +288,9 @@ class SymbolTable:
         )
 
     def pop_scope(self):
+        
         self.currentScope = self.parent[self.currentScope]
-
+        
     @property
     def current_table(self):
         return self.scope_tables[self.currentScope]
@@ -698,10 +701,9 @@ def write_mips(code, file):
             continue
         elif line[0] != "label":
             file.write(f"\t\t{line[0].lower()}\t")
-            args = [arg for arg in line[1:] if arg]
-            file.write(",".join(args))
+            file.write(",".join(line[1:]))
         else:
-            file.write(line[1] + line[2]) 
+            file.write(f"{line[1]}\t{line[2]}") 
         file.write("\n")
     file.close()
 
