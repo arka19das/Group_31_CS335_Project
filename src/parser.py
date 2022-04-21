@@ -52,7 +52,7 @@ def cal_offset(p):
     count_ = p.in_whose_scope.count("_")
     offset = 0
 
-    # print(p.val,p.lno, ST.scope_tables[ST.currentScope].name,p.in_whose_scope)
+    print(p.val,p.lno, ST.scope_tables[ST.currentScope].name,p.in_whose_scope)
     temp=1
     temp=table_name_to_num[p.in_whose_scope]
     for c_ in range(count_):  # CHECK ARKA BC
@@ -896,6 +896,7 @@ def p_postfix_expression_3(p):
                 is_func=0,
                 place=p[1].place,
                 lhs=1,
+                in_whose_scope=ST.scope_tables[ST.currentScope].name
             )
             p[0].ast = build_AST_2(p, [1, 3], "()")
             # p[0].ast = build_AST(p, rule_name)
@@ -3201,7 +3202,7 @@ def p_direct_declarator_2(p):
                     f"Function {p[1].val} already declared",
                 )
             )
-        node = Node(name=p[1].val, is_func=1)
+        node = Node(name=p[1].val, is_func=1,)
         tempList = []
         total_size = 0
         for child in p[3].children:
