@@ -52,7 +52,7 @@ def cal_offset(p):
     count_ = p.in_whose_scope.count("_")
     offset = 0
 
-    print(p.val,p.lno, ST.scope_tables[ST.currentScope].name,p.in_whose_scope)
+    #print(p.val,p.lno, ST.scope_tables[ST.currentScope].name,p.in_whose_scope)
     temp=1
     temp=table_name_to_num[p.in_whose_scope]
     for c_ in range(count_):  # CHECK ARKA BC
