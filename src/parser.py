@@ -4324,7 +4324,7 @@ def p_jump_statemen_2(p):
             param_size+=(4-param_size%4)%4
 
         code_gen.append(["return0", "", "", ""])
-        activation_record.append([f"return0_8_{param_size+24}", "", "", ""]) #MIPS32ARKA
+        activation_record.append([f"return0_8_{param_size+12}", "", "", ""]) #MIPS32ARKA
 
     else:
         offset_string = cal_offset(p[2])
@@ -4349,7 +4349,7 @@ def p_jump_statemen_2(p):
         return_size+=(4-return_size%4)%4
         code_gen.append([f"return{get_data_type_size(p[2].type)}", p[2].place, "", ""])
         activation_record.append(
-            [f"return_{return_size}_{p[2].type}_{param_size+return_size+16}", offset_string, "", "",]
+            [f"return_{return_size}_{p[2].type}_{param_size+return_size+8}", offset_string, "", "",]
         )
 
 
