@@ -1014,7 +1014,8 @@ def p_postfix_expression_3(p):
                     else:
                         # offset_string[-3]="s"
                         if arguments.upper() in PRIMITIVE_TYPES or arguments.endswith("*"):
-                            temp_offset = get_data_type_size(arguments)
+                            # temp_offset = get_data_type_size(arguments)
+                            temp_offset=8
                             arg_split = arguments.split()[0] 
                             temp_3ac.append([f"param", p[1].val, " ", p[3].children[i].val])
                             temp_act.append(
@@ -1031,13 +1032,6 @@ def p_postfix_expression_3(p):
                                 )
 
                         func_offset+=temp_offset
-                    # if p[3].children[i].type.upper() in PRIMITIVE_TYPES or p[
-                    #     3
-                    # ].children[i].type.endswith("*"):
-                    #     func_offset += 8
-                    # else:
-                    #     func_offset += get_data_type_size(arguments)
-                    #     func_offset += (8 - func_offset % 8) % 8
                     i -= 1
                     
                 param_size = func_offset

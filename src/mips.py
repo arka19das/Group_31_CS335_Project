@@ -721,8 +721,9 @@ def mips_generation(full_code_gen):
                 sz = int(node_split[1])
                 # sz+=(8-sz%8)%8
                 for i in range(0,sz,8):
-                    mips_set.append(load_reg("$t0",f"{offset-i}($fp)",node_split[2]))
-                    mips_set.append(store_reg("$t0", f"{return_offset-i}($v0)", node_split[2]))
+                    # mips_set.append(load_reg("$t0",f"{offset-i}($fp)",node_split[2]))
+                    # mips_set.append(store_reg("$t0", f"{return_offset-i}($fp)", node_split[2]))
+                    mips_set.append(store_reg(f"{offset-i}($fp)", f"{return_offset-i-8}($fp)", node_split[2]))
             
             return_offset+=16
             return_size=-return_offset
@@ -737,21 +738,10 @@ def mips_generation(full_code_gen):
         elif "call" in s:
             node_type = s.split("_")
             
+            mips_set.append(["DADDI","$t0","$0",f"{int(node_type[2])-int(node_type[3])}"])
+            mips_set.append(["SUB","$sp","$sp","$t0"])
             mips_set.append(["SW", "$fp", "-8($sp)"])
             mips_set.append(["SW", "$ra", "-16($sp)"])
-            # sz = get_data_type_size(node_type[1])
-            # sz+=(8-sz%8)%8
-            #Agr address strore krna hai to kya krenge ?
-            # if node_type[1] in ["float", "double"]:
-            # mips_set.append(["DADDI","$v0","$sp",f"{-16-sz}"])
-            #mips_set.extend(("$t0",f"{-16-sz}($sp)", "$v0"))
-                # mips_set.append([LOAD_INSTRUCTIONS[node_type[1]], f"{-16-sz}($sp)", "$f0"])
-            # elif node_type[1] in ["int", "long", "doublchar"]:
-            #     mips_set.append(addr_load("$t0",f"{-16-sz}($sp)", "$v0"))
-            #     # mips_set.append([LOAD_INSTRUCTIONS[node_type[1]], f"{-16-sz}($sp)", "$v0"])
-            # elif node_type[1] != "void":
-            #     # non_primitive_load jaisa
-            #     pass
             
             for p in params:
                 mips_set.append(p)
