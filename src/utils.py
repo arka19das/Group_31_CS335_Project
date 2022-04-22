@@ -2,7 +2,7 @@ import code
 import csv
 from dataclasses import dataclass, field, fields
 from pathlib import Path
-from typing import Any, List, Union, Dict
+from typing import Any, Dict, List, Tuple, Union
 
 offsets = {}
 # offsets__with_table_name = {}
@@ -275,7 +275,7 @@ class SymbolTable:
                 self.error_flag = 1
             print(str(err))
 
-    def get_tmp_var(self, vartype=None, value=0) -> str:
+    def get_tmp_var(self, vartype=None, value=0) -> Tuple[str, str]:
         global TMP_VAR_COUNTER
         global offsets
         TMP_VAR_COUNTER += 1
@@ -669,13 +669,15 @@ def write_code(code, file):
 
 
 def write_mips(code, file):
+    with open("../stdlib/lib.s") as lib:
+        file.write(lib.read())
     for line in code:
         if line[0] != "label":
             file.write(f"\t\t{line[0].lower()}\t")
             args = [arg for arg in line[1:] if arg]
             file.write(",".join(args))
         else:
-            file.write(line[1] + line[2]) 
+            file.write(line[1] + line[2])
         file.write("\n")
     file.close()
 
@@ -708,64 +710,78 @@ def dump_symbol_table_csv(verbose: bool = False):
                 writer.writerow(node.to_dict(True))
 
 
-node1 = Node(
-    name="printf",
-    type="int",
-    val="",
-    is_func=1,
-    argument_list=["int"],
-    lno=-1,
-    in_whose_scope="#global",
-)
-node2 = Node(
-    name="scanf",
-    type="int",
-    val="",
-    is_func=1,
-    argument_list=["int"],
-    lno=-1,
-    in_whose_scope="#global",
-)
-node3 = Node(
-    name="malloc",
-    type="void *",
-    val="",
-    is_func=1,
-    argument_list=["int"],
-    lno=-1,
-    in_whose_scope="#global",
-)
-node4 = Node(
-    name="sqrt",
-    type="float",
-    val="",
-    is_func=1,
-    argument_list=["int"],
-    lno=-1,
-    in_whose_scope="#global",
-)
-node5 = Node(
-    name="pow",
-    type="float",
-    val="",
-    is_func=1,
-    argument_list=["int"],
-    lno=-1,
-    in_whose_scope="#global",
-)
-node6 = Node(
-    name="abs",
-    type="float",
-    val="",
-    is_func=1,
-    argument_list=["int"],
-    lno=-1,
-    in_whose_scope="#global",
-)
-node7 = Node(name="NULL", type="void *", val="0", lno=-1, in_whose_scope="#global")
-
-
-pre_append_array = [node1, node2, node3, node4, node5, node6, node7]
+pre_append_array = [
+    Node(
+        name="NULL",
+        type="void *",
+        val="0",
+        lno=-1,
+        in_whose_scope="#global"
+    ),
+    Node(
+        name="print_int",
+        type="int",
+        val="",
+        is_func=1,
+        argument_list=["int"],
+        lno=-1,
+        in_whose_scope="#global",
+    ),
+    Node(
+        name="print_char",
+        type="char",
+        val="",
+        is_func=1,
+        argument_list=["char"],
+        lno=-1,
+        in_whose_scope="#global"
+    ),
+    Node(
+        name="print_float",
+        type="float",
+        val="",
+        is_func=1,
+        argument_list=["float"],
+        lno=-1,
+        in_whose_scope="#global"
+    ),
+    Node(
+        name="read_int",
+        type="int",
+        val="",
+        is_func=1,
+        argument_list=[],
+        lno=-1,
+        in_whose_scope="#global",
+    ),
+    Node(
+        name="read_char",
+        type="char",
+        val="",
+        is_func=1,
+        argument_list=[],
+        lno=-1,
+        in_whose_scope="#global"
+    ),
+    Node(
+        name="read_float",
+        type="float",
+        val="",
+        is_func=1,
+        argument_list=[],
+        lno=-1,
+        in_whose_scope="#global"
+    ),
+    Node(
+        name="read_string",
+        type="string",
+        val="",
+        is_func=1,
+        argument_list=["char*", "int"],
+        lno=-1,
+        in_whose_scope="#global"
+    ),
+]
 
 
 def pre_append_to_table():
