@@ -563,12 +563,23 @@ def p_postfix_expression_3(p):
                 )
                 p[0] = ST.get_dummy()
                 return
+            
+            func_offset=16
+            temp=ST.currentScope
+            while temp!=0:
+                func_offset+=offsets[temp]
+                temp=ST.parent[temp]
+            # func_offset = offsets[ST.currentScope] + 16
             return_size = get_data_type_size(p1v_node.type)
-            return_size+=(8-return_size%8)%8
+            return_size += ((8 - return_size % 8) % 8)
+            func_offset += return_size
+            
+            p[0].offset = func_offset
             code_gen.append([f"call_{offsets[ST.currentScope]}", p[1].val, "", ""])
             activation_record.append(
-                [f"call_{p1v_node.type}_{offsets[ST.currentScope]+8+return_size}", p[1].val, "", f"__{p[1].val}"]
+                [f"call_{p1v_node.type}_{func_offset}_{16+return_size}", p[1].val, "", f"__{p[1].val}"]
             )
+            
 
         else:
             if not p[1].name.startswith("Dot"):
@@ -4331,15 +4342,16 @@ def p_jump_statemen_2(p):
                 )
             )
             p[0] = ST.get_dummy()
-        temp = p[2].in_whose_scope.split("_")[0]
-        node =ST.find(temp),temp 
+        
+        temp = ST.scope_tables[ST.currentScope].name.split("_")[0]
+        node =ST.find(temp) 
         param_size = 0
         for argument in node.argument_list:
             param_size+=get_data_type_size(argument)
             param_size+=(8-param_size%8)%8
 
         code_gen.append(["return0", "", "", ""])
-        activation_record.append([f"return0_8_{param_size+24}", "", "", ""])
+        activation_record.append([f"return0_8_{param_size+24}", "0", "", ""])
 
     else:
         offset_string = cal_offset(p[2])
@@ -4353,7 +4365,7 @@ def p_jump_statemen_2(p):
                 )
             )
         # return_size=param_size=0
-        temp = p[2].in_whose_scope.split("_")[0]
+        temp = ST.scope_tables[ST.currentScope].name.split("_")[0]
         node =ST.find(temp)
         param_size = 0
         for argument in node.argument_list:
