@@ -455,18 +455,19 @@ def p_postfix_expression_3(p):
         check_identifier(p[1], p.lineno(1))
         offset_string = cal_offset(p[1])
         if p[1].type.endswith("*"):
-            code_gen.append(["long=", p[1].place, tmp_var])
-            activation_record.append(["long=", offset_string, tmp_offset_string])
+            code_gen.append(["long=", p[1].place, tmp_var, ""])
+            activation_record.append(["long=", offset_string, tmp_offset_string, ""])
 
         else:
             code_gen.append(
-                [str(get_data_type_size(p[1].type)) + "=", p[1].place, tmp_var,]
+                [str(get_data_type_size(p[1].type)) + "=", p[1].place, tmp_var,""]
             )
             activation_record.append(
                 [
                     str(get_data_type_size(p[1].type)) + "=",
                     offset_string,
                     tmp_offset_string,
+                    ""
                 ]
             )
 
@@ -1267,8 +1268,8 @@ def p_unary_expression(p):
                     )
                 )
                 p[0] = ST.get_dummy()
-            code_gen.append(["int=", tmp_var, type_size])
-            activation_record.append(["int=", tmp_offset_string, type_size])
+            code_gen.append(["int=", tmp_var, type_size, ""])
+            activation_record.append(["int=", tmp_offset_string, type_size, ""])
 
         elif p[1].val == "&":
             # TODO:3ac
@@ -1544,8 +1545,8 @@ def p_unary_expression(p):
                 )
             )
             p[0] = ST.get_dummy()
-        code_gen.append(["int=", tmp_var, str(type_size)])
-        activation_record.append(["int=", tmp_offset_string, str(type_size)])
+        code_gen.append(["int=", tmp_var, str(type_size), ""])
+        activation_record.append(["int=", tmp_offset_string, str(type_size), ""])
 
         p[0].ast = build_AST_2(p, [1, 3], p[2])
 
