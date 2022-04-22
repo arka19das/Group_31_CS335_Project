@@ -1057,7 +1057,7 @@ def p_postfix_expression_3(p):
                     activation_record.append(tact)
                     activation_record[-1][2] = f"{-(func_offset + activation_record[-1][2])}($fp)"
 
-                p[0].offset = func.offset
+                p[0].offset = func_offset
                 func_offset+=param_size
                 code_gen.append([f"call_{offsets[ST.currentScope]}", p[1].val, "", ""])
                 activation_record.append(
