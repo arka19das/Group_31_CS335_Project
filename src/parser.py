@@ -563,11 +563,20 @@ def p_postfix_expression_3(p):
                 )
                 p[0] = ST.get_dummy()
                 return
+            func_offset=8
+            temp=ST.currentScope
+            while temp!=0:
+                func_offset+=offsets[temp]
+                temp=ST.parent[temp]
             return_size = get_data_type_size(p1v_node.type)
             return_size+=(4-return_size%4)%4
+            func_offset += return_size
+
+            p[0].offset = func_offset
             code_gen.append([f"call_{offsets[ST.currentScope]}", p[1].val, "", ""])
             activation_record.append(
-                [f"call_{p1v_node.type}_{offsets[ST.currentScope]+8+return_size}", p[1].val, "", f"__{p[1].val}"]#MIPS32 ARKA
+                # [f"call_{p1v_node.type}_{offsets[ST.currentScope]+8+return_size}", p[1].val, "", f"__{p[1].val}"]#MIPS32 ARKA
+                [f"call_{p1v_node.type}_{func_offset}_{16+return_size}", p[1].val, "", f"__{p[1].val}"]#MIPS32 ARKA
             )
 
         else:
@@ -2626,8 +2635,8 @@ def p_declaration(p):
         if "void" in p[1].type.split():
             flag = 0
         for child in p[2].children:
-
             if child.name == "InitDeclarator":
+                
                 if p[1].type.startswith("typedef"):
                     ST.error(
                         Error(
@@ -2683,7 +2692,6 @@ def p_declaration(p):
                     child.children[0].offset = offsets[ST.currentScope]
                     
                     child.children[0].in_whose_scope=ST.scope_tables[ST.currentScope].name
-                # print(child.type,child.val,offsets[ST.currentScope])
                 
                 node.size *= totalEle
                 offsets[ST.currentScope] += node.size
@@ -2760,7 +2768,6 @@ def p_declaration(p):
                         )
                 # above line maybe necessary to be commented
             else:
-
                 if (
                     ST.current_table.find(child.val)
                     and ST.current_table.find(child.val).is_func > 0
@@ -2949,10 +2956,9 @@ def p_init_declarator(p):
                 )
             )
             p[0] = ST.get_dummy()
-        if p[1].level != p[3].level:
-            ST.error(Error(p[1].lno, rule_name, "compilation error", "Type Mismatch"))
-            p[0] = ST.get_dummy()
-
+        # if p[1].level != p[3].level:
+        #     ST.error(Error(p[1].lno, rule_name, "compilation error", "Type Mismatch"))
+        #     p[0] = ST.get_dummy()
 
 def p_storage_class_specifier(p):
     """storage_class_specifier : TYPEDEF
@@ -4316,15 +4322,15 @@ def p_jump_statemen_2(p):
                 )
             )
             p[0] = ST.get_dummy()
-        temp = p[2].in_whose_scope.split("_")[0]
-        node =ST.find(temp),temp 
+        temp = ST.scope_tables[ST.currentScope].name.split("_")[0]
+        node =ST.find(temp)
         param_size = 0
         for argument in node.argument_list:
             param_size+=get_data_type_size(argument)
             param_size+=(4-param_size%4)%4
 
         code_gen.append(["return0", "", "", ""])
-        activation_record.append([f"return0_8_{param_size+12}", "", "", ""]) #MIPS32ARKA
+        activation_record.append([f"return0_8_{param_size+12}", "0", "", ""]) #MIPS32ARKA
 
     else:
         offset_string = cal_offset(p[2])
@@ -4338,7 +4344,8 @@ def p_jump_statemen_2(p):
                 )
             )
         # return_size=param_size=0
-        temp = p[2].in_whose_scope.split("_")[0]
+        # temp = p[2].in_whose_scope.split("_")[0]
+        temp = ST.scope_tables[ST.currentScope].name.split("_")[0]
         node =ST.find(temp)
         param_size = 0
         for argument in node.argument_list:
@@ -4598,8 +4605,8 @@ if __name__ == "__main__":
         write_code(code_gen, file)
         file = open("activation_record.txt", "w")
         write_code(activation_record, file)
-        file = open("mips_generated.s", "w")
-        write_mips(mips_generation(activation_record), file)
+        # file = open("mips_generated.s", "w")
+        # write_mips(mips_generation(activation_record), file)
 
     dump_symbol_table_csv(args.v)
 
