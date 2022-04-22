@@ -448,7 +448,7 @@ def p_postfix_expression_3(p):
             level=p[1].level,
             offset=p[1].offset,
             lhs=1,
-            in_whose_scope=p[2].in_whose_scope,
+            in_whose_scope=p[1].in_whose_scope,
             
         )
         p[0].ast = build_AST_2(p, [1], p[2])
