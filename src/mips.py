@@ -554,28 +554,22 @@ def conversion(type1, addr1, type2, addr2):
     size = -0.2
     if type1 in TYPE_INTEGER and type2.endswith("*"):
         if type2[0:-2].endswith("*"):
-            size = -8
+            size = -4
         elif type2[0:-2] in TYPE_INTEGER + TYPE_FLOAT:
             size = -4
-            if (
-                type2[0:-2] == "long"
-                or type2[0:-2] == "unsigned long"
-                or type2[0:-2] == "double"
-            ):
-                size = -8
-            elif type2[0:-2] == "short" or type2[0:-2] == "unsigned short":
+            if type2[0:-2] == "short" or type2[0:-2] == "unsigned short":
                 size = -2
         else:
             size = ST.find(type2[0:-2])
 
     if type1.endswith("*"):
-        type1 = "long"
+        type1 = "int"
     if type2.endswith("*"):
-        type2 = "long"
+        type2 = "int"
     if type1 in TYPE_INTEGER:
         mips.append(load_reg("$t0", addr1, type1))
         if size != -0.2:
-            op = "DMULTI"
+            op = "MULTU"
             mips.append([op, "$t0", str(size)])
             mips.append(["MFLO  ", "$t0"])
     elif type1 in TYPE_FLOAT:
@@ -583,26 +577,19 @@ def conversion(type1, addr1, type2, addr2):
 
     if (
         type1
-        in ("int", "short", "unsigned short", "unsigned int", "char", "unsigned char")
+        in  TYPE_INTEGER 
         and type2 in TYPE_FLOAT
     ):
         mips.append(["MTC1", "$t0", "f2"])
-        mips.append(["CVT.D.W", "f2", "f2"])
-
-    elif type1 in ("long", "unsigned long") and type2 in TYPE_FLOAT:
-        mips.append(["DMTC1", "$t0", "f2"])
-        mips.append(["CVT.D.L", "f2", "f2"])
+        mips.append(["CVT.S.W", "f2", "f2"])
 
     elif (
-        type2
-        in ("int", "short", "unsigned short", "unsigned int", "char", "unsigned char")
+        type2 in TYPE_INTEGER
         and type1 in TYPE_FLOAT
     ):
-        mips.append(["CVT.W.D", "f2", "f2"])
+        mips.append(["CVT.W.S", "f2", "f2"])
         mips.append(["MFC1", "$t0", "f2"])
-    elif type2 in ("long", "unsigned long") and type1 in TYPE_FLOAT:
-        mips.append(["CVT.L.D", "f2", "f2"])
-        mips.append(["DMFC1", "$t0", "f2"])
+    
     elif (type1 in TYPE_FLOAT and type2 in TYPE_FLOAT) or (
         type1 in TYPE_INTEGER and type2 in TYPE_INTEGER
     ):
@@ -654,13 +641,13 @@ def mips_generation(full_code_gen):
         )
         if "2" in s and "_" not in s:
             conversion_type = s.split("2")
-            if "float" in conversion_type:
-                print("ERROR: float  conversion not supported")
-            else:
-                print(code_gen)
-                mips_set += conversion(
-                    conversion_type[0], code_gen[2], conversion_type[1], code_gen[1]
-                )
+            # if "float" in conversion_type:
+            #     print("ERROR: float  conversion not supported")
+            
+            print(code_gen)
+            mips_set += conversion(
+                conversion_type[0], code_gen[2], conversion_type[1], code_gen[1]
+            )
 
         elif s.endswith(operators):
 
