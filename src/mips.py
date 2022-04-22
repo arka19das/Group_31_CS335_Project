@@ -1,4 +1,6 @@
 from dis import code_info
+
+from numpy import append
 from utils import *
 
 comment_variable = ";"
@@ -506,11 +508,11 @@ def addr_load(reg1, laddr, raddr):
     return mips
 
 
-# beq	__tmp_var_3	0	__label_1
-def beq_mips(type, reg, addr, label):
+# beq	__tmp_var_3	0	__label_1   [int]
+def beq_mips( reg, addr, label):
     mips = []
-    load_instr = LOAD_INSTRUCTIONS[type]
-    mips.append([load_instr, reg, addr])
+    #load_instr = LOAD_INSTRUCTIONS[type]
+    mips.append(["lw", reg, addr])
     mips.append(["beq", reg, "$0", label])
     return mips
 
@@ -569,26 +571,26 @@ def conversion(type1, addr1, type2, addr2):
     if type1 in TYPE_INTEGER:
         mips.append(load_reg("$t0", addr1, type1))
         if size != -0.2:
-            op = "MULTU"
+            op = "multu"
             mips.append([op, "$t0", str(size)])
-            mips.append(["MFLO  ", "$t0"])
+            mips.append(["mflo  ", "$t0"])
     elif type1 in TYPE_FLOAT:
-        mips.append(load_reg("f2", addr1, type1))
+        mips.append(load_reg("$f2", addr1, type1))
 
     if (
         type1
         in  TYPE_INTEGER 
         and type2 in TYPE_FLOAT
     ):
-        mips.append(["MTC1", "$t0", "f2"])
-        mips.append(["CVT.S.W", "f2", "f2"])
+        mips.append(["mtc1", "$t0", "f2"])
+        mips.append(["cvt.s.w", "$f2", "$f2"])
 
     elif (
         type2 in TYPE_INTEGER
         and type1 in TYPE_FLOAT
     ):
-        mips.append(["CVT.W.S", "f2", "f2"])
-        mips.append(["MFC1", "$t0", "f2"])
+        mips.append(["cvt.s.w", "$f2", "$f2"])
+        mips.append(["mfc1", "$t0", "f2"])
     
     elif (type1 in TYPE_FLOAT and type2 in TYPE_FLOAT) or (
         type1 in TYPE_INTEGER and type2 in TYPE_INTEGER
@@ -601,15 +603,9 @@ def conversion(type1, addr1, type2, addr2):
     if type2 in TYPE_INTEGER:
         mips.append(store_reg("$t0", addr2, type2))
     elif type2 in TYPE_FLOAT:
-        mips.append(store_reg("f2", addr2, type2))
+        mips.append(store_reg("$f2", addr2, type2))
 
     return mips
-
-
-
-
-#print(non_prim_load("$t0","$t1","-160($fp)","-152($fp)","104non_primitive_load"))
-
 
 def mips_generation(full_code_gen):
     mips_set = []
@@ -639,15 +635,10 @@ def mips_generation(full_code_gen):
             "<<",
             ">>",
         )
-        if "2" in s and "_" not in s:
+        if "2" in s and "_" not in s and s!="2load":
             conversion_type = s.split("2")
-            # if "float" in conversion_type:
-            #     print("ERROR: float  conversion not supported")
-            
             print(code_gen)
-            mips_set += conversion(
-                conversion_type[0], code_gen[2], conversion_type[1], code_gen[1]
-            )
+            mips_set += conversion(conversion_type[0], code_gen[2], conversion_type[1], code_gen[1])
 
         elif s.endswith(operators):
 
@@ -676,6 +667,13 @@ def mips_generation(full_code_gen):
             pass
         elif s == "addr":
             mips_set.extend(addr_load("$t0",code_gen[1],code_gen[2]))    
+        elif s== "beq":
+            mips_set.extend(beq_mips("$t0",code_gen[1],code_gen[3]))
+        elif s=="goto":
+            mips_set.append(["j",code_gen[3]])
+       
+        elif s=="label":
+            mips_set.append(code_gen)       
         elif s == "endfunc":
             pass
         
