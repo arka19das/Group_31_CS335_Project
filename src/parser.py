@@ -206,8 +206,8 @@ def p_hex_constant(p):
     p[0].place = int(temp[0], 16)
     p[0].in_whose_scope = ST.scope_tables[ST.currentScope].name
     
-    if "l" in p[1] or "L" in p[1]:
-        p[0].type = "long"
+    # if "l" in p[1] or "L" in p[1]:
+    #     p[0].type = "int"
 
     if "u" in p[1] or "U" in p[1]:
         p[0].type = "unsigned " + p[0].type
@@ -226,12 +226,12 @@ def p_oct_constant(p):
         lhs=1,
     )
     temp = re.findall("[0-7]+", p[1][1:])
-    p[0].val = int(temp[0], 8)
-    p[0].place = int(temp[0], 8)
+    p[0].val = int(temp[0], 4)
+    p[0].place = int(temp[0], 4)
     p[0].in_whose_scope = ST.scope_tables[ST.currentScope].name
     
-    if "l" in p[1] or "L" in p[1]:
-        p[0].type = "long"
+    # if "l" in p[1] or "L" in p[1]:
+    #     p[0].type = "int"
 
     if "u" in p[1] or "U" in p[1]:
         p[0].type = "unsigned " + p[0].type
@@ -254,8 +254,8 @@ def p_int_constant(p):
     temp = re.findall("[0-9]+", p[1])
     p[0].val = temp[0]
     p[0].in_whose_scope = ST.scope_tables[ST.currentScope].name
-    if "l" in p[1] or "L" in p[1]:
-        p[0].type = "long"
+    # if "l" in p[1] or "L" in p[1]:
+    #     p[0].type = "int"
 
     if "u" in p[1] or "U" in p[1]:
         p[0].type = "unsigned " + p[0].type
@@ -455,8 +455,8 @@ def p_postfix_expression_3(p):
         check_identifier(p[1], p.lineno(1))
         offset_string = cal_offset(p[1])
         if p[1].type.endswith("*"):
-            code_gen.append(["long=", p[1].place, tmp_var, ""])
-            activation_record.append(["long=", offset_string, tmp_offset_string, ""])
+            code_gen.append(["int=", p[1].place, tmp_var, ""])
+            activation_record.append(["int=", offset_string, tmp_offset_string, ""])
 
         else:
             code_gen.append(
@@ -477,7 +477,7 @@ def p_postfix_expression_3(p):
             if p[1].type.endswith("*"):
                 code_gen.append(
                     [
-                        "long-",
+                        "int-",
                         p[1].place,
                         p[1].place,
                         str(get_data_type_size(p[1].type[:-2])),
@@ -485,7 +485,7 @@ def p_postfix_expression_3(p):
                 )
                 activation_record.append(
                     [
-                        "long-",
+                        "int-",
                         offset_string,
                         offset_string,
                         str(get_data_type_size(p[1].type[:-2])),
@@ -502,7 +502,7 @@ def p_postfix_expression_3(p):
             if p[1].type.endswith("*"):
                 code_gen.append(
                     [
-                        "long-",
+                        "int-",
                         p[1].place,
                         p[1].place,
                         f"-{get_data_type_size(p[1].type[:-2])}",
@@ -510,7 +510,7 @@ def p_postfix_expression_3(p):
                 )
                 activation_record.append(
                     [
-                        "long-",
+                        "int-",
                         offset_string,
                         offset_string,
                         f"-{get_data_type_size(p[1].type[:-2])}",
@@ -564,10 +564,10 @@ def p_postfix_expression_3(p):
                 p[0] = ST.get_dummy()
                 return
             return_size = get_data_type_size(p1v_node.type)
-            return_size+=(8-return_size%8)%8
+            return_size+=(4-return_size%4)%4
             code_gen.append([f"call_{offsets[ST.currentScope]}", p[1].val, "", ""])
             activation_record.append(
-                [f"call_{p1v_node.type}_{offsets[ST.currentScope]+8+return_size}", p[1].val, "", f"__{p[1].val}"]
+                [f"call_{p1v_node.type}_{offsets[ST.currentScope]+8+return_size}", p[1].val, "", f"__{p[1].val}"]#MIPS32 ARKA
             )
 
         else:
@@ -641,7 +641,7 @@ def p_postfix_expression_3(p):
                     # TODO:INCOMPLETE
                     flag = 1
                     offset_string = cal_offset(p[1])
-                    tmp, tmp_offset_string = ST.get_tmp_var("long")
+                    tmp, tmp_offset_string = ST.get_tmp_var("int")
 
                     type1 = curr_list[0]
                     tmp2, tmp_offset_string2 = ST.get_tmp_var(curr_list[0])
@@ -672,28 +672,17 @@ def p_postfix_expression_3(p):
                         p[0] = ST.get_dummy()
                         return  ## IS RETURN ACTUALLY REQUIRED --ADDED BY ARKA
 
-                    # offset_string = cal_offset(p[1])
-                    # tmp, tmp_offset_string = ST.get_tmp_var("long")
-                    # p[0].addr = tmp
-                    # type1 = curr_list[0]
-                    # tmp2, tmp_offset_string = ST.get_tmp_var(curr_list[0])
-                    # if len(curr_list) > 4:
-                    #     tmp2.array = copy.deepcopy(curr_list[4])
                     code_gen.append(["addr", tmp, p[1].place, ""])
                     activation_record.append(
                         ["addr", tmp_offset_string, offset_string[0:-5], "",]
                     )
 
                     # if curr_list[3] > 0:
-                    code_gen.append(["long-", tmp, curr_list[3], tmp])
+                    code_gen.append(["int-", tmp, curr_list[3], tmp])
                     activation_record.append(
-                        ["long-", tmp_offset_string, curr_list[3], tmp_offset_string,]
+                        ["int-", tmp_offset_string, curr_list[3], tmp_offset_string,]
                     )
                     # print(type1)
-                    # if len(p[0].array) > 0:
-                    #     print(1)
-                    #     code_gen.append([f"long=", tmp2, tmp, ""])
-                    #     activation_record.append([f"long=", tmp2, tmp, ""])
                     if type1.upper() in PRIMITIVE_TYPES:
                         code_gen.append(
                             [f"{get_data_type_size(type1)}load", tmp2, tmp, ""]
@@ -808,19 +797,16 @@ def p_postfix_expression_3(p):
                     ["int^", v_offset_string, v_offset_string, v_offset_string,]
                 )
 
-            # if d != 0:
-            # print(p[1].array)
-            # code_gen.append(["long=", temp_var, p[3].place, ""])
             if isinstance(p[0].array[0], str):
                 code_gen.append(["int+", v1, v1, temp_var])
                 activation_record.append(
                     ["int+", v_offset_string, v_offset_string, temp_offset_string,]
                 )
 
-                code_gen.append(["long*", v1, v1, str(get_data_type_size(p[0].type))])
+                code_gen.append(["int*", v1, v1, str(get_data_type_size(p[0].type))])
                 activation_record.append(
                     [
-                        "long*",
+                        "int*",
                         v_offset_string,
                         v_offset_string,
                         str(get_data_type_size(p[0].type)),
@@ -867,9 +853,9 @@ def p_postfix_expression_3(p):
                         ["addr", v2_offset_string, offset_string[0:-5], ""]
                     )
 
-                code_gen.append(["long-", v2, v1, v2])
+                code_gen.append(["int-", v2, v1, v2])
                 activation_record.append(
-                    ["long-", v2_offset_string, v_offset_string, tmp_offset_string,]
+                    ["int-", v2_offset_string, v_offset_string, tmp_offset_string,]
                 )
 
                 type1 = p[0].type  # TODO: BUGGED
@@ -1004,7 +990,7 @@ def p_postfix_expression_3(p):
                             [f"param_{p[3].children[i].type}", p[1].val, func_offset, tmp_offset_string]
                         )
                         # temp_offset = get_data_type_size(arguments)
-                        func_offset += 8
+                        func_offset += 4
                         
                     elif (p[3].children[i].type.upper() in PRIMITIVE_TYPES) ^ (
                         arguments.upper() in PRIMITIVE_TYPES
@@ -1041,7 +1027,7 @@ def p_postfix_expression_3(p):
                         # offset_string[-3]="s"
                         if arguments.upper() in PRIMITIVE_TYPES or arguments.endswith("*"):
                             # temp_offset = get_data_type_size(arguments)
-                            temp_offset=8
+                            temp_offset=4
                             arg_split = arguments.split()[0] 
                             temp_3ac.append([f"param", p[1].val, " ", p[3].children[i].val])
                             temp_act.append(
@@ -1049,26 +1035,26 @@ def p_postfix_expression_3(p):
                             )
                         else:
                             temp_offset = get_data_type_size(arguments)
-                            temp_offset += (8-temp_offset%8)%8                       
+                            temp_offset += (4-temp_offset%4)%4                       
                             offset = int(offset_string.split('(')[0])
-                            for j in range(0,temp_offset,8):
+                            for j in range(0,temp_offset,4):
                                 temp_3ac.append([f"param", p[1].val, " ", p[3].children[i].val])
                                 temp_act.append(
-                                    [f"param_long", p[1].val, func_offset+j, f"{-offset-j}($fp)"]
+                                    [f"param_int", p[1].val, func_offset+j, f"{-offset-j}($fp)"]
                                 )
 
                         func_offset+=temp_offset
                     i -= 1
                     
                 param_size = func_offset
-                func_offset=16
+                func_offset=8
                 temp=ST.currentScope
                 while temp!=0:
                     func_offset+=offsets[temp]
                     temp=ST.parent[temp]
                 # func_offset = offsets[ST.currentScope] + 16
                 return_size = get_data_type_size(p1v_node.type)
-                return_size += ((8 - return_size % 8) % 8)
+                return_size += ((4 - return_size % 4) % 4)
                 func_offset += return_size
 
                 for t3ac, tact in zip(temp_3ac, temp_act):
@@ -1080,7 +1066,7 @@ def p_postfix_expression_3(p):
                 func_offset+=param_size
                 code_gen.append([f"call_{offsets[ST.currentScope]}", p[1].val, "", ""])
                 activation_record.append(
-                    [f"call_{p1v_node.type}_{func_offset}_{param_size+16+return_size}", p[1].val, "", f"__{p[1].val}"]
+                    [f"call_{p1v_node.type}_{func_offset}_{param_size+8+return_size}", p[1].val, "", f"__{p[1].val}"]
                 )
 
 
@@ -1141,13 +1127,13 @@ def p_unary_expression(p):
             # p[]
             # code_gen.append(["OKAY"])
             code_gen.append(["addr", v2, p[1].place, ""])
-            code_gen.append(["long-", v2, code_gen[-2][1], v2])
+            code_gen.append(["int-", v2, code_gen[-2][1], v2])
             offset_string = cal_offset(p[1])
             activation_record.append(
-                ["addr", v2_offset_string, offset_string[0:-5], ""]
+                ["int", v2_offset_string, offset_string[0:-5], ""]
             )
             activation_record.append(
-                ["long-", v2_offset_string, code_gen[-2][1], v2_offset_string]
+                ["int-", v2_offset_string, code_gen[-2][1], v2_offset_string]
             )
             p[0].val = p[0].place = v2
         else:
@@ -1189,7 +1175,7 @@ def p_unary_expression(p):
                 if p[2].type.endswith("*"):
                     code_gen.append(
                         [
-                            "long-",
+                            "int-",
                             p[2].place,
                             p[2].place,
                             str(get_data_type_size(p[2].type[:-2])),
@@ -1197,7 +1183,7 @@ def p_unary_expression(p):
                     )
                     activation_record.append(
                         [
-                            "long-",
+                            "int-",
                             offset_string,
                             offset_string,
                             str(get_data_type_size(p[2].type[:-2])),
@@ -1214,7 +1200,7 @@ def p_unary_expression(p):
                 if p[2].type.endswith("*"):
                     code_gen.append(
                         [
-                            "long-",
+                            "int-",
                             p[2].place,
                             p[2].place,
                             -get_data_type_size(p[2].type[:-2]),
@@ -1222,7 +1208,7 @@ def p_unary_expression(p):
                     )
                     activation_record.append(
                         [
-                            "long-",
+                            "int-",
                             offset_string,
                             offset_string,
                             str(get_data_type_size(p[2].type[:-2])),
@@ -1349,10 +1335,10 @@ def p_unary_expression(p):
                 # print(p[2].level)
                 if p[2].level > 1:
                     code_gen.append(
-                        ["long^", temp_var, p[2].place, "0",]
+                        ["int^", temp_var, p[2].place, "0",]
                     )
                     activation_record.append(
-                        ["long^", tmp_offset_string, offset_string, "0",]
+                        ["int^", tmp_offset_string, offset_string, "0",]
                     )
                 else:
                     code_gen.append(
@@ -2534,7 +2520,7 @@ def p_assignment_expression(p):
                     )
                     if temp_node.type.endswith("*"):
                         activation_record.append(
-                            ["long=", offset_string1, offset_string3, "",]
+                            ["int=", offset_string1, offset_string3, "",]
                         )
                     elif temp_node.type.startswith("struct "):
                         activation_record.append(
@@ -2547,12 +2533,12 @@ def p_assignment_expression(p):
                             ]
                         )
                         size_of_struct = ST.find(temp_node.type).size
-                        for long_offset in range(0, size_of_struct, 8):
+                        for int_offset in range(0, size_of_struct, 4):
                             activation_record.append(
                                 [
-                                    "long=",
-                                    f"{int(offset_string1[0:-5])-long_offset}($fp)",
-                                    f"{int(offset_string3[0:-5])-long_offset}($fp)",
+                                    "int=",
+                                    f"{int(offset_string1[0:-5])-int_offset}($fp)",
+                                    f"{int(offset_string3[0:-5])-int_offset}($fp)",
                                     "",
                                 ]
                             )
@@ -2681,7 +2667,7 @@ def p_declaration(p):
                             continue
                         totalEle = totalEle * i
                 if len(child.children[0].type) > 0:
-                    node.size = 8
+                    node.size = 4
                     node.type = p[1].type + " " + child.children[0].type
                 elif flag == 0:
                     ST.error(
@@ -2701,7 +2687,8 @@ def p_declaration(p):
                 
                 node.size *= totalEle
                 offsets[ST.currentScope] += node.size
-                offsets[ST.currentScope] += (8 - offsets[ST.currentScope] % 8) % 8
+                offsets[ST.currentScope] += (4 - offsets[ST.currentScope] % 4) % 4
+                
 
                 if child.type != child.children[1].type:
 
@@ -2806,7 +2793,7 @@ def p_declaration(p):
                         totalEle = totalEle * i
                 if child.type[-1] == "*":
                     # node.type = p[1].type + " " + child.type
-                    node.size = 8
+                    node.size = 4
                 elif flag == 0:
                     ST.error(
                         Error(
@@ -2819,7 +2806,7 @@ def p_declaration(p):
                     p[0] = ST.get_dummy()
                 node.size *= totalEle
                 offsets[ST.currentScope] += node.size
-                offsets[ST.currentScope] += (8 - offsets[ST.currentScope] % 8) % 8
+                offsets[ST.currentScope] += (4 - offsets[ST.currentScope] % 4) % 4
 
 
 def p_declaration_specifiers(p):
@@ -2981,9 +2968,7 @@ def p_type_specifier_1(p):
     | CHAR
     | SHORT
     | INT
-    | LONG
     | FLOAT
-    | DOUBLE
     | SIGNED
     | UNSIGNED
     | TYPE_NAME
@@ -3082,7 +3067,7 @@ def p_struct_or_union_specifier(p):
                 for ele in child.array:
                     totalEle *= ele
             curr_offset = curr_offset + get_data_type_size(child.type) * totalEle
-            curr_offset += (8 - curr_offset) % 8
+            curr_offset += (4 - curr_offset) % 4
             curr_list[2] *= totalEle
             SZ *= totalEle
             max_size = max(max_size, SZ)
@@ -3091,7 +3076,7 @@ def p_struct_or_union_specifier(p):
         val_node.field_list = temp_list
         valptr_node.field_list = temp_list
         val_node.size = curr_offset
-        valptr_node.size = 8
+        valptr_node.size = 4
 
     elif len(p) == 3:
         p[0].type = p[1].type + " " + p[2]
@@ -3289,13 +3274,13 @@ def p_direct_declarator_2(p):
         for child in p[3].children:
             tempList.append(child.type)
             total_size += get_data_type_size(child.type)
-            total_size += (8 - total_size % 8) % 8
+            total_size += (4 - total_size % 4) % 4
         total_size = -total_size
         for child in p[3].children:
             node1 = ST.find(child.val)
             node1.offset = total_size
             total_size += get_data_type_size(child.type)
-            total_size += (8 - total_size % 8) % 8
+            total_size += (4 - total_size % 4) % 4
             node1.in_whose_scope=p[1].val
         # print(p[1])
         node.argument_list = tempList
@@ -3878,7 +3863,7 @@ def p_selection_statement(p):
         #     e_type == "float"
         #     or e_type == "double"
         #     or e_type == "void"
-        #     or e_type == "long double"
+        #     or e_type == "int double"
         # ):
 
         if TYPE_EASY[p[3].type.upper()] not in TYPE_INTEGER + TYPE_CHAR:
@@ -3974,8 +3959,8 @@ def p_Switch_M3(p):
             if case[0] == "'":
                 case = str(ord(case[1:-1]))
 
-            ## TODO: difference when p[-4] is long or unsigned long
-            # if p[-4].type=="unsigned long" or p[-4].type=="long":
+            ## TODO: difference when p[-4] is int or unsigned int
+            # if p[-4].type=="unsigned int" or p[-4].type=="int":
 
             ##IS offset needed here ?
             offset_string = cal_offset(p[-1].label[i])
@@ -4336,10 +4321,10 @@ def p_jump_statemen_2(p):
         param_size = 0
         for argument in node.argument_list:
             param_size+=get_data_type_size(argument)
-            param_size+=(8-param_size%8)%8
+            param_size+=(4-param_size%4)%4
 
         code_gen.append(["return0", "", "", ""])
-        activation_record.append([f"return0_8_{param_size+24}", "", "", ""])
+        activation_record.append([f"return0_8_{param_size+24}", "", "", ""]) #MIPS32ARKA
 
     else:
         offset_string = cal_offset(p[2])
@@ -4358,10 +4343,10 @@ def p_jump_statemen_2(p):
         param_size = 0
         for argument in node.argument_list:
             param_size+=get_data_type_size(argument)
-            param_size+=(8-param_size%8)%8
+            param_size+=(4-param_size%4)%4
 
         return_size = get_data_type_size(p[2].type)
-        return_size+=(8-return_size%8)%8
+        return_size+=(4-return_size%4)%4
         code_gen.append([f"return{get_data_type_size(p[2].type)}", p[2].place, "", ""])
         activation_record.append(
             [f"return_{return_size}_{p[2].type}_{param_size+return_size+16}", offset_string, "", "",]
