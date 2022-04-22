@@ -16,14 +16,14 @@ class Lexer(object):
         "continue": "CONTINUE",
         "default": "DEFAULT",
         "do": "DO",
-        "double": "DOUBLE",
+        # "double": "DOUBLE",
         "else": "ELSE",
         "float": "FLOAT",
         "for": "FOR",
         "goto": "GOTO",
         "if": "IF",
         "int": "INT",
-        "long": "LONG",
+        # "long": "LONG",
         "return": "RETURN",
         "short": "SHORT",
         "signed": "SIGNED",
@@ -34,10 +34,6 @@ class Lexer(object):
         "unsigned": "UNSIGNED",
         "void": "VOID",
         "while": "WHILE",
-        "class": "CLASS",
-        "private": "PRIVATE",
-        "public": "PUBLIC",
-        "protected": "PROTECTED",
         # "bool": "BOOLEAN",  # newly added
         # "true": "TRUE",  # newly added might be removed
         # "false": "FALSE",  # newly added might be removed
