@@ -260,23 +260,25 @@ Binary_ops = {
 def load_reg(reg, addr, type):
     # mips = []
     instr = LOAD_INSTRUCTIONS.get(type, f"{error_variable} {type}not found")
-    if is_int(addr):
-        if type == "int" or type == "char" or type == "short":
-            mips = ["ADDI", reg, "$0", addr]
-            return mips
-        elif type == "long":
-            mips = ["DADDI", reg, "$0", addr]
-            return mips
-        elif (
-            type == "unsigned int"
-            or type == "unsigned char"
-            or type == "unsigned short"
-        ):
-            mips = ["ADDIU", reg, "$0", addr]
-            return mips
-        elif type == "unsigned long":
-            mips = ["DADDIU", reg, "$0", addr]
-            return mips
+    if is_int(addr) and type in TYPE_INTEGER:
+        mips = ["li",reg,addr]
+        return mips
+        # if type == "int" or type == "char" or type == "short":
+        #     mips = ["ADDI", reg, "$0", addr]
+        #     return mips
+        # elif type == "long":
+        #     mips = ["DADDI", reg, "$0", addr]
+        #     return mips
+        # elif (
+        #     type == "unsigned int"
+        #     or type == "unsigned char"
+        #     or type == "unsigned short"
+        # ):
+        #     mips = ["ADDIU", reg, "$0", addr]
+        #     return mips
+        # elif type == "unsigned long":
+        #     mips = ["DADDIU", reg, "$0", addr]
+        #     return mips
     mips = [instr, reg, addr]
     return mips
 
@@ -443,19 +445,19 @@ def binary_exp_mips(binexp, reg1, a1, reg2, a2, reg3, a3):
 
 print(binary_exp_mips("int~","t1","a1","t2","a2","t3","a3"))
 
-def LI(reg, const, type):
-    if type == "int" or type == "char" or type == "short":
-        mips = ["ADDI", reg, "$0", const]
-        return mips
-    elif type == "long":
-        mips = ["DADDI", reg, "$0", const]
-        return mips
-    elif type == "unsigned int" or type == "unsigned char" or type == "unsigned short":
-        mips = ["ADDIU", reg, "$0", const]
-        return mips
-    elif type == "unsigned long":
-        mips = ["DADDIU", reg, "$0", const]
-        return mips
+# def LI(reg, const, type):
+#     if type == "int" or type == "char" or type == "short":
+#         mips = ["ADDI", reg, "$0", const]
+#         return mips
+#     elif type == "long":
+#         mips = ["DADDI", reg, "$0", const]
+#         return mips
+#     elif type == "unsigned int" or type == "unsigned char" or type == "unsigned short":
+#         mips = ["ADDIU", reg, "$0", const]
+#         return mips
+#     elif type == "unsigned long":
+#         mips = ["DADDIU", reg, "$0", const]
+#         return mips
 
 
 
@@ -467,7 +469,7 @@ def assign_op(atype, reg, laddr, raddr):
     mips = []
     type = atype[:-1]
     if is_int(raddr):
-        mips.append(LI(reg, raddr, type))
+        mips.append(["li",reg,raddr])
         mips.append(store_reg(reg, laddr, type))
         return mips
     else:
@@ -482,24 +484,25 @@ def assign_op_ptr(atype, reg1, laddr, reg2, raddr):
     type = atype[:-1]
     load_instr = LOAD_INSTRUCTIONS.get(type, f"{error_variable} {atype} not found")
     mips.append([load_instr, reg2, raddr])
-    mips.append(["LD", reg1, laddr])
-    mips.append(["SD", reg2, f"0({reg1})"])
+    mips.append(["lw", reg1, laddr])
+    mips.append(["sw", reg2, f"0({reg1})"])
     return mips
 
 
 # int*=  var tmp_var
 def addr_str(reg1, laddr, raddr):
     mips = []
-    mips.append(["LD", reg1, raddr])
-    mips.append(["SD", reg1, laddr])
+    mips.append(["lw", reg1, raddr])
+    mips.append(["sw", reg1, laddr])
     return mips
 
 
 # addr tmp_var var
-def addr_load(reg1, addr1, offset_var):
+def addr_load(reg1, laddr, raddr):
     mips = []
-    mips.append(["DADDI", reg1, "$fp", offset_var])
-    mips.append(["SD", reg1, addr1])
+    #mips.append(["DADDI", reg1, "$fp", offset_var])
+    mips.append(["la",reg1,raddr])
+    mips.append(["sw", reg1, laddr])
     return mips
 
 
@@ -508,9 +511,43 @@ def beq_mips(type, reg, addr, label):
     mips = []
     load_instr = LOAD_INSTRUCTIONS[type]
     mips.append([load_instr, reg, addr])
-    mips.append(["BEQ", reg, "$0", label])
+    mips.append(["beq", reg, "$0", label])
     return mips
 
+def nload(type,reg1,reg2,laddr,raddr):
+    mips = []
+    size  = int(type[0])
+    mips.append(["lw",reg2,raddr])
+    if(size == 4):
+       mips.append(["lw",reg1,f"0({reg2})"])
+       mips.append(["sw",reg1,laddr])
+    else:
+       mips.append(["lh",reg1,f"0({reg2})"])
+       mips.append(["sh",reg1,laddr])
+    return mips   
+
+ 
+def non_prim_load(type,reg1,reg2,laddr,raddr):
+    mips = []
+    x=""
+    l_offset=int(laddr[0:-5])
+    for i in type:
+        if i.isnumeric():
+            x+=i
+    size = int(x)
+    # mips.append(["LD",reg2,laddr])
+    mips.append(["lw",reg2,raddr])
+    for i in range(0,size,4):
+        if i == 0:
+            mips.append(["lw",reg1,f"0({reg2})"])
+            mips.append(["sw",reg1,f"{l_offset}($fp)"])
+        else:
+            mips.append(["addi",reg2,reg2,"-4"])
+            mips.append(["lw",reg1,f"0({reg2})"])
+            l_offset = l_offset-4
+            mips.append(["sw",reg1,f"{l_offset}($fp)"])
+    return mips        
+   
 
 def conversion(type1, addr1, type2, addr2):
     mips = []
@@ -581,38 +618,7 @@ def conversion(type1, addr1, type2, addr2):
 
     return mips
 
-def nload(type,reg1,reg2,laddr,raddr):
-    mips = []
-    size  = int(type[0])
-    mips.append(["LD",reg2,raddr])
-    if(size == 4):
-       mips.append(["LW",reg1,f"0({reg2})"])
-       mips.append(["SW",reg1,laddr])
-    else:
-       mips.append(["LD",reg1,f"0({reg2})"])
-       mips.append(["SD",reg1,laddr])
-    return mips   
 
-def non_prim_load(type,reg1,reg2,laddr,raddr):
-    mips = []
-    x=""
-    l_offset=int(laddr[0:-5])
-    for i in type:
-        if i.isnumeric():
-            x+=i
-    size = int(x)
-    # mips.append(["LD",reg2,laddr])
-    mips.append(["LD",reg2,raddr])
-    for i in range(0,size,8):
-        if i == 0:
-            mips.append(["LD",reg1,f"0({reg2})"])
-            mips.append(["SD",reg1,f"{l_offset}($fp)"])
-        else:
-            mips.append(["DADDI",reg2,reg2,"-8"])
-            mips.append(["LD",reg1,f"0({reg2})"])
-            l_offset = l_offset-8
-            mips.append(["SD",reg1,f"{l_offset}($fp)"])
-    return mips        
 
 
 #print(non_prim_load("$t0","$t1","-160($fp)","-152($fp)","104non_primitive_load"))
@@ -660,10 +666,10 @@ def mips_generation(full_code_gen):
 
             if s.endswith(("<=", ">=", "!=", "==", "&&", "||", "<<", ">>",)):
                 if s[0:-2].endswith("*"):
-                    s = "long" + s[-2:]
+                    s = "int" + s[-2:]
             else:
                 if s[0:-1].endswith("*"):
-                    s = "long" + s[-1:]
+                    s = "int" + s[-1:]
 
             # TODO:for pointers and arrays convert to long instead of float *
             mips_set += binary_exp_mips(
@@ -674,7 +680,7 @@ def mips_generation(full_code_gen):
             mips_set.extend(assign_op(s, "$t0", code_gen[1], code_gen[2]))
         elif s.endswith("=") and code_gen[3]=="*":
             mips_set.extend(assign_op_ptr(s, "$t0", code_gen[1], code_gen[2]))
-        elif s == "4load" or s == "8load":
+        elif s == "2load" or s == "4load":
             mips_set.extend(nload(s,"$t0","$t1",code_gen[1],code_gen[2]))
         elif s.endswith("non_primitive_load"):
             mips_set.extend(non_prim_load(s,"$t0","$t1",code_gen[1],code_gen[2]))    
@@ -734,18 +740,18 @@ def mips_generation(full_code_gen):
             # mips_set.append(["ADDI","$t7","$0",int(node_type[-1])])
             mips_set.append(["LA","$fp",f"{-int(node_type[2])}($sp)"])
             mips_set.append(["MOVZ","$sp","$fp","$0"])
-            mips_set.append(["JAL", code_gen[1], ""])
+            mips_set.append(["jal", code_gen[1], ""])
             # return_offset = node_type[3]
 
         elif "param" in s:
             if is_char(code_gen[1]):
-                params.append(["ADDI", code_gen[2], "$0", code_gen[3]])
+                params.append(["addi", code_gen[2], "$0", code_gen[3]])
             elif is_num(code_gen[1]):
                 if "." in s:
                     #instruction nahi pata float ke liye
-                    params.append(["ADDI", code_gen[2], "$0", code_gen[3]])
+                    params.append(["addi", code_gen[2], "$0", code_gen[3]])
                 else:
-                    params.append(["ADDI", code_gen[2], "$0", code_gen[3]])
+                    params.append(["addi", code_gen[2], "$0", code_gen[3]])
             else:
                 _type = _type = s.split("_")[1]
                 params.append(load_reg("$t0",code_gen[3],_type))
