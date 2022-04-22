@@ -354,6 +354,17 @@ class SymbolTable:
         # return f"__tmp_label_{TMP_LABEL_COUNTER}"
         return f"__label_{TMP_LABEL_COUNTER}"
 
+    def get_dummy(self) -> Node:
+        dummy_var, dummy_offset_string = ST.get_tmp_var("int")
+        scope_table = ST.current_table.name
+        return Node(
+            name="Dummy",
+            val=dummy_var,
+            place=dummy_var,
+            lhs=1,
+            in_whose_scope=scope_table,
+            offset=-(int(dummy_offset_string[0:-5])),
+        )
 
 ST = SymbolTable()
 

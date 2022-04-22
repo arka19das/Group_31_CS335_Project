@@ -174,7 +174,7 @@ def p_float_constant(p):
         name="Constant",
         val=p[1],
         lno=p.lineno(1),
-        type="float",
+        type="double",
         children=[],
         place=p[1],
         lhs=1,
@@ -303,6 +303,7 @@ def p_char_constant(p):
                     "Invalid character constant",
                 )
             )
+            p[0] = ST.get_dummy()
 
     elif len(a) == 1:
         if a == "\\":
@@ -314,6 +315,7 @@ def p_char_constant(p):
                     "Invalid character constant",
                 )
             )
+            p[0] = ST.get_dummy()
         b = ord(a)
     else:
         ST.error(
@@ -321,6 +323,7 @@ def p_char_constant(p):
                 p.lineno(1), "rule_name", "Lexical Error", "Invalid character constant"
             )
         )
+        p[0] = ST.get_dummy()
 
     p[0] = Node(
         name="Constant",
@@ -404,6 +407,7 @@ def p_identifier(p):
                 f"Identifier {p[1]} not declared",
             )
         )
+        p[0] = ST.get_dummy()
 
 
 def p_postfix_expression_3(p):
@@ -431,6 +435,7 @@ def p_postfix_expression_3(p):
                     f"Array {p[1].val} pointer increment",
                 )
             )
+            p[0] = ST.get_dummy()
 
         tmp_var, tmp_offset_string = ST.get_tmp_var(p[1].type)
         p[0] = Node(
@@ -544,6 +549,7 @@ def p_postfix_expression_3(p):
                         f"No function declared with name {p[1].val}",
                     )
                 )
+                p[0] = ST.get_dummy()
                 return
             elif len(p1v_node.argument_list) != 0:
                 ST.error(
@@ -554,6 +560,7 @@ def p_postfix_expression_3(p):
                         f"Function {p[1].val} called with incorrect number of arguments",
                     )
                 )
+                p[0] = ST.get_dummy()
                 return
             return_size = get_data_type_size(p1v_node.type)
             return_size+=(8-return_size%8)%8
@@ -574,6 +581,7 @@ def p_postfix_expression_3(p):
                             f"{p[1].val} not declared",
                         )
                     )
+                    p[0] = ST.get_dummy()
 
             p[0] = Node(
                 name="DotOrPTRExpression",
@@ -598,6 +606,7 @@ def p_postfix_expression_3(p):
                         f"{p[1].val} is not a struct",
                     )
                 )
+                p[0] = ST.get_dummy()
                 return
 
             if (struct_name.endswith("*") and p[2] == ".") or (
@@ -611,6 +620,7 @@ def p_postfix_expression_3(p):
                         f"Invalid operator on {struct_name}",
                     )
                 )
+                p[0] = ST.get_dummy()
                 return
             # Akshay added this ..now -> shouldnt work ..check it
             if (p[1].level > 0 and p[2] == ".") or (p[1].level > 1 and p[2] == "->"):
@@ -622,7 +632,7 @@ def p_postfix_expression_3(p):
                         f" Invalid dimensions on struct {p[1].val}",
                     )
                 )
-
+                p[0] = ST.get_dummy()
             struct_node = ST.find(struct_name)
             flag = 0
             for curr_list in struct_node.field_list:
@@ -658,6 +668,7 @@ def p_postfix_expression_3(p):
                                 f"Incorrect number of dimensions for {p[1].val}",
                             )
                         )
+                        p[0] = ST.get_dummy()
                         return  ## IS RETURN ACTUALLY REQUIRED --ADDED BY ARKA
 
                     # offset_string = cal_offset(p[1])
@@ -723,6 +734,7 @@ def p_postfix_expression_3(p):
                         f"Field not declared in {struct_name}",
                     )
                 )
+                p[0] = ST.get_dummy()
 
     elif len(p) == 5:
         ##multidimensional array mei multiply galat cheez se karrahe
@@ -754,6 +766,7 @@ def p_postfix_expression_3(p):
                         f"Incorrect number of dimensions specified for {p[1].val}",
                     )
                 )
+                p[0] = ST.get_dummy()
             ##begin AKSHAY ADDED THIS..ASK FOR HELP
             elif p[1].type.count("*") > 0:
                 p[0].type = p[1].type[:-2]
@@ -770,6 +783,7 @@ def p_postfix_expression_3(p):
                         "Array Index is of incompatible type",
                     )
                 )
+                p[0] = ST.get_dummy()
                 return  ## added might cause varities error later-Arka
             if p[1].name.startswith("Dot"):
                 ## added by akshay to evaluate array of structs in field of struct
@@ -918,6 +932,7 @@ def p_postfix_expression_3(p):
                         f"No function of name {p[1].val} declared",
                     )
                 )
+                p[0] = ST.get_dummy()
                 return
             elif len(p1v_node.argument_list) != len(p[3].children):
                 ST.error(
@@ -928,6 +943,7 @@ def p_postfix_expression_3(p):
                         "Incorrect number of arguments for function call",
                     )
                 )
+                p[0] = ST.get_dummy()
                 return
             else:
                 i = len(p1v_node.argument_list) - 1
@@ -1000,6 +1016,7 @@ def p_postfix_expression_3(p):
                                 f"Type mismatch in argument {i+1} of function call. Expected: {arguments}, Received: {ST.curType[-1]}",
                             )
                         )
+                        p[0] = ST.get_dummy()
                         return
 
                     elif (
@@ -1016,6 +1033,7 @@ def p_postfix_expression_3(p):
                                 f"Type mismatch in argument {i+1} of function call. Expected: {arguments}, Received: {ST.curType[-1]}",
                             )
                         )
+                        p[0] = ST.get_dummy()
                         return
 
                     else:
@@ -1111,6 +1129,7 @@ def p_unary_expression(p):
                     f"Cannot assign or operate with an array indexed with level greater than 1",
                 )
             )
+            p[0] = ST.get_dummy()
             p[0] = p[1]
 
         elif len(p[1].array) > 0 and isinstance(p[1].array[0], int):
@@ -1146,6 +1165,7 @@ def p_unary_expression(p):
                         f"Array {p[2].val} pointer increment",
                     )
                 )
+                p[0] = ST.get_dummy()
             tempNode = Node(name="", val=p[1], lno=p[2].lno, type="", children="")
 
             p[0] = Node(
@@ -1246,6 +1266,7 @@ def p_unary_expression(p):
                         f"Size of doesn't exist for '{p[2].type}' type",
                     )
                 )
+                p[0] = ST.get_dummy()
             code_gen.append(["int=", tmp_var, type_size])
             activation_record.append(["int=", tmp_offset_string, type_size])
 
@@ -1272,6 +1293,7 @@ def p_unary_expression(p):
                         f"Invalid operator {p[1].val} for '{p[2].type}' type",
                     )
                 )
+                p[0] = ST.get_dummy()
             temp_var, tmp_offset_string = ST.get_tmp_var(p[2].type + " *")
             p[0].place = temp_var
             p[0].val = temp_var
@@ -1293,6 +1315,7 @@ def p_unary_expression(p):
                         f"Cannot dereference variable of type {p[2].type}",
                     )
                 )
+                p[0] = ST.get_dummy()
             p[0] = Node(
                 name="PointerVariable",
                 val=p[2].val,
@@ -1361,6 +1384,7 @@ def p_unary_expression(p):
                         f"Unary minus is not allowed for  {p[2].type}",
                     )
                 )
+                p[0] = ST.get_dummy()
             tmp_var, tmp_offset_string = ST.get_tmp_var(p[2].type)
             p[0] = Node(
                 name="UnaryOperationMinus",
@@ -1390,6 +1414,7 @@ def p_unary_expression(p):
                         f"Unary plus is not allowed for  {p[2].type}",
                     )
                 )
+                p[0] = ST.get_dummy()
             p[0] = p[2]
         elif p[1].val == "~":
             if p[2].type.upper() not in TYPE_CHAR + TYPE_INTEGER:
@@ -1401,6 +1426,7 @@ def p_unary_expression(p):
                         f"{p[1].val} is not allowed for  {p[2].type}",
                     )
                 )
+                p[0] = ST.get_dummy()
             else:
                 tmp_var, tmp_offset_string = ST.get_tmp_var(p[2].type)
                 p[0] = Node(
@@ -1432,6 +1458,7 @@ def p_unary_expression(p):
                         f"{p[1].val} is not allowed for  {p[2].type}",
                     )
                 )
+                p[0] = ST.get_dummy()
             else:
                 tmp_var, tmp_offset_string = ST.get_tmp_var(p[2].type)
                 p[0] = Node(
@@ -1474,6 +1501,7 @@ def p_unary_expression(p):
                     f"{p[1].val} is not allowed for  {p[2].type}",
                 )
             )
+            p[0] = ST.get_dummy()
             p[0] = Node(
                 name="UnaryOperation",
                 val=p[2].val,
@@ -1515,6 +1543,7 @@ def p_unary_expression(p):
                     f"Size of doesn't exist for '{p[3].type}' type",
                 )
             )
+            p[0] = ST.get_dummy()
         code_gen.append(["int=", tmp_var, str(type_size)])
         activation_record.append(["int=", tmp_offset_string, str(type_size)])
 
@@ -1564,6 +1593,7 @@ def p_cast_expression(p):
                     f"Cannot cast {p[2].type} to {p[4].type}",
                 )
             )
+            p[0] = ST.get_dummy()
         elif p[2].type.startswith("struct ") or p[4].type.startswith("struct "):
             ST.error(
                 Error(
@@ -1573,6 +1603,7 @@ def p_cast_expression(p):
                     f"Cannot cast {p[2].type} to {p[4].type}",
                 )
             )
+            p[0] = ST.get_dummy()
         # print(p[2].type, p[4].type)
         # TODO: EXPLICIT TYPE CONVERSION of pointers of different levels
         # till now it has not been done
@@ -1585,6 +1616,7 @@ def p_cast_expression(p):
                     f"Cannot cast {p[2].type} to {p[4].type} as pointer levels are different",
                 )
             )
+            p[0] = ST.get_dummy()
         tmp_var, tmp_offset_string = ST.get_tmp_var(p[2].type)
         p[0] = Node(
             name="TypeCasting",
@@ -2236,6 +2268,7 @@ def p_assignment_expression(p):
                     "Left side of assignment cannot be expression",
                 )
             )
+            p[0] = ST.get_dummy()
         if p[1].type == "" or p[3].type == "":
             p[0] = Node(
                 name="AssignmentOperation",
@@ -2252,6 +2285,7 @@ def p_assignment_expression(p):
             return
         if "const" in p[1].type.split():
             ST.error(Error(p[1].lno, rule_name, "error", "Modifying const variable"))
+            p[0] = ST.get_dummy()
         if "struct" in p[1].type.split() or "struct" not in p[3].type.split():
             op1 = "struct" in p[1].type.split()
             op2 = "struct" in p[3].type.split()
@@ -2264,6 +2298,7 @@ def p_assignment_expression(p):
                         f"Cannot assign variable of type {p[3].type} to {p[1].type}",
                     )
                 )
+                p[0] = ST.get_dummy()
             elif op1 and op2 and (p[1].type != p[3].type):
                 ST.error(
                     Error(
@@ -2273,6 +2308,7 @@ def p_assignment_expression(p):
                         f"Struct {p[3].type}, {p[1].type} are of different types",
                     )
                 )
+                p[0] = ST.get_dummy()
         elif len(p[1].array) > 0 and isinstance(p[1].array[0], int):
             ST.error(
                 Error(
@@ -2282,6 +2318,7 @@ def p_assignment_expression(p):
                     f"Invalid operation on array pointer {p[1].val}",
                 )
             )
+            p[0] = ST.get_dummy()
         if p[1].level != p[3].level:
             ST.error(
                 Error(
@@ -2291,6 +2328,7 @@ def p_assignment_expression(p):
                     "Type mismatch in assignment: Pointers of different levels",
                 )
             )
+            p[0] = ST.get_dummy()
         # elif (p[1].level and len(p[1].array) > 0) and (
         #     p[3].level and len(p[3].array) > 0
         # ):
@@ -2322,6 +2360,7 @@ def p_assignment_expression(p):
                                 "Incorrect number of dimensions",
                             )
                         )
+                        p[0] = ST.get_dummy()
                         return
 
         p1_node = ST.find(p[1].val)
@@ -2334,6 +2373,7 @@ def p_assignment_expression(p):
                     f"Invalid operation on {p[1].val}",
                 )
             )
+            p[0] = ST.get_dummy()
             return
         p3_node = ST.find(p[3].val)
         if (p3_node is not None) and ((p[3].is_func >= 1)):
@@ -2345,6 +2385,7 @@ def p_assignment_expression(p):
                     f"Invalid operation on {p[3].val}",
                 )
             )
+            p[0] = ST.get_dummy()
             return
 
         if p[2].val != "=":
@@ -2357,14 +2398,18 @@ def p_assignment_expression(p):
                         f"Invalid operation on {p[1].val}",
                     )
                 )
+                p[0] = ST.get_dummy()
                 return
         p[0] = Node(
+            level=p[1].level,
             name="AssignmentOperation",
             val=p[1].val,
-            type=p[1].type,
+            place=p[1].place,
             lno=p[1].lno,
+            type=p[1].type,
             children=[],
-            level=p[1].level,
+            offset=p[1].offset,
+            in_whose_scope=p[1].in_whose_scope,
         )
         temp_node = p[3]
         # print(temp_node)
@@ -2605,6 +2650,7 @@ def p_declaration(p):
                             "Typedef Initialized",
                         )
                     )
+                    p[0] = ST.get_dummy()
                     continue
                 if ST.current_table.find(child.children[0].val):
                     ST.error(
@@ -2615,6 +2661,7 @@ def p_declaration(p):
                             f"Identifier {child.children[0].val} already declared",
                         )
                     )
+                    p[0] = ST.get_dummy()
                 node = Node(
                     name=child.children[0].val,
                     type=child.type,
@@ -2644,6 +2691,7 @@ def p_declaration(p):
                             f"Identifier {child.children[0].val} cannot have type void",
                         )
                     )
+                    p[0] = ST.get_dummy()
                 if child.children[0].offset == -1465465465:
                     child.children[0].offset = offsets[ST.currentScope]
                     
@@ -2739,6 +2787,7 @@ def p_declaration(p):
                             f"Identifier {child.val} already declared",
                         )
                     )
+                    p[0] = ST.get_dummy()
 
                 node = Node(
                     name=child.val,
@@ -2766,6 +2815,7 @@ def p_declaration(p):
                             f"Identifier {child.val} cannot have type void",
                         )
                     )
+                    p[0] = ST.get_dummy()
                 node.size *= totalEle
                 offsets[ST.currentScope] += node.size
                 offsets[ST.currentScope] += (8 - offsets[ST.currentScope] % 8) % 8
@@ -2800,6 +2850,7 @@ def p_declaration_specifiers(p):
                     f"{p[2].type} not allowed after {p[1].type}",
                 )
             )
+            p[0] = ST.get_dummy()
         if p[1].name == "TypeSpecifier1" and (
             p[2].name.startswith("TypeSpecifier1")
             or p[2].name.startswith("StorageClassSpecifier")
@@ -2814,6 +2865,7 @@ def p_declaration_specifiers(p):
                         f"{p[2].type} not allowed after {p[1].type}",
                     )
                 )
+                p[0] = ST.get_dummy()
         if p[1].name == "TypeQualifier" and (
             p[2].name.startswith("StorageClassSpecifier")
             or p[2].name.startswith("TypeQualifier")
@@ -2826,6 +2878,7 @@ def p_declaration_specifiers(p):
                     f"{p[2].type} not allowed after {p[1].type}",
                 )
             )
+            p[0] = ST.get_dummy()
 
         ST.curType.pop()
         if (p[1].type + " " + p[2].type).upper() in PRIMITIVE_TYPES:
@@ -2907,8 +2960,10 @@ def p_init_declarator(p):
                     p.lineno(1), rule_name, "compilation error", "Invalid Initializer",
                 )
             )
+            p[0] = ST.get_dummy()
         if p[1].level != p[3].level:
             ST.error(Error(p[1].lno, rule_name, "compilation error", "Type Mismatch"))
+            p[0] = ST.get_dummy()
 
 
 def p_storage_class_specifier(p):
@@ -2964,6 +3019,7 @@ def p_struct_declaration_with_linked_list(p):
                 f"Struct {p[0].type} already declared",
             )
         )
+        p[0] = ST.get_dummy()
 
     valptr_name = p[0].type + " *"
     val_node = Node(name=p[0].type, type=p[0].type)
@@ -3006,6 +3062,7 @@ def p_struct_or_union_specifier(p):
                             f"{child.val} already declared",
                         )
                     )
+                    p[0] = ST.get_dummy()
             if get_data_type_size(child.type) == -1:
                 ST.error(
                     Error(
@@ -3015,6 +3072,7 @@ def p_struct_or_union_specifier(p):
                         f"Datatype {child.type} not defined",
                     )
                 )
+                p[0] = ST.get_dummy()
             SZ = get_data_type_size(child.type)
             curr_list = [child.type, child.val, SZ, curr_offset]
             totalEle = 1
@@ -3048,6 +3106,7 @@ def p_struct_or_union_specifier(p):
                     f"{p[0].type} is not a type",
                 )
             )
+            p[0] = ST.get_dummy()
     else:
         p[0].ast = build_AST(p, rule_name)
 
@@ -3098,6 +3157,7 @@ def p_struct_declaration(p):
                         f"Identifier {child.val} cannot have type void",
                     )
                 )
+                p[0] = ST.get_dummy()
             child.type = p[1].type
 
 
@@ -3221,6 +3281,7 @@ def p_direct_declarator_2(p):
                     f"Function {p[1].val} already declared",
                 )
             )
+            p[0] = ST.get_dummy()
         node = Node(name=p[1].val, is_func=1,)
         tempList = []
         total_size = 0
@@ -3278,6 +3339,7 @@ def p_direct_declarator_4(p):
                         f"Array {p[1].val} cannot have variable dimension except first",
                     )
                 )
+                p[0] = ST.get_dummy()
             p[0].array.append(0)
         p[0].level=p[1].level+1
         p[0].ast = build_AST(p, rule_name)
@@ -3292,6 +3354,7 @@ def p_direct_declarator_4(p):
                     f"Function {p[1].val} already declared",
                 )
             )
+            p[0] = ST.get_dummy()
             return
         node = Node(name=p[1].val, type=ST.curType[-1], is_func=1, argument_list=[])
         # Modified
@@ -3403,6 +3466,7 @@ def p_parameter_declaration(p):
                     f"Parameter {p[2].val} already declared",
                 )
             )
+            p[0] = ST.get_dummy()
         node = Node(name=p[2].val, type=p[1].type)
         ST.current_table.insert(node)
         if len(p[2].type) > 0:
@@ -3418,6 +3482,7 @@ def p_parameter_declaration(p):
                         f"Parameter {p[2].val} cannot have type void",
                     )
                 )
+                p[0] = ST.get_dummy()
             node.size = get_data_type_size(p[1].type)
         if len(p[2].array) > 0:
             node.array = p[2].array
@@ -3611,6 +3676,7 @@ def p_labeled_statement(p):
                     f"Invalid datatype {p[3].type} for case. Expected char or int constant",
                 )
             )
+            p[0] = ST.get_dummy()
 
         name = "CaseStatement"
 
@@ -3697,6 +3763,7 @@ def p_new_compound_statement(p):
                 f"Empty function not allowed",
             )
         )
+        p[0] = ST.get_dummy()
     elif len(p) == 4:
         p[0] = p[2]
         p[0].name = "CompoundStatement"
@@ -3822,6 +3889,7 @@ def p_selection_statement(p):
                     f"Switch doesn't support '{p[3].type}' expression type",
                 )
             )
+            p[0] = ST.get_dummy()
         p[0] = Node(
             name="SwitchStatement", val="", type="", children=[], lno=p.lineno(1),
         )
@@ -3879,6 +3947,7 @@ def p_Switch_M3(p):
                 f"Switch case has repeated labels",
             )
         )
+        p[0] = ST.get_dummy()
     tmp_var = p[-4].place
     offset_string = cal_offset(p[-4])
     tmp_offset_string = offset_string
@@ -4213,6 +4282,7 @@ def p_jump_statemen_1(p):
                 p.lineno(1), rule_name, "compilation error", "continue not inside loop",
             )
         )
+        p[0] = ST.get_dummy()
     elif temp == "continue":
         code_gen.append(["goto", "", "", contStack[-1]])
         activation_record.append(["goto", "", "", contStack[-1]])
@@ -4225,6 +4295,7 @@ def p_jump_statemen_1(p):
                 "break not inside switch/loop",
             )
         )
+        p[0] = ST.get_dummy()
     elif temp == "break":
         code_gen.append(["goto", "", "", brkStack[-1]])
         activation_record.append(["goto", "", "", brkStack[-1]])
@@ -4238,6 +4309,7 @@ def p_jump_statemen_1(p):
                     "Not a valid goto label",
                 )
             )
+            p[0] = ST.get_dummy()
         code_gen.append(["goto", "", "", "__label_" + p[2][0]])
 
 
@@ -4257,6 +4329,7 @@ def p_jump_statemen_2(p):
                     "Function return type is not void",
                 )
             )
+            p[0] = ST.get_dummy()
         temp = p[2].in_whose_scope.split("_")[0]
         node =ST.find(temp),temp 
         param_size = 0
@@ -4468,6 +4541,12 @@ def p_pop_scope_rcb(p):
 def p_error(p):
     if p:
         ST.error(Error(p.lineno, "error", "semantic/syntax error", "Unknown"))
+        while True:
+            tok = parser.token()             # Get the next token
+            if not tok or tok.type in {'RIGHT_CURLY_BRACKET', 'SEMICOLON'}: 
+                break
+        parser.errok()
+        return tok
 
 
 # Build the parser
