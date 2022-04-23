@@ -175,7 +175,7 @@ def p_float_constant(p):
         name="Constant",
         val=p[1],
         lno=p.lineno(1),
-        type="double",
+        type="float",
         children=[],
         place=p[1],
         lhs=1,
