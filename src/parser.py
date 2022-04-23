@@ -1002,12 +1002,12 @@ def p_postfix_expression_3(p):
                             ]
                         )
                         # tmp_offset_string[-3]="s"
+                        func_offset += 4
                         temp_3ac.append([f"param", p[1].val, " ", tmp_var])
                         temp_act.append(
                             [f"param_{p[3].children[i].type}", p[1].val, func_offset, tmp_offset_string]
                         )
                         # temp_offset = get_data_type_size(arguments)
-                        func_offset += 4
                         
                     elif (p[3].children[i].type.upper() in PRIMITIVE_TYPES) ^ (
                         arguments.upper() in PRIMITIVE_TYPES
@@ -1046,7 +1046,7 @@ def p_postfix_expression_3(p):
                             arg_split = arguments.split()[0] 
                             temp_3ac.append([f"param", p[1].val, " ", p[3].children[i].val])
                             temp_act.append(
-                                [f"param_{arg_split}", p[1].val, func_offset, offset_string]
+                                [f"param_{arg_split}", p[1].val, func_offset+temp_offset, offset_string]
                             )
                         else:
                             temp_offset = get_data_type_size(arguments)
@@ -1055,7 +1055,7 @@ def p_postfix_expression_3(p):
                             for j in range(0,temp_offset,4):
                                 temp_3ac.append([f"param", p[1].val, " ", p[3].children[i].val])
                                 temp_act.append(
-                                    [f"param_int", p[1].val, func_offset+j, f"{-offset-j}($fp)"]
+                                    [f"param_int", p[1].val, func_offset++temp_offset-j, f"{-offset-j}($fp)"]
                                 )
                             
                         func_offset+=temp_offset
