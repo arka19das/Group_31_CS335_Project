@@ -676,7 +676,7 @@ def write_mips(code, file):
             continue
         elif line[0] != "label":
             file.write(f"\t\t{line[0].lower()}\t")
-            args = [arg for arg in line[1:] if arg]
+            args = [str(arg) for arg in line[1:] if arg != ""]
             file.write(",".join(args))
         else:
             file.write(line[1] + line[2])
