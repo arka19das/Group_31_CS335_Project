@@ -3,7 +3,7 @@ from dis import code_info
 from numpy import append
 from utils import *
 
-comment_variable = ";"
+comment_variable = "#"
 error_variable = "----------error----------\n"
 
 
