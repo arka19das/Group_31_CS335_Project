@@ -691,12 +691,6 @@ def mips_generation(full_code_gen):
                 for i in range(0,sz,4):
                     mips_set.append(store_reg(f"{offset-i}($fp)", f"{return_offset-i}($fp)", node_split[2]))
             
-            mips_set.append(["ADDIU","$t0","$fp",f"{return_offset}"])
-            mips_set.append(["MOVZ","$fp","$t0","$0"])
-            mips_set.append(["LW", "$ra", "-8($fp)"])
-            mips_set.append(["MOVZ","$sp","$fp","$0"])
-            mips_set.append(["LA", "$fp", "-4($fp)"])
-            mips_set.append(["MOVZ","$sp","$fp","$0"])
             mips_set.append(["JR", "$ra", ""])
 
         elif "call" in s:
@@ -716,6 +710,12 @@ def mips_generation(full_code_gen):
             mips_set.append(["LA","$fp",f"{-int(node_type[2])}($sp)"])
             mips_set.append(["MOVZ","$sp","$fp","$0"])
             mips_set.append(["jal", code_gen[1], ""])
+            mips_set.append(["ADDIU","$t0","$fp",f"{int(node_type[2])-int(node_type[3])+sz}"])
+            mips_set.append(["MOVZ","$fp","$t0","$0"])
+            mips_set.append(["LW", "$ra", "-8($fp)"])
+            mips_set.append(["MOVZ","$sp","$fp","$0"])
+            mips_set.append(["LA", "$fp", "-4($fp)"])
+            mips_set.append(["MOVZ","$sp","$fp","$0"])
             
         elif "param" in s:
             if is_char(code_gen[1]):

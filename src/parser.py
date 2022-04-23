@@ -566,19 +566,21 @@ def p_postfix_expression_3(p):
                 return
             
             func_offset=8
+            return_size=0
             temp=ST.currentScope
             while temp!=0:
                 func_offset+=offsets[temp]
                 temp=ST.parent[temp]
-            return_size = get_data_type_size(p1v_node.type)
-            return_size += ((4 - return_size % 4) % 4)
-            func_offset += return_size
+            
+            if p1v_node.type!="void":
+                return_size = get_data_type_size(p1v_node.type)
+                return_size += ((4 - return_size % 4) % 4)
+                func_offset += return_size
+                node = Node(val=p1v_node.val, type=p1v_node, name="return_value", offset=func_offset-8)    
+                ST.current_table.insert(node)
+                offsets[ST.currentScope]+=return_size  
 
-            node = Node(val=p1v_node.val, type=p1v_node, name="return_value", offset=func_offset-8)    
-            ST.current_table.insert(node)
-            offsets[ST.currentScope]+=return_size    
             p[0].offset = func_offset
-            func_offset+=param_size
             code_gen.append([f"call_{offsets[ST.currentScope]}", p[1].val, "", ""])
             activation_record.append(
                 [f"call_{p1v_node.type}_{func_offset}_{return_size+8}", p[1].val, "", f"__{p[1].val}"]
@@ -1061,24 +1063,26 @@ def p_postfix_expression_3(p):
                     
                 param_size = func_offset
                 func_offset=8
+                return_size=0
                 temp=ST.currentScope
                 while temp!=0:
                     func_offset+=offsets[temp]
                     temp=ST.parent[temp]
                 # func_offset = offsets[ST.currentScope] + 16
-                return_size = get_data_type_size(p1v_node.type)
-                return_size += ((4 - return_size % 4) % 4)
-                func_offset += return_size
-
+                if p1v_node.type != "void":
+                    return_size = get_data_type_size(p1v_node.type)
+                    return_size += ((4 - return_size % 4) % 4)
+                    func_offset += return_size
+                    node = Node(val=p1v_node.val, type=p1v_node, name="return_value", offset=func_offset-8)
+                    ST.current_table.insert(node)
+                    offsets[ST.currentScope]+=return_size
+                
+                p[0].offset = func_offset
                 for t3ac, tact in zip(temp_3ac, temp_act):
                     code_gen.append(t3ac)
                     activation_record.append(tact)
                     activation_record[-1][2] = f"{-(func_offset + activation_record[-1][2])}($fp)"
 
-                node = Node(val=p1v_node.val, type=p1v_node, name="return_value", offset=func_offset-8)
-                ST.current_table.insert(node)
-                offsets[ST.currentScope]+=return_size
-                p[0].offset = func_offset
                 func_offset+=param_size
                 code_gen.append([f"call_{offsets[ST.currentScope]}", p[1].val, "", ""])
                 activation_record.append(
@@ -4341,7 +4345,7 @@ def p_jump_statemen_2(p):
             param_size+=(4-param_size%4)%4
 
         code_gen.append(["return0", "", "", ""])
-        activation_record.append([f"return0_4_int_{param_size+12}", "0", "", ""]) #MIPS32ARKA
+        activation_record.append([f"return0_4_int_{param_size+8}", "0", "", ""]) #MIPS32ARKA
 
     else:
         offset_string = cal_offset(p[2])
