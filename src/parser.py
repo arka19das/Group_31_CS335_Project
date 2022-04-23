@@ -62,6 +62,7 @@ def cal_offset(p):
 
     offset += p.offset
     offset+=get_data_type_size(p.type)
+    
     # print(offset ,p.place,p.in_whose_scope,offsets[1])
     if offset:
         offset_string = f"{-offset}($fp)"
@@ -563,11 +564,25 @@ def p_postfix_expression_3(p):
                 )
                 p[0] = ST.get_dummy()
                 return
+            
+            func_offset=8
+            temp=ST.currentScope
+            while temp!=0:
+                func_offset+=offsets[temp]
+                temp=ST.parent[temp]
             return_size = get_data_type_size(p1v_node.type)
-            return_size+=(4-return_size%4)%4
+            return_size += ((4 - return_size % 4) % 4)
+            func_offset += return_size
+
+            node = Node(val=p1v_node.val, type=p1v_node, name="return_value", offset=func_offset)    
+            ST.current_table.insert(node)
+            offsets[ST.currentScope]+=return_size    
+            p[0].offset = func_offset
+            func_offset+=param_size
             code_gen.append([f"call_{offsets[ST.currentScope]}", p[1].val, "", ""])
             activation_record.append(
-                [f"call_{p1v_node.type}_{offsets[ST.currentScope]+8+return_size}", p[1].val, "", f"__{p[1].val}"]#MIPS32 ARKA
+                [f"call_{p1v_node.type}_{func_offset}_{return_size+8}", p[1].val, "", f"__{p[1].val}"]
+            
             )
 
         else:
@@ -1060,6 +1075,9 @@ def p_postfix_expression_3(p):
                     activation_record.append(tact)
                     activation_record[-1][2] = f"{-(func_offset + activation_record[-1][2])}($fp)"
 
+                node = Node(val=p1v_node.val, type=p1v_node, name="return_value", offset=func_offset)
+                ST.current_table.insert(node)
+                offsets[ST.currentScope]+=return_size
                 p[0].offset = func_offset
                 func_offset+=param_size
                 code_gen.append([f"call_{offsets[ST.currentScope]}", p[1].val, "", ""])
@@ -2679,8 +2697,8 @@ def p_declaration(p):
                     p[0] = ST.get_dummy()
                 if child.children[0].offset == -1465465465:
                     child.children[0].offset = offsets[ST.currentScope]
-                    
                     child.children[0].in_whose_scope=ST.scope_tables[ST.currentScope].name
+                    child.children[0].type = p[1].type
                 # print(child.type,child.val,offsets[ST.currentScope])
                 
                 node.size *= totalEle
@@ -4349,7 +4367,7 @@ def p_jump_statemen_2(p):
 
         code_gen.append([f"return{get_data_type_size(p[2].type)}", p[2].place, "", ""])
         activation_record.append(
-            [f"return_{return_size}_{temp.type}_{param_size+return_size+8}", offset_string, "", "",]
+            [f"return_{return_size}_{node.type}_{param_size+return_size+8}", offset_string, "", "",]
         )
 
 

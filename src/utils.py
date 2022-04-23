@@ -669,8 +669,8 @@ def write_code(code, file):
 
 
 def write_mips(code, file):
-    with open("../stdlib/lib.s") as lib:
-        file.write(lib.read())
+    # with open("../stdlib/lib.s") as lib:
+    #     file.write(lib.read())
     for line in code:
         if line[0] != "label":
             file.write(f"\t\t{line[0].lower()}\t")
