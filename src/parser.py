@@ -1024,9 +1024,7 @@ def p_postfix_expression_3(p):
                         return
 
                     else:
-                        # offset_string[-3]="s"
                         if arguments.upper() in PRIMITIVE_TYPES or arguments.endswith("*"):
-                            # temp_offset = get_data_type_size(arguments)
                             temp_offset=4
                             arg_split = arguments.split()[0] 
                             temp_3ac.append([f"param", p[1].val, " ", p[3].children[i].val])
@@ -1066,7 +1064,7 @@ def p_postfix_expression_3(p):
                 func_offset+=param_size
                 code_gen.append([f"call_{offsets[ST.currentScope]}", p[1].val, "", ""])
                 activation_record.append(
-                    [f"call_{p1v_node.type}_{func_offset}_{param_size+8+return_size}", p[1].val, "", f"__{p[1].val}"]
+                    [f"call_{p1v_node.type}_{func_offset}_{param_size+return_size+8}", p[1].val, "", f"__{p[1].val}"]
                 )
 
 
@@ -4316,15 +4314,16 @@ def p_jump_statemen_2(p):
                 )
             )
             p[0] = ST.get_dummy()
-        temp = p[2].in_whose_scope.split("_")[0]
-        node =ST.find(temp),temp 
+        
+        temp = ST.scope_tables[ST.currentScope].name.split("_")[0]
+        node =ST.find(temp)
         param_size = 0
         for argument in node.argument_list:
             param_size+=get_data_type_size(argument)
             param_size+=(4-param_size%4)%4
 
         code_gen.append(["return0", "", "", ""])
-        activation_record.append([f"return0_8_{param_size+12}", "", "", ""]) #MIPS32ARKA
+        activation_record.append([f"return0_4_int_{param_size+12}", "0", "", ""]) #MIPS32ARKA
 
     else:
         offset_string = cal_offset(p[2])
@@ -4338,7 +4337,7 @@ def p_jump_statemen_2(p):
                 )
             )
         # return_size=param_size=0
-        temp = p[2].in_whose_scope.split("_")[0]
+        temp = ST.scope_tables[ST.currentScope].name.split("_")[0]
         node =ST.find(temp)
         param_size = 0
         for argument in node.argument_list:
@@ -4347,9 +4346,10 @@ def p_jump_statemen_2(p):
 
         return_size = get_data_type_size(p[2].type)
         return_size+=(4-return_size%4)%4
+
         code_gen.append([f"return{get_data_type_size(p[2].type)}", p[2].place, "", ""])
         activation_record.append(
-            [f"return_{return_size}_{p[2].type}_{param_size+return_size+8}", offset_string, "", "",]
+            [f"return_{return_size}_{temp.type}_{param_size+return_size+8}", offset_string, "", "",]
         )
 
 

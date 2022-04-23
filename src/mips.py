@@ -33,16 +33,10 @@ def is_char(x):
 
 def is_num(x):
     #TODO Has to modify
+    ##TO_DO regex dalna hai
+                    
     return x.isdigit() or '.' in x
-    # try:
-    #     if s.isnumeric():
-    #         return True
-    # except:
-    #     return False
-
-
-# print(is_int("140"))
-
+   
 LABEL_COUNTER = 0
 
 
@@ -680,7 +674,7 @@ def mips_generation(full_code_gen):
         elif "return" in s:
             
             node_split =s.split("_")
-            return_offset = int(node_split[-1])-16
+            return_offset = int(node_split[-1])-int(node_split[1])
             if s[-1]=="0":
                 mips_set.append(["ADDI", f"{return_offset}($fp)", "$0", "$0"])
             elif is_char(code_gen[1]):
@@ -692,47 +686,43 @@ def mips_generation(full_code_gen):
                 else:
                     mips_set.append(["ADDI", f"{return_offset}($fp)", "$0", code_gen[3]])
             else:
-                # node_split = s.split("_")
                 offset = int(code_gen[1].split('(')[0])
                 sz = int(node_split[1])
-                # sz+=(8-sz%8)%8
-                for i in range(0,sz,8):
-                    # mips_set.append(load_reg("$t0",f"{offset-i}($fp)",node_split[2]))
-                    # mips_set.append(store_reg("$t0", f"{return_offset-i}($fp)", node_split[2]))
-                    mips_set.append(store_reg(f"{offset-i}($fp)", f"{return_offset-i-8}($fp)", node_split[2]))
+                for i in range(0,sz,4):
+                    mips_set.append(store_reg(f"{offset-i}($fp)", f"{return_offset-i}($fp)", node_split[2]))
             
-            return_offset+=16
-            return_size=-return_offset
-            # load_registers_on_function_return("sp")
-            mips_set.append(["ADDIU","$t0","$fp",f"{return_size}"])
+            mips_set.append(["ADDIU","$t0","$fp",f"{return_offset}"])
             mips_set.append(["MOVZ","$fp","$t0","$0"])
-            mips_set.append(["LW", "$ra", "-16($fp)"])
+            mips_set.append(["LW", "$ra", "-8($fp)"])
             mips_set.append(["MOVZ","$sp","$fp","$0"])
-            mips_set.append(["LA", "$fp", "-8($fp)"])
+            mips_set.append(["LA", "$fp", "-4($fp)"])
+            mips_set.append(["MOVZ","$sp","$fp","$0"])
             mips_set.append(["JR", "$ra", ""])
 
         elif "call" in s:
             node_type = s.split("_")
             
+            sz = get_data_type_size(node_type[1])
+            sz += ((4 - sz % 4) % 4)
+                
             mips_set.append(["DADDI","$t0","$0",f"{int(node_type[2])-int(node_type[3])}"])
             mips_set.append(["SUB","$sp","$sp","$t0"])
-            mips_set.append(["SW", "$fp", "-8($sp)"])
-            mips_set.append(["SW", "$ra", "-16($sp)"])
+            mips_set.append(["SW", "$fp", f"{-(sz+4)}($sp)"])
+            mips_set.append(["SW", "$ra", f"{-(sz+8)}($sp)"])
             
             for p in params:
                 mips_set.append(p)
             params = []
-            # mips_set.append(["ADDI","$t7","$0",int(node_type[-1])])
             mips_set.append(["LA","$fp",f"{-int(node_type[2])}($sp)"])
             mips_set.append(["MOVZ","$sp","$fp","$0"])
             mips_set.append(["jal", code_gen[1], ""])
-            # return_offset = node_type[3]
-
+            
         elif "param" in s:
             if is_char(code_gen[1]):
                 params.append(["addi", code_gen[2], "$0", code_gen[3]])
             elif is_num(code_gen[1]):
                 if "." in s:
+                    ##TO_DO regex dalna hai
                     #instruction nahi pata float ke liye
                     params.append(["addi", code_gen[2], "$0", code_gen[3]])
                 else:
