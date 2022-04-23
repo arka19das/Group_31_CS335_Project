@@ -809,9 +809,9 @@ def p_postfix_expression_3(p):
             v1, v_offset_string = ST.get_tmp_var("int")
             # print(p[1].array)
             if isinstance(p[1].array[-1], int):
-                code_gen.append(["int^", v1, v1, v1])
+                code_gen.append(["int=", v1, "0",""])
                 activation_record.append(
-                    ["int^", v_offset_string, v_offset_string, v_offset_string,]
+                    ["int=", v_offset_string, "0",""]
                 )
 
             if isinstance(p[0].array[0], str):

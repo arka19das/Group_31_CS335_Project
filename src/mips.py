@@ -578,7 +578,7 @@ def conversion(type1, addr1, type2, addr2):
         in  TYPE_INTEGER 
         and type2 in TYPE_FLOAT
     ):
-        mips.append(["mtc1", "$t0", "f2"])
+        mips.append(["mtc1", "$t0", "$f2"])
         mips.append(["cvt.s.w", "$f2", "$f2"])
 
     elif (
@@ -586,7 +586,7 @@ def conversion(type1, addr1, type2, addr2):
         and type1 in TYPE_FLOAT
     ):
         mips.append(["cvt.s.w", "$f2", "$f2"])
-        mips.append(["mfc1", "$t0", "f2"])
+        mips.append(["mfc1", "$t0", "$f2"])
     
     elif (type1 in TYPE_FLOAT and type2 in TYPE_FLOAT) or (
         type1 in TYPE_INTEGER and type2 in TYPE_INTEGER
