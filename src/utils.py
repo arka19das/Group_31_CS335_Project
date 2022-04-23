@@ -2,7 +2,7 @@ import code
 import csv
 from dataclasses import dataclass, field, fields
 from pathlib import Path
-from typing import Any, List, Union, Dict
+from typing import Any, Dict, List, Tuple, Union
 
 offsets = {}
 # offsets__with_table_name = {}
@@ -14,7 +14,7 @@ table_name_to_num={}
 table_name_to_num["#global"]=0
 
 
-TYPE_FLOAT = ["FLOAT", "DOUBLE", "LONG DOUBLE"]
+TYPE_FLOAT = ["FLOAT", "DOUBLE"]
 TYPE_EASY = {
     "VOID": "VOID",
     "CHAR": "CHAR",
@@ -22,30 +22,17 @@ TYPE_EASY = {
     "FLOAT": "FLOAT",
     "INT": "INT",
     "DOUBLE": "DOUBLE",
-    "LONG": "LONG",
     "SHORT INT": "SHORT",
-    "LONG INT": "LONG",
-    "LONG LONG": "LONG",
-    "LONG LONG INT": "LONG",
-    "LONG DOUBLE": "LONG DOUBLE",
     "SIGNED CHAR": "CHAR",
     "SIGNED SHORT": "SHORT",
     "SIGNED SHORT INT": "SHORT",
     "SIGNED": "INT",
     "SIGNED INT": "INT",
-    "SIGNED LONG": "LONG",
-    "SIGNED LONG INT": "LONG",
-    "SIGNED LONG LONG": "LONG",
-    "SIGNED LONG LONG INT": "LONG",
     "UNSIGNED CHAR": "UNSIGNED CHAR",
     "UNSIGNED SHORT": "UNSIGNED SHORT",
     "UNSIGNED SHORT INT": "UNSIGNED SHORT",
     "UNSIGNED": "UNSIGNED INT",
     "UNSIGNED INT": "UNSIGNED INT",
-    "UNSIGNED LONG": "UNSIGNED LONG",
-    "UNSIGNED LONG INT": "UNSIGNED LONG",
-    "UNSIGNED LONG LONG": "UNSIGNED LONG",
-    "UNSIGNED LONG LONG INT": "UNSIGNED LONG",
 }
 TYPE_INTEGER = [
     "SHORT",
@@ -59,18 +46,7 @@ TYPE_INTEGER = [
     "UNSIGNED INT",
     "SIGNED",
     "UNSIGNED",
-    "LONG",
-    "LONG INT",
-    "SIGNED LONG INT",
-    "SIGNED LONG",
-    "UNSIGNED LONG",
-    "UNSIGNED LONG INT",
-    "LONG LONG",
-    "LONG LONG INT",
-    "SIGNED LONG LONG",
-    "SIGNED LONG LONG INT",
-    "UNSIGNED LONG LONG",
-    "UNSIGNED LONG LONG INT",
+ 
 ]
 
 
@@ -89,30 +65,17 @@ SIZE_OF_TYPE = {
     "FLOAT": 4,
     "INT": 4,
     "DOUBLE": 8,
-    "LONG": 8,
     "SHORT INT": 2,
-    "LONG INT": 8,
-    "LONG LONG": 8,
-    "LONG LONG INT": 8,
-    "LONG DOUBLE": 16,
     "SIGNED CHAR": 1,
     "SIGNED SHORT": 2,
     "SIGNED SHORT INT": 2,
     "SIGNED": 4,
     "SIGNED INT": 4,
-    "SIGNED LONG": 8,
-    "SIGNED LONG INT": 8,
-    "SIGNED LONG LONG": 8,
-    "SIGNED LONG LONG INT": 8,
     "UNSIGNED CHAR": 1,
     "UNSIGNED SHORT": 2,
     "UNSIGNED SHORT INT": 2,
     "UNSIGNED": 4,
     "UNSIGNED INT": 4,
-    "UNSIGNED LONG": 8,
-    "UNSIGNED LONG INT": 8,
-    "UNSIGNED LONG LONG": 8,
-    "UNSIGNED LONG LONG INT": 8,
 }
 
 IGNORE_LIST = ["(", ")", "{", "}", "[", "]", ",", ";"]
@@ -312,7 +275,7 @@ class SymbolTable:
                 self.error_flag = 1
             print(str(err))
 
-    def get_tmp_var(self, vartype=None, value=0) -> str:
+    def get_tmp_var(self, vartype=None, value=0) -> Tuple[str, str]:
         global TMP_VAR_COUNTER
         global offsets
         TMP_VAR_COUNTER += 1
@@ -333,8 +296,7 @@ class SymbolTable:
             scope_table.insert(node)
             tmp_offset_string = f"{-offsets[scope]}($fp)"
             offsets[scope] += get_data_type_size(vartype)
-            offsets[scope] += (8 - offsets[scope] % 8) % 8
-
+            offsets[scope] += (4 - offsets[scope] % 4) % 4
             # symTab = get_current_symtab()
             # symTab.insert(
             #     {"name": vname, "type": vartype, "is_array": False, "dimensions": []}
@@ -658,7 +620,7 @@ def type_util(op1: Node, op2: Node, op: str):
 def get_data_type_size(type_1):
     # DONE: error because it is focusing on  the last word only
     if type_1.endswith("*"):
-        return 8
+        return 4
     if type_1.startswith("struct"):
         node = ST.find(type_1)
         if node is None:
@@ -707,13 +669,17 @@ def write_code(code, file):
 
 
 def write_mips(code, file):
+    # with open("../stdlib/lib.s") as lib:
+    #     file.write(lib.read())
     for line in code:
-        if line[0] != "label":
+        if line[0]==";":
+            continue
+        elif line[0] != "label":
             file.write(f"\t\t{line[0].lower()}\t")
-            args = [arg for arg in line[1:] if arg]
+            args = [str(arg) for arg in line[1:] if arg != ""]
             file.write(",".join(args))
         else:
-            file.write(line[1] + line[2]) 
+            file.write(line[1] + line[2])
         file.write("\n")
     file.close()
 
@@ -746,64 +712,78 @@ def dump_symbol_table_csv(verbose: bool = False):
                 writer.writerow(node.to_dict(True))
 
 
-node1 = Node(
-    name="printf",
-    type="int",
-    val="",
-    is_func=1,
-    argument_list=["int"],
-    lno=-1,
-    in_whose_scope="#global",
-)
-node2 = Node(
-    name="scanf",
-    type="int",
-    val="",
-    is_func=1,
-    argument_list=["int"],
-    lno=-1,
-    in_whose_scope="#global",
-)
-node3 = Node(
-    name="malloc",
-    type="void *",
-    val="",
-    is_func=1,
-    argument_list=["int"],
-    lno=-1,
-    in_whose_scope="#global",
-)
-node4 = Node(
-    name="sqrt",
-    type="float",
-    val="",
-    is_func=1,
-    argument_list=["int"],
-    lno=-1,
-    in_whose_scope="#global",
-)
-node5 = Node(
-    name="pow",
-    type="float",
-    val="",
-    is_func=1,
-    argument_list=["int"],
-    lno=-1,
-    in_whose_scope="#global",
-)
-node6 = Node(
-    name="abs",
-    type="float",
-    val="",
-    is_func=1,
-    argument_list=["int"],
-    lno=-1,
-    in_whose_scope="#global",
-)
-node7 = Node(name="NULL", type="void *", val="0", lno=-1, in_whose_scope="#global")
-
-
-pre_append_array = [node1, node2, node3, node4, node5, node6, node7]
+pre_append_array = [
+    Node(
+        name="NULL",
+        type="void *",
+        val="0",
+        lno=-1,
+        in_whose_scope="#global"
+    ),
+    Node(
+        name="print_int",
+        type="int",
+        val="",
+        is_func=1,
+        argument_list=["int"],
+        lno=-1,
+        in_whose_scope="#global",
+    ),
+    Node(
+        name="print_char",
+        type="char",
+        val="",
+        is_func=1,
+        argument_list=["char"],
+        lno=-1,
+        in_whose_scope="#global"
+    ),
+    Node(
+        name="print_float",
+        type="float",
+        val="",
+        is_func=1,
+        argument_list=["float"],
+        lno=-1,
+        in_whose_scope="#global"
+    ),
+    Node(
+        name="read_int",
+        type="int",
+        val="",
+        is_func=1,
+        argument_list=[],
+        lno=-1,
+        in_whose_scope="#global",
+    ),
+    Node(
+        name="read_char",
+        type="char",
+        val="",
+        is_func=1,
+        argument_list=[],
+        lno=-1,
+        in_whose_scope="#global"
+    ),
+    Node(
+        name="read_float",
+        type="float",
+        val="",
+        is_func=1,
+        argument_list=[],
+        lno=-1,
+        in_whose_scope="#global"
+    ),
+    Node(
+        name="read_string",
+        type="string",
+        val="",
+        is_func=1,
+        argument_list=["char*", "int"],
+        lno=-1,
+        in_whose_scope="#global"
+    ),
+]
 
 
 def pre_append_to_table():

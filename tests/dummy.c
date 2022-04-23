@@ -1,12 +1,7 @@
 
-// #include<stdio.h>
-// int j=0;
-int foo(int a){
-    return a+1;
-}
+
 int main(){
-    // foo(1);
-    int a,b,c;
-    int x = foo(a);
+    int x=1;
+    x+=1;
     return 0;
 }
