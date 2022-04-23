@@ -718,11 +718,11 @@ def mips_generation(full_code_gen):
             mips_set.append(["LA","$fp",f"{-int(node_type[2])}($sp)"])
             mips_set.append(["move","$sp","$fp"])
             mips_set.append(["jal", code_gen[1], ""])
-            mips_set.append(["ADD","$fp","$fp",f"{int(node_type[2])-int(node_type[3])+sz}"])
+            mips_set.append(["ADD","$fp","$fp",f"{int(node_type[3])-sz}"])
             # mips_set.append(["MOV","$fp","$t0"])
             mips_set.append(["LW", "$ra", "-8($fp)"])
             mips_set.append(["move","$sp","$fp"])
-            mips_set.append(["LA", "$fp", "-4($fp)"])
+            mips_set.append(["LW", "$fp", "-4($fp)"])
             mips_set.append(["move","$sp","$fp"])
             
         elif "param" in s:

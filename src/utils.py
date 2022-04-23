@@ -672,7 +672,9 @@ def write_mips(code, file):
     # with open("../stdlib/lib.s") as lib:
     #     file.write(lib.read())
     for line in code:
-        if line[0] != "label":
+        if line[0]==";":
+            continue
+        elif line[0] != "label":
             file.write(f"\t\t{line[0].lower()}\t")
             args = [arg for arg in line[1:] if arg]
             file.write(",".join(args))
