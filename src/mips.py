@@ -676,15 +676,15 @@ def mips_generation(full_code_gen):
             node_split =s.split("_")
             return_offset = int(node_split[-1])-int(node_split[1])
             if s[-1]=="0":
-                mips_set.append(["ADDI", f"{return_offset}($fp)", "$0", "$0"])
+                mips_set.append(["ADD", f"{return_offset}($fp)", "$0", "$0"])
             elif is_char(code_gen[1]):
-                mips_set.append(["ADDI", f"{return_offset}($fp)", "$0", code_gen[3]])
+                mips_set.append(["ADD", f"{return_offset}($fp)", "$0", code_gen[3]])
             elif is_num(code_gen[1]):
                 if "." in s:
                     #instruction nahi pata float ke liye
-                    mips_set.append(["ADDI", "0($v0)", "$0", code_gen[3]])
+                    mips_set.append(["ADD", f"{return_offset}($fp)", "$0", code_gen[3]])
                 else:
-                    mips_set.append(["ADDI", f"{return_offset}($fp)", "$0", code_gen[3]])
+                    mips_set.append(["ADD", f"{return_offset}($fp)", "$0", code_gen[3]])
             else:
                 offset = int(code_gen[1].split('(')[0])
                 sz = int(node_split[1])
@@ -699,8 +699,8 @@ def mips_generation(full_code_gen):
             sz = get_data_type_size(node_type[1])
             sz += ((4 - sz % 4) % 4)
                 
-            mips_set.append(["DADDI","$t0","$0",f"{int(node_type[2])-int(node_type[3])}"])
-            mips_set.append(["SUB","$sp","$sp","$t0"])
+            # mips_set.append(["DADDI","$t0","$0",f"{int(node_type[2])-int(node_type[3])}"])
+            mips_set.append(["SUB","$sp","$sp",f"{int(node_type[2])-int(node_type[3])}"])
             mips_set.append(["SW", "$fp", f"{-(sz+4)}($sp)"])
             mips_set.append(["SW", "$ra", f"{-(sz+8)}($sp)"])
             
@@ -708,29 +708,29 @@ def mips_generation(full_code_gen):
                 mips_set.append(p)
             params = []
             mips_set.append(["LA","$fp",f"{-int(node_type[2])}($sp)"])
-            mips_set.append(["MOVZ","$sp","$fp","$0"])
+            mips_set.append(["MOV","$sp","$fp"])
             mips_set.append(["jal", code_gen[1], ""])
-            mips_set.append(["ADDIU","$t0","$fp",f"{int(node_type[2])-int(node_type[3])+sz}"])
-            mips_set.append(["MOVZ","$fp","$t0","$0"])
+            mips_set.append(["ADD","$fp","$fp",f"{int(node_type[2])-int(node_type[3])+sz}"])
+            # mips_set.append(["MOV","$fp","$t0"])
             mips_set.append(["LW", "$ra", "-8($fp)"])
-            mips_set.append(["MOVZ","$sp","$fp","$0"])
+            mips_set.append(["MOV","$sp","$fp"])
             mips_set.append(["LA", "$fp", "-4($fp)"])
-            mips_set.append(["MOVZ","$sp","$fp","$0"])
+            mips_set.append(["MOV","$sp","$fp"])
             
         elif "param" in s:
             if is_char(code_gen[1]):
-                params.append(["addi", code_gen[2], "$0", code_gen[3]])
+                params.append(["add", code_gen[2], "$0", code_gen[3]])
             elif is_num(code_gen[1]):
                 if "." in s:
                     ##TO_DO regex dalna hai
                     #instruction nahi pata float ke liye
-                    params.append(["addi", code_gen[2], "$0", code_gen[3]])
+                    params.append(["add", code_gen[2], "$0", code_gen[3]])
                 else:
-                    params.append(["addi", code_gen[2], "$0", code_gen[3]])
+                    params.append(["add", code_gen[2], "$0", code_gen[3]])
             else:
                 _type = _type = s.split("_")[1]
-                params.append(load_reg("$t0",code_gen[3],_type))
-                params.append(store_reg("$t0", code_gen[2], _type))
+                # params.append(load_reg("$t0",code_gen[3],_type))
+                params.append(store_reg(code_gen[3], code_gen[2], _type))
         
         elif s == ";":
             pass
