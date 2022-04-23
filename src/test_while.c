@@ -10,11 +10,16 @@
 
 int func(int n) //(int a, struct t1 b, int c, int d, int e, int f)
 {
-    if (n<=2)
+    switch (n)
     {
+    case /* constant-expression */2:
+        /* code */
         return 1;
+        break;
+    case 1:return 1;break;
+    
+    default: return func(n-1)+func(n-2);
     }
-    return func(n-1)+func(n-2);
     // d++;
     
 }

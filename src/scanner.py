@@ -25,7 +25,7 @@ class Lexer(object):
         "int": "INT",
         # "long": "LONG",
         "return": "RETURN",
-        "short": "SHORT",
+        # "short": "SHORT",
         "signed": "SIGNED",
         "sizeof": "SIZEOF",
         "struct": "STRUCT",

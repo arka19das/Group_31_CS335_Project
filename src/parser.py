@@ -2986,7 +2986,6 @@ def p_storage_class_specifier(p):
 def p_type_specifier_1(p):
     """type_specifier : VOID
     | CHAR
-    | SHORT
     | INT
     | FLOAT
     | SIGNED
@@ -3988,9 +3987,9 @@ def p_Switch_M3(p):
             activation_record.append(
                 [
                     "beq",
-                    tmp_var + tmp_offset_string,
+                     tmp_offset_string,
                     case,
-                    p[-1].label[i] + offset_string,
+                    p[-1].label[i] 
                 ]
             )
 

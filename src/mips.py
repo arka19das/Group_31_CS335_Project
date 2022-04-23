@@ -505,11 +505,11 @@ def addr_load(reg1, laddr, raddr):
 
 
 # beq	__tmp_var_3	0	__label_1   [int]
-def beq_mips( reg, addr, label):
+def beq_mips( reg, addr,constant, label):
     mips = []
     #load_instr = LOAD_INSTRUCTIONS[type]
     mips.append(["lw", reg, addr])
-    mips.append(["beq", reg, "$0", label])
+    mips.append(["beq", reg, constant, label])
     return mips
 
 def nload(type,reg1,reg2,laddr,raddr):
@@ -667,7 +667,7 @@ def mips_generation(full_code_gen):
         elif s == "addr":
             mips_set.extend(addr_load("$t0",code_gen[1],code_gen[2]))    
         elif s== "beq":
-            mips_set.extend(beq_mips("$t0",code_gen[1],code_gen[3]))
+            mips_set.extend(beq_mips("$t0",code_gen[1],code_gen[2],code_gen[3]))
         elif s=="goto":
             mips_set.append(["j",code_gen[3]])
        
