@@ -694,8 +694,9 @@ def mips_generation(full_code_gen):
                 offset = int(code_gen[1].split('(')[0])
                 sz = int(node_split[1])
                 for i in range(0,sz,4):
-                    mips_set.append(load_reg("$t1",f"{offset-i}($fp)", node_split[2]))
-                    mips_set.append(store_reg("$t1", f"{return_offset-i}($fp)", node_split[2]))
+                    #TO_DO TYPE dekha padega
+                    mips_set.append(load_reg("$t1",f"{offset+i}($fp)", "int"))
+                    mips_set.append(store_reg("$t1", f"{return_offset+i}($fp)", "int"))
             
             mips_set.append(["JR", "$ra", ""])
 
