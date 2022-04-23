@@ -574,7 +574,7 @@ def p_postfix_expression_3(p):
             return_size += ((4 - return_size % 4) % 4)
             func_offset += return_size
 
-            node = Node(val=p1v_node.val, type=p1v_node, name="return_value", offset=func_offset)    
+            node = Node(val=p1v_node.val, type=p1v_node, name="return_value", offset=func_offset-8)    
             ST.current_table.insert(node)
             offsets[ST.currentScope]+=return_size    
             p[0].offset = func_offset
@@ -1075,7 +1075,7 @@ def p_postfix_expression_3(p):
                     activation_record.append(tact)
                     activation_record[-1][2] = f"{-(func_offset + activation_record[-1][2])}($fp)"
 
-                node = Node(val=p1v_node.val, type=p1v_node, name="return_value", offset=func_offset)
+                node = Node(val=p1v_node.val, type=p1v_node, name="return_value", offset=func_offset-8)
                 ST.current_table.insert(node)
                 offsets[ST.currentScope]+=return_size
                 p[0].offset = func_offset
