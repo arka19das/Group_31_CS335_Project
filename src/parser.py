@@ -695,9 +695,9 @@ def p_postfix_expression_3(p):
                     )
 
                     # if curr_list[3] > 0:
-                    code_gen.append(["int-", tmp, curr_list[3], tmp])
+                    code_gen.append(["int-", tmp, tmp, curr_list[3]])
                     activation_record.append(
-                        ["int-", tmp_offset_string, curr_list[3], tmp_offset_string,]
+                        ["int-", tmp_offset_string, tmp_offset_string, curr_list[3],]
                     )
                     # print(type1)
                     if type1.upper() in PRIMITIVE_TYPES:
@@ -870,9 +870,9 @@ def p_postfix_expression_3(p):
                         ["addr", v2_offset_string, offset_string, ""]
                     )
 
-                code_gen.append(["int-", v2, v1, v2])
+                code_gen.append(["int-", v2, v2, v1])
                 activation_record.append(
-                    ["int-", v2_offset_string, v_offset_string, v2_offset_string,]
+                    ["int-", v2_offset_string, v2_offset_string, v_offset_string,]
                 )
 
                 type1 = p[0].type  # TODO: BUGGED
@@ -1147,13 +1147,13 @@ def p_unary_expression(p):
             # p[]
             # code_gen.append(["OKAY"])
             code_gen.append(["addr", v2, p[1].place, ""])
-            code_gen.append(["int-", v2, code_gen[-2][1], v2])
+            code_gen.append(["int-", v2, v2, code_gen[-2][1]])
             offset_string = cal_offset(p[1])
             activation_record.append(
                 ["int", v2_offset_string, offset_string, ""]
             )
             activation_record.append(
-                ["int-", v2_offset_string, code_gen[-2][1], v2_offset_string]
+                ["int-", v2_offset_string, v2_offset_string, code_gen[-2][1]]
             )
             p[0].val = p[0].place = v2
         else:
