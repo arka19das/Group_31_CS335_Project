@@ -607,7 +607,7 @@ def mips_generation(full_code_gen):
     mips_set = []
     mips_set.append([".data"])
     mips_set.append([".text"])
-    mips_set.append([".globl main"])
+    # mips_set.append([".globl main"])
     params = []
     return_offset = 0
     for code_gen in full_code_gen:
@@ -681,22 +681,22 @@ def mips_generation(full_code_gen):
             node_split =s.split("_")
             return_offset = int(node_split[-1])-int(node_split[1])
             if s[-1]=="0":
-                mips_set.append(["ADD", f"{return_offset}($fp)", "$0", "$0"])
+                mips_set.append(["sw","$0",  f"{return_offset}($fp)"])
             elif is_char(code_gen[1]):
-                mips_set.append(["ADD", f"{return_offset}($fp)", "$0", code_gen[1]])
+                pass
             elif is_num(code_gen[1]):
                 if "." in s:
                     #instruction nahi pata float ke liye
                     mips_set.append(["ADD", f"{return_offset}($fp)", "$0", code_gen[1]])
                 else:
-                    mips_set.append(["ADD", f"{return_offset}($fp)", "$0", code_gen[1]])
+                    mips_set.append(["li","$t0",code_gen[1]])
+                    mips_set.append(["sw", "$t0",f"{return_offset}($fp)"])
             else:
                 offset = int(code_gen[1].split('(')[0])
                 sz = int(node_split[1])
                 for i in range(0,sz,4):
-                    #TO_DO TYPE dekha padega
-                    mips_set.append(load_reg("$t1",f"{offset+i}($fp)", "int"))
-                    mips_set.append(store_reg("$t1", f"{return_offset+i}($fp)", "int"))
+                    mips_set.append(load_reg("$t1",f"{offset-i}($fp)", node_split[2]))
+                    mips_set.append(store_reg("$t1", f"{return_offset-i}($fp)", node_split[2]))
             
             mips_set.append(["JR", "$ra", ""])
 
@@ -726,18 +726,19 @@ def mips_generation(full_code_gen):
             
         elif "param" in s:
             if is_char(code_gen[1]):
-                params.append(["add", code_gen[2], "$0", code_gen[3]])
+                params.append(["add", code_gen[2], "$0", code_gen[1]])
             elif is_num(code_gen[1]):
                 if "." in s:
                     ##TO_DO regex dalna hai
                     #instruction nahi pata float ke liye
-                    params.append(["add", code_gen[2], "$0", code_gen[3]])
+                    params.append(["add", code_gen[2], "$0", code_gen[1]])
                 else:
-                    params.append(["add", code_gen[2], "$0", code_gen[3]])
+                    params.append(["li","$t0",code_gen[1]])
+                    params.append(["sw","$t0" ,code_gen[2]])
             else:
                 _type = _type = s.split("_")[1]
-                # params.append(load_reg("$t0",code_gen[3],_type))
-                params.append(store_reg(code_gen[3], code_gen[2], _type))
+                params.append(load_reg("$t0",code_gen[1],_type))
+                params.append(store_reg("$t0", code_gen[2], _type))
         
         elif s == ";":
             pass
