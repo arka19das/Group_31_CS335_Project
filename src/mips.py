@@ -663,6 +663,8 @@ def mips_generation(full_code_gen):
             mips_set.extend(non_prim_load(s,"$t0","$t1",code_gen[1],code_gen[2]))    
         elif s == "funcstart":
             mips_set.append(["label",code_gen[1],":",""])
+            if code_gen[1]=="main":
+                mips_set.append(["move","$fp","$sp"])
             pass
         elif s == "addr":
             mips_set.extend(addr_load("$t0",code_gen[1],code_gen[2]))    

@@ -455,22 +455,22 @@ def p_postfix_expression_3(p):
         p[0].ast = build_AST_2(p, [1], p[2])
         check_identifier(p[1], p.lineno(1))
         offset_string = cal_offset(p[1])
-        if p[1].type.endswith("*"):
-            code_gen.append(["int=", p[1].place, tmp_var, ""])
-            activation_record.append(["int=", offset_string, tmp_offset_string, ""])
+        # if p[1].type.endswith("*"):
+        #     code_gen.append(["int=", p[1].place, tmp_var, ""])
+        #     activation_record.append(["int=", offset_string, tmp_offset_string, ""])
 
-        else:
-            code_gen.append(
-                [str(get_data_type_size(p[1].type)) + "=", p[1].place, tmp_var,""]
-            )
-            activation_record.append(
-                [
-                    str(get_data_type_size(p[1].type)) + "=",
-                    offset_string,
-                    tmp_offset_string,
-                    ""
-                ]
-            )
+        # else:
+        #     code_gen.append(
+        #         [p[1].type + "=", p[1].place, tmp_var,""]
+        #     )
+        #     activation_record.append(
+        #         [
+        #             p[1].type + "=",
+        #             offset_string,
+        #             tmp_offset_string,
+        #             ""
+        #         ]
+        #     )
 
         # code_gen.append(f"f{tmp_var} := {p[1].place}")
         # DONE: FLOAT not supported yet and neither are pointers dhang se
@@ -1162,7 +1162,7 @@ def p_unary_expression(p):
 
     elif len(p) == 3:
         offset_string = cal_offset(p[2])
-        if p[1].val == "++" or p[1].val == "--":
+        if p[1] == "++" or p[1] == "--":
             if len(p[2].array) > 0 and isinstance(p[2].array[0], int):
                 ST.error(
                     Error(
@@ -1191,7 +1191,7 @@ def p_unary_expression(p):
             check_identifier(p[2], p.lineno(2))
 
             # DONE: FLOAT not supported yet and neither are pointers dhang se
-            if p[1].val == "++":
+            if p[1] == "++":
                 if p[2].type.endswith("*"):
                     code_gen.append(
                         [
@@ -1216,7 +1216,7 @@ def p_unary_expression(p):
                     )
 
                 # code_gen.append(f"{p[1].place} := {p[1].place} + 1")
-            elif p[1].val == "--":
+            elif p[1]== "--":
                 if p[2].type.endswith("*"):
                     code_gen.append(
                         [
