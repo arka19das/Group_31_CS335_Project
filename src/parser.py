@@ -2421,6 +2421,7 @@ def p_assignment_expression(p):
         temp_node = p[3]
         # print(temp_node)
         offset_string1 = cal_offset(p[1])
+        # print(offset_string1,p[1].addr)
         # print(p[3],p[3].place,p[3].offset)
         offset_string3 = cal_offset(p[3])
 
@@ -2485,6 +2486,8 @@ def p_assignment_expression(p):
                         [p[0].type + "=", offset_string1, tmp_offset_string, "",]
                     )
                 else:
+                    offset_string1 = cal_offset(ST.find(p[1].addr))
+                    
                     code_gen.append([p[0].type + "=", p[1].addr, temp_node1, "*"])
                     activation_record.append(
                         [p[0].type + "=", offset_string1, tmp_offset_string, "*",]
@@ -2498,6 +2501,7 @@ def p_assignment_expression(p):
                         [temp_node.type + "=", offset_string1, temp_offset_string, "",]
                     )
                 else:
+                    offset_string1 = cal_offset(ST.find(p[1].addr))
                     code_gen.append(
                         [temp_node.type + "=", p[1].addr, temp_node.place, "*"]
                     )
@@ -2526,6 +2530,8 @@ def p_assignment_expression(p):
                     )
 
                 else:
+                    offset_string1 = cal_offset(ST.find(p[1].addr))
+                    
                     code_gen.append([p[0].type + "=", p[1].addr, temp_node1, "*"])
                     activation_record.append(
                         [p[0].type + "=", offset_string1, tmp_offset_string, "",]
@@ -2570,6 +2576,8 @@ def p_assignment_expression(p):
                 else:
                     # ARKA DOUBTS
                     print("else", p[0].type, temp_node.type)
+                    offset_string1 = cal_offset(ST.find(p[1].addr))
+                    
                     code_gen.append(
                         [temp_node.type + "=", p[1].addr, temp_node.place, "*"]
                     )
@@ -2737,6 +2745,8 @@ def p_declaration(p):
                             [child.type + "=", offset_string, tmp_offset_string, "",]
                         )
                     else:
+                        offset_string = cal_offset(ST.find(child.children[0].addr))
+                        
                         code_gen.append(
                             # [p[1].type + "=", child.children[0].place, temp_node1, "*"]
                             [child.type + "=", child.children[0].addr, temp_node1, "*"]
