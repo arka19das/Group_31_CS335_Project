@@ -656,7 +656,7 @@ def mips_generation(full_code_gen):
         elif s.endswith("=") and code_gen[3]=="":
             mips_set.extend(assign_op(s, "$t0", code_gen[1], code_gen[2]))
         elif s.endswith("=") and code_gen[3]=="*":
-            mips_set.extend(assign_op_ptr(s, "$t0", code_gen[1], code_gen[2]))
+            mips_set.extend(assign_op_ptr(s, "$t0", code_gen[1], "$t1", code_gen[2]))
         elif s == "2load" or s == "4load":
             mips_set.extend(nload(s,"$t0","$t1",code_gen[1],code_gen[2]))
         elif s.endswith("non_primitive_load"):

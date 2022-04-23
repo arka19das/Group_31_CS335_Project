@@ -872,7 +872,7 @@ def p_postfix_expression_3(p):
 
                 code_gen.append(["int-", v2, v1, v2])
                 activation_record.append(
-                    ["int-", v2_offset_string, v_offset_string, tmp_offset_string,]
+                    ["int-", v2_offset_string, v_offset_string, v2_offset_string,]
                 )
 
                 type1 = p[0].type  # TODO: BUGGED
