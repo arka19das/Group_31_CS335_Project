@@ -605,6 +605,9 @@ def conversion(type1, addr1, type2, addr2):
 
 def mips_generation(full_code_gen):
     mips_set = []
+    mips_set.append([".data"])
+    mips_set.append([".text"])
+    mips_set.append([".globl main"])
     params = []
     return_offset = 0
     for code_gen in full_code_gen:
@@ -680,18 +683,19 @@ def mips_generation(full_code_gen):
             if s[-1]=="0":
                 mips_set.append(["ADD", f"{return_offset}($fp)", "$0", "$0"])
             elif is_char(code_gen[1]):
-                mips_set.append(["ADD", f"{return_offset}($fp)", "$0", code_gen[3]])
+                mips_set.append(["ADD", f"{return_offset}($fp)", "$0", code_gen[1]])
             elif is_num(code_gen[1]):
                 if "." in s:
                     #instruction nahi pata float ke liye
-                    mips_set.append(["ADD", f"{return_offset}($fp)", "$0", code_gen[3]])
+                    mips_set.append(["ADD", f"{return_offset}($fp)", "$0", code_gen[1]])
                 else:
-                    mips_set.append(["ADD", f"{return_offset}($fp)", "$0", code_gen[3]])
+                    mips_set.append(["ADD", f"{return_offset}($fp)", "$0", code_gen[1]])
             else:
                 offset = int(code_gen[1].split('(')[0])
                 sz = int(node_split[1])
                 for i in range(0,sz,4):
-                    mips_set.append(store_reg(f"{offset-i}($fp)", f"{return_offset-i}($fp)", node_split[2]))
+                    mips_set.append(load_reg("$t1",f"{offset-i}($fp)", node_split[2]))
+                    mips_set.append(store_reg("$t1", f"{return_offset-i}($fp)", node_split[2]))
             
             mips_set.append(["JR", "$ra", ""])
 
@@ -710,14 +714,14 @@ def mips_generation(full_code_gen):
                 mips_set.append(p)
             params = []
             mips_set.append(["LA","$fp",f"{-int(node_type[2])}($sp)"])
-            mips_set.append(["MOV","$sp","$fp"])
+            mips_set.append(["move","$sp","$fp"])
             mips_set.append(["jal", code_gen[1], ""])
             mips_set.append(["ADD","$fp","$fp",f"{int(node_type[2])-int(node_type[3])+sz}"])
             # mips_set.append(["MOV","$fp","$t0"])
             mips_set.append(["LW", "$ra", "-8($fp)"])
-            mips_set.append(["MOV","$sp","$fp"])
+            mips_set.append(["move","$sp","$fp"])
             mips_set.append(["LA", "$fp", "-4($fp)"])
-            mips_set.append(["MOV","$sp","$fp"])
+            mips_set.append(["move","$sp","$fp"])
             
         elif "param" in s:
             if is_char(code_gen[1]):
