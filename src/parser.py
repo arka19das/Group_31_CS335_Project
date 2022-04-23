@@ -566,19 +566,21 @@ def p_postfix_expression_3(p):
                 return
             
             func_offset=8
+            return_size=0
             temp=ST.currentScope
             while temp!=0:
                 func_offset+=offsets[temp]
                 temp=ST.parent[temp]
-            return_size = get_data_type_size(p1v_node.type)
-            return_size += ((4 - return_size % 4) % 4)
-            func_offset += return_size
+            
+            if p1v_node.type!="void":
+                return_size = get_data_type_size(p1v_node.type)
+                return_size += ((4 - return_size % 4) % 4)
+                func_offset += return_size
+                node = Node(val=p1v_node.val, type=p1v_node, name="return_value", offset=func_offset-8)    
+                ST.current_table.insert(node)
+                offsets[ST.currentScope]+=return_size  
 
-            node = Node(val=p1v_node.val, type=p1v_node, name="return_value", offset=func_offset-8)    
-            ST.current_table.insert(node)
-            offsets[ST.currentScope]+=return_size    
             p[0].offset = func_offset
-            func_offset+=param_size
             code_gen.append([f"call_{offsets[ST.currentScope]}", p[1].val, "", ""])
             activation_record.append(
                 [f"call_{p1v_node.type}_{func_offset}_{return_size+8}", p[1].val, "", f"__{p[1].val}"]
@@ -1000,12 +1002,12 @@ def p_postfix_expression_3(p):
                             ]
                         )
                         # tmp_offset_string[-3]="s"
+                        func_offset += 4
                         temp_3ac.append([f"param", p[1].val, " ", tmp_var])
                         temp_act.append(
                             [f"param_{p[3].children[i].type}", p[1].val, func_offset, tmp_offset_string]
                         )
                         # temp_offset = get_data_type_size(arguments)
-                        func_offset += 4
                         
                     elif (p[3].children[i].type.upper() in PRIMITIVE_TYPES) ^ (
                         arguments.upper() in PRIMITIVE_TYPES
@@ -1044,7 +1046,7 @@ def p_postfix_expression_3(p):
                             arg_split = arguments.split()[0] 
                             temp_3ac.append([f"param", p[1].val, " ", p[3].children[i].val])
                             temp_act.append(
-                                [f"param_{arg_split}", p[1].val, func_offset, offset_string]
+                                [f"param_{arg_split}", p[1].val, func_offset+temp_offset, offset_string]
                             )
                         else:
                             temp_offset = get_data_type_size(arguments)
@@ -1053,37 +1055,38 @@ def p_postfix_expression_3(p):
                             for j in range(0,temp_offset,4):
                                 temp_3ac.append([f"param", p[1].val, " ", p[3].children[i].val])
                                 temp_act.append(
-                                    [f"param_int", p[1].val, func_offset+j, f"{-offset-j}($fp)"]
+                                    [f"param_int", p[1].val, func_offset++temp_offset-j, f"{-offset-j}($fp)"]
                                 )
-
+                            
                         func_offset+=temp_offset
                     i -= 1
                     
                 param_size = func_offset
                 func_offset=8
+                return_size=0
                 temp=ST.currentScope
                 while temp!=0:
                     func_offset+=offsets[temp]
                     temp=ST.parent[temp]
                 # func_offset = offsets[ST.currentScope] + 16
-                return_size = get_data_type_size(p1v_node.type)
-                return_size += ((4 - return_size % 4) % 4)
-                func_offset += return_size
-
+                if p1v_node.type != "void":
+                    return_size = get_data_type_size(p1v_node.type)
+                    return_size += ((4 - return_size % 4) % 4)
+                    func_offset += return_size
+                    node = Node(val=p1v_node.val, type=p1v_node, name="return_value", offset=func_offset-8)
+                    ST.current_table.insert(node)
+                    offsets[ST.currentScope]+=return_size
+                
+                p[0].offset = func_offset-8-return_size
                 for t3ac, tact in zip(temp_3ac, temp_act):
                     code_gen.append(t3ac)
                     activation_record.append(tact)
                     activation_record[-1][2] = f"{-(func_offset + activation_record[-1][2])}($fp)"
 
-                node = Node(val=p1v_node.val, type=p1v_node, name="return_value", offset=func_offset-8)
-                ST.current_table.insert(node)
-                offsets[ST.currentScope]+=return_size
-                p[0].offset = func_offset-8-return_size
                 func_offset+=param_size
                 code_gen.append([f"call_{offsets[ST.currentScope]}", p[1].val, "", ""])
-                print(func_offset,param_size,return_size)
                 activation_record.append(
-                    [f"call_{p1v_node.type}_{func_offset}_{param_size+return_size+8}_{param_size+8}", p[1].val, "", f"__{p[1].val}"]
+                    [f"call_{p1v_node.type}_{func_offset}_{param_size+return_size+8}", p[1].val, "", f"__{p[1].val}"]
                 )
 
 
@@ -2566,7 +2569,7 @@ def p_assignment_expression(p):
                         )
                 else:
                     # ARKA DOUBTS
-                    # print("else", p[0].type, temp_node.type)
+                    print("else", p[0].type, temp_node.type)
                     code_gen.append(
                         [temp_node.type + "=", p[1].addr, temp_node.place, "*"]
                     )
@@ -4364,8 +4367,7 @@ def p_jump_statemen_2(p):
             param_size+=(4-param_size%4)%4
 
         return_size = get_data_type_size(p[2].type)
-        
-        # return_size+=(4-return_size%4)%4
+        return_size+=(4-return_size%4)%4
 
         code_gen.append([f"return{get_data_type_size(p[2].type)}", p[2].place, "", ""])
         activation_record.append(

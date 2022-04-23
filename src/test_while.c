@@ -8,17 +8,21 @@
 //     // struct t1 *next;
 // };
 
-int func(int p) //(int a, struct t1 b, int c, int d, int e, int f)
+int func(int n) //(int a, struct t1 b, int c, int d, int e, int f)
 {
-
-    return p+1;
+    if (n<=2)
+    {
+        return 1;
+    }
+    return func(n-1)+func(n-2);
     // d++;
     
 }
 int main()
 {
    
-    int a=10;
+    int a=4;
+    int b1=102;
     // c = c + (float *)1;
     // c = &(a);
     // a = *c;

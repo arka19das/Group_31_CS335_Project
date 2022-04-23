@@ -680,7 +680,7 @@ def mips_generation(full_code_gen):
             
             node_split =s.split("_")
             return_offset = int(node_split[-1])-int(node_split[1])
-            if s[-1]=="0":
+            if "return0" in s[-1]:
                 mips_set.append(["sw","$0",  f"{return_offset}($fp)"])
             elif is_char(code_gen[1]):
                 pass
@@ -715,7 +715,7 @@ def mips_generation(full_code_gen):
             for p in params:
                 mips_set.append(p)
             params = []
-            mips_set.append(["LA","$fp",f"{-int(node_type[2])}($sp)"])
+            mips_set.append(["LA","$fp",f"{-int(node_type[2])}($fp)"])
             mips_set.append(["move","$sp","$fp"])
             mips_set.append(["jal", code_gen[1], ""])
             mips_set.append(["ADD","$fp","$fp",f"{int(node_type[3])-sz}"])
@@ -727,18 +727,18 @@ def mips_generation(full_code_gen):
             
         elif "param" in s:
             if is_char(code_gen[1]):
-                params.append(["add", code_gen[2], "$0", code_gen[1]])
+                params.append(["add", code_gen[2], "$0", code_gen[3]])
             elif is_num(code_gen[1]):
                 if "." in s:
                     ##TO_DO regex dalna hai
                     #instruction nahi pata float ke liye
-                    params.append(["add", code_gen[2], "$0", code_gen[1]])
+                    params.append(["add", code_gen[2], "$0", code_gen[3]])
                 else:
-                    params.append(["li","$t0",code_gen[1]])
+                    params.append(["li","$t0",code_gen[3]])
                     params.append(["sw","$t0" ,code_gen[2]])
             else:
                 _type = _type = s.split("_")[1]
-                params.append(load_reg("$t0",code_gen[1],_type))
+                params.append(load_reg("$t0",code_gen[3],_type))
                 params.append(store_reg("$t0", code_gen[2], _type))
         
         elif s == ";":
