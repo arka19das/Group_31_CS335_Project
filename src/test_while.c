@@ -1,10 +1,15 @@
 #include <stdio.h>
+struct t2{
+    int a;
+    int b;
+
+};
 struct t1
 {
     int a;
-    struct t1 *next;
+    struct t2 d;
     int b;
-    float d1;
+    // float d1;
     // struct t1 *next;
 };
 
@@ -20,8 +25,9 @@ struct t1
 //     return sum;
     
 // }
-int func(struct t1 t)
+int func(int *x)
 {
+    *x=3;
     
     return 0;
 }
@@ -37,8 +43,14 @@ int main()
     // print_int(a.a);
     // a=b;
     // a.a=2;
-    float a=2;
-    print_float(a);
+    // a.d.a=1; /nested struct wrong
+    int *x,y=1000,z=3,arr[10];
+    // arr[19][1]=18737346;
+    // arr[19]+1;
+    arr[0]=2;
+    x=arr;
+    // *x=300;
+    print_int(*x);
     // func(a);
     return 0;
 }

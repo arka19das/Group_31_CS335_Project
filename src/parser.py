@@ -164,7 +164,6 @@ def p_primary_expression(p):
     if len(p) == 2:
         p[0] = p[1]
     else:
-        # print(p[2])
         p[0] = p[2]
         # p[0].lhs = 1
 
@@ -538,6 +537,7 @@ def p_postfix_expression_3(p):
                 is_func=0,
                 place=p[1].place,
                 lhs=1,
+                in_whose_scope=ST.scope_tables[ST.current_scope].name
             )
             p[0].ast = build_AST_2(p, [1], "()")
             # p[0].ast = build_AST(p, rule_name)
@@ -698,7 +698,6 @@ def p_postfix_expression_3(p):
                     activation_record.append(
                         ["int+", tmp_offset_string, tmp_offset_string, str(struct_node.size-curr_list[3]-get_data_type_size(curr_list[0]))]
                     )
-                    # print(type1)
                     if type1.upper() in PRIMITIVE_TYPES:
                         code_gen.append(
                             [f"{get_data_type_size(type1)}load", tmp2, tmp, ""]
@@ -806,7 +805,6 @@ def p_postfix_expression_3(p):
 
             d = len(p[1].array) - p[0].level - 1
             v1, v_offset_string = ST.get_tmp_var("int")
-            # print(p[1].array)
             if isinstance(p[1].array[-1], int):
                 code_gen.append(["int=", v1, "0",""])
                 activation_record.append(
@@ -878,7 +876,7 @@ def p_postfix_expression_3(p):
                 v3, v3_offset_string = ST.get_tmp_var(type1)
                 p[0].place = v3
                 p[0].addr = v2
-
+                p[0].offset=ST.find(v3).offset
                 # agar isko stack pe liya to p[0].place ko v3 me store krne se gayab hojayega
                 if type1.upper() in PRIMITIVE_TYPES:
                     code_gen.append([f"{get_data_type_size(type1)}load", v3, v2, ""])
@@ -1027,7 +1025,6 @@ def p_postfix_expression_3(p):
                         and p[3].children[i].type.upper() not in PRIMITIVE_TYPES
                         and arguments.upper() not in PRIMITIVE_TYPES
                     ):
-                        # print(ST.curType[-1] ,arguments)
                         ST.error(
                             Error(
                                 p[1].lno,
@@ -1141,7 +1138,6 @@ def p_unary_expression(p):
         elif len(p[1].array) > 0 and isinstance(p[1].array[0], int):
             p[0] = p[1]
             p[0].array = []
-            # print(p[0].index, "1")
             v2, v2_offset_string = ST.get_tmp_var(p[1].type)
             # p[]
             # code_gen.append(["OKAY"])
@@ -1330,6 +1326,7 @@ def p_unary_expression(p):
                 level=p[2].level - 1,
                 type=p[2].type[:-2],
                 offset=p[2].offset,
+                addr=p[2].place,
                 in_whose_scope=p[2].in_whose_scope,
                 
             )
@@ -1351,7 +1348,6 @@ def p_unary_expression(p):
                     ]
                 )
             else:
-                # print(p[2].level)
                 if p[2].level > 1:
                     code_gen.append(
                         ["int^", temp_var, p[2].place, "0",]
@@ -1454,7 +1450,6 @@ def p_unary_expression(p):
                 )
 
         elif p[1].val == "!":
-            # print(p[2].type, p[2].place)
             if p[2].type.upper() not in TYPE_CHAR + TYPE_INTEGER:
                 ST.error(
                     Error(
@@ -2575,6 +2570,7 @@ def p_assignment_expression(p):
                 else:
                     # ARKA DOUBTS
                     print("else", p[0].type, temp_node.type)
+                    print(ST.find(p[1].addr))
                     offset_string1 = cal_offset(ST.find(p[1].addr))
                     
                     code_gen.append(
@@ -2679,6 +2675,7 @@ def p_declaration(p):
                 node = Node(
                     name=child.children[0].val,
                     type=child.type,
+                    place=child.children[0].val,
                     val=child.children[1].val,
                     size=get_data_type_size(p[1].type),
                     offset=offsets[ST.currentScope],
@@ -2811,6 +2808,8 @@ def p_declaration(p):
                     type=child.type,
                     size=get_data_type_size(p[1].type),
                     offset=offsets[ST.currentScope],
+                    place=child.val,
+                    val=child.val,
                 )
                 ST.current_table.insert(node)
                 totalEle = 1
@@ -3481,7 +3480,7 @@ def p_parameter_declaration(p):
                 )
             )
             p[0] = ST.get_dummy()
-        node = Node(name=p[2].val, type=p[1].type)
+        node = Node(name=p[2].val, type=p[1].type,place=p[2].val,val=p[2].val)
         ST.current_table.insert(node)
         if len(p[2].type) > 0:
             node.type = p[1].type + " " + p[2].type
@@ -4450,8 +4449,6 @@ def p_function_definition_2(p):
     )
     p[0].ast = build_AST_2(p, [1, 2, 4], rule_name)
     code_gen.append(["endfunc", "", "", ""])
-    # print(p[1])
-    # print(p[2])
 
     activation_record.append(["endfunc", "", "", ""])
     # funcstack.pop()
