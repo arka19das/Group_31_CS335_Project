@@ -3760,9 +3760,9 @@ def p_compound_statement(p):
 
 def p_new_compound_statement(p):
     """new_compound_statement : LEFT_CURLY_BRACKET pop_scope_rcb
-    | LEFT_CURLY_BRACKET statement_list pop_scope_rcb
-    | LEFT_CURLY_BRACKET declaration_list pop_scope_rcb
-    | LEFT_CURLY_BRACKET declaration_list statement_list pop_scope_rcb
+    | LEFT_CURLY_BRACKET statement_list return_statement pop_scope_rcb
+    | LEFT_CURLY_BRACKET declaration_list return_statement pop_scope_rcb
+    | LEFT_CURLY_BRACKET declaration_list statement_list return_statement pop_scope_rcb
     """
     rule_name = "new_compound_statement"
     if len(p) == 3:
@@ -3778,7 +3778,7 @@ def p_new_compound_statement(p):
             )
         )
         p[0] = ST.get_dummy()
-    elif len(p) == 4:
+    elif len(p) == 5:
         p[0] = p[2]
         p[0].name = "CompoundStatement"
         p[0].ast = p[2].ast
@@ -4280,11 +4280,11 @@ def p_for(p):
     p[0] = build_AST(p, rule_name)
 
 
-def p_jump_statemen_1(p):
+def p_jump_statement(p):
     """jump_statement : GOTO IDENTIFIER SEMICOLON
     | CONTINUE SEMICOLON
     | BREAK SEMICOLON"""
-    rule_name = "jump_statement_1"
+    rule_name = "jump_statement"
 
     p[0] = Node(name="JumpStatement", val="", type="", lno=p.lineno(1), children=[])
     p[0].ast = build_AST(p, rule_name)
@@ -4327,11 +4327,11 @@ def p_jump_statemen_1(p):
         code_gen.append(["goto", "", "", "__label_" + p[2][0]])
 
 
-def p_jump_statemen_2(p):
-    """jump_statement : RETURN SEMICOLON
+def p_return_statement(p):
+    """return_statement : RETURN SEMICOLON
     | RETURN expression SEMICOLON"""
     rule_name = "jump_statement_2"
-    p[0] = Node(name="JumpStatement", val="", type="", lno=p.lineno(1), children=[])
+    p[0] = Node(name="ReturnStatement", val="", type="", lno=p.lineno(1), children=[])
     p[0].ast = build_AST(p, rule_name)
     if len(p) == 3:
         if ST.curFuncReturnType != "void":

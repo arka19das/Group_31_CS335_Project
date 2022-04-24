@@ -1,13 +1,16 @@
-﻿﻿# CS335 Course Project
+﻿﻿﻿# CS335 Course Project
 
 Building a Compiler from C to MIPS, implemented in Python
 
 ## Group Members:
 
-- A. Kedarnath: 190002
-- Akshay Gupta: 190093
-- Arka Das: 190175
-- Bisweswar Martha: 190239
+
+| Name             | Roll No | Contribution % |
+|------------------|---------|----------------|
+| A. Kedarnath     | 190002  | 25%            |
+| Akshay Gupta     | 190093  | 25%            |
+| Arka Das         | 190175  | 25%            |
+| Bisweswar Martha | 190239  | 25%            |
 
 ## Milestone 1
 
@@ -60,3 +63,5 @@ python ./src/parser.py <testing_file_path> #command for testing
 # Rules for our grammar 
 
 1. Declaration only at beginning of scope
+2. `short`, `long`, `double`, `typedef` and `auto` removed
+3. Global Constants are not allowed.
