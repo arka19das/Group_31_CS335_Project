@@ -9,13 +9,9 @@ print_char:
     syscall
 
 print_float:
-    s.s $f12, 0($sp)
-    la $sp, -4($sp)
     l.s $f12, 0($fp)
     li $v0, 2
     syscall
-    la $sp, 4($sp)
-    l.s $f12, 0($sp)
 
 malloc:
     lw $a0, 0($fp)
