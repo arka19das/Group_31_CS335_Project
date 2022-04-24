@@ -3973,8 +3973,8 @@ def p_Switch_M3(p):
         activation_record.append(
             [
                 p[-4].type + "2" + "int",
-                tmp_var + tmp_offset_string,
-                p[-4].place + offset_string,
+                tmp_offset_string,
+                offset_string,
             ]
         )
 
