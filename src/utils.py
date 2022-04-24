@@ -163,6 +163,7 @@ class Node:
     addr: str = ""
     ast: Any = None
     in_whose_scope: str = ""
+    is_return: int =0 
 
     def to_dict(self, verbose: bool = False):
         s = {}
