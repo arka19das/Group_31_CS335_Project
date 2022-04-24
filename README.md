@@ -64,4 +64,4 @@ python ./src/parser.py <testing_file_path> #command for testing
 
 1. Declaration only at beginning of scope
 2. `short`, `long`, `double`, `typedef` and `auto` removed
-
+3. Global Constants are not allowed.

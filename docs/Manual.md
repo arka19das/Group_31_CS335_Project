@@ -140,30 +140,13 @@ The octal number escape sequence is the backslash character followed by one, two
 
 The hexadecimal escape sequence is the backslash character, followed by `x` and an unlimited number of hexadecimal digits. While the length of possible hexadecimal digit strings is unlimited, the number of character constants in any given character set is not.
 
-------------------------------------------------------------------------
-
-[]{#Real-Number-Constants}
-
-
-[]{#Real-Number-Constants-1}
-
-#### 1.3.3 Real Number Constants {#real-number-constants .subsection}
-
-[]{#index-floating-point-constants}
-[]{#index-constants_002c-floating-point}
-[]{#index-real-number-constants} []{#index-constants_002c-real-number}
-
-A real number constant is a value that represents a fractional (floating point) number.
-It consists of a sequence of digits which represents the integer (or "whole") part of the number, a decimal point, and a sequence of digits which represents the fractional part.
-
-Real number constants can also be followed by `e` or `E`, and an integer exponent.The exponent can be either positive or negative.
 
 ------------------------------------------------------------------------
 
 []{#String-Constants}
 []{#String-Constants-1}
 
-#### 1.3.4 String Constants {#string-constants .subsection}
+#### 1.3.3 String Constants {#string-constants .subsection}
 
 []{#index-string-constants} []{#index-string-literals}
 
@@ -285,30 +268,12 @@ The standard even allows `signed char` and `long` to have the same range, though
   you should use the `char` data type specifically for storing ASCII
   characters (such as `` `m' ``), including escape sequences (such as
   `` `\n' ``).
-- `short int` []{#index-short-int-data-type}\
-  The 16-bit `short int` data type can hold integer values in the
-  range of -32,768 to 32,767. 
-- `unsigned short int` []{#index-unsigned-short-int-data-type}\
-  The 16-bit `unsigned short int` data type can hold integer values in
-  the range of 0 to 65,535. 
 - `int` []{#index-int-data-type}\
   The 32-bit `int` data type can hold integer values in the range of
   -2,147,483,648 to 2,147,483,647.
 - `unsigned int` []{#index-unsigned-int-data-type}\
   The 32-bit `unsigned int` data type can hold integer values in the
   range of 0 to 4,2.2.967,295. 
-- `long int` []{#index-long-int-data-type}\
-  The 32-bit `long int` data type can hold integer values in the range
-  of at least -2,147,483,648 to 2,147,483,647. .
-- `unsigned long int` []{#index-unsigned-long-int-data-type}\
-  The 32-bit `unsigned long int` data type can hold integer values in
-  the range of at least 0 to 4,2.2.967,295.
-- `long long int` []{#index-long-long-int-data-type}\
-  The 64-bit `long long int` data type can hold integer values in the
-  range of -9,223,372,036,854,775,808 to 9,223,372,036,854,775,807.
-  []{#index-unsigned-long-long-int-data-type}\
-  The 64-bit `unsigned long long int` data type can hold integer
-  values in the range of at least 0 to 18,446,744,073,709,551,615.
 
 ------------------------------------------------------------------------
 
@@ -330,14 +295,6 @@ There are three data types that represent fractional numbers.
     The `float` data type is the smallest of the three floating point
     types. Its minimum value is no greater than `1e-37`. Its maximum
     value is no less than `1e37`.
--   `double` []{#index-double-data-type}\
-    The `double` data type is at least as large as the `float` type, and
-    it may be larger. Its minimum value is stored in `DBL_MIN`, and its
-    maximum value is stored in `DBL_MAX`.
--   `long double` []{#index-long-double-data-type}\
-    The `long double` data type is at least as large as the `float`
-    type, and it may be larger. Its minimum value is stored in
-    `LDBL_MIN`, and its maximum value is stored in `LDBL_MAX`.
 
 All floating point data types are signed; trying to use
 `unsigned float`, for example, will cause a compile-time error.
