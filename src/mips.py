@@ -485,7 +485,7 @@ def assign_op_ptr(atype, reg1, laddr, reg2, raddr):
         mips.append(["li",reg2,raddr])
     else:    
         mips.append([load_instr, reg2, raddr])
-    mips.append(["la", reg1, laddr])
+    mips.append(["lw", reg1, laddr])
     mips.append(["sw", reg2, f"0({reg1})"])
     return mips
 

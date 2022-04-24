@@ -28,8 +28,8 @@ int main()
 {
    
 
-   
-    struct t1 a,b;
+//    int a1=100;
+    struct t1 a;
     // float a1=3;
     // a.a=2;
     // b.d1=3;

@@ -693,7 +693,6 @@ def p_postfix_expression_3(p):
                     activation_record.append(
                         ["addr", tmp_offset_string, offset_string, "",]
                     )
-
                     # if curr_list[3] > 0:
                     code_gen.append(["int+", tmp, tmp, str(struct_node.size-curr_list[3]-get_data_type_size(curr_list[0]))])
                     activation_record.append(

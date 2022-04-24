@@ -294,9 +294,10 @@ class SymbolTable:
                 offset=offsets[scope],
             )
             scope_table.insert(node)
-            tmp_offset_string = f"{-offsets[scope]}($fp)"
             offsets[scope] += get_data_type_size(vartype)
             offsets[scope] += (4 - offsets[scope] % 4) % 4
+            tmp_offset_string = f"{-offsets[scope]}($fp)"
+            
             # symTab = get_current_symtab()
             # symTab.insert(
             #     {"name": vname, "type": vartype, "is_array": False, "dimensions": []}
