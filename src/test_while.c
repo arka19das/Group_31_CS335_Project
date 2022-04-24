@@ -29,14 +29,14 @@ int main()
    
 
    
-    struct t1 a;
+    struct t1 a,b;
     // float a1=3;
     // a.a=2;
     // b.d1=3;
     // print_int(a.a);
     // a=b;
     a.a=2;
-    a=b;
+    print_int(a.a);
     // func(a);
     return 0;
 }

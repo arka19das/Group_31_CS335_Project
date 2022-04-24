@@ -695,9 +695,9 @@ def p_postfix_expression_3(p):
                     )
 
                     # if curr_list[3] > 0:
-                    code_gen.append(["int-", tmp, tmp, curr_list[3]])
+                    code_gen.append(["int+", tmp, tmp, str(struct_node.size-curr_list[3]-get_data_type_size(curr_list[0]))])
                     activation_record.append(
-                        ["int-", tmp_offset_string, tmp_offset_string, curr_list[3],]
+                        ["int+", tmp_offset_string, tmp_offset_string, str(struct_node.size-curr_list[3]-get_data_type_size(curr_list[0]))]
                     )
                     # print(type1)
                     if type1.upper() in PRIMITIVE_TYPES:

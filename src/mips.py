@@ -694,17 +694,18 @@ def mips_generation(full_code_gen):
                 mips_set.extend(assign_op_ptr(s, freg1, code_gen[1],freg2, code_gen[2]))
         
         elif s == "2load" or s == "4load":
-            type = ""
-            op = ""
-            for i in s:
-                if i.isalpha() or i == " ":
-                    type += i
-                else:
-                    op += i
-            if type in TYPE_INTEGER:        
-                mips_set.extend(nload(s, ireg1 ,ireg2, code_gen[1], code_gen[2]))
-            else:
-                mips_set.extend(nload(s, freg1,freg2, code_gen[1], code_gen[2]))
+            # type = ""
+            # op = ""
+            # for i in s:
+            #     if i.isalpha() or i == " ":
+            #         type += i
+            #     else:
+            #         op += i
+            # print(type,"hello")
+            # if type in TYPE_INTEGER:        
+            mips_set.extend(nload(s, ireg1 ,ireg2, code_gen[1], code_gen[2]))
+            # else:
+            # mips_set.extend(nload(s, freg1,freg2, code_gen[1], code_gen[2]))
         #ISME KAISE KARNA FLOAT HANDLE
         elif s.endswith("non_primitive_load"):
             mips_set.extend(non_prim_load(s,"$t0","$t1",code_gen[1],code_gen[2]))    
