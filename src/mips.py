@@ -295,7 +295,7 @@ def binary_exp_mips(binexp, reg1, a1, reg2, a2, reg3, a3):
             type += i
         else:
             op += i
-    print(type, op)
+    # print(type, op)
     # mips.append(load_reg(reg1, a1, type))
     mips.append(load_reg(reg2, a2, type))
     if (op == "+" or op == "-") and type in TYPE_INTEGER:
@@ -441,7 +441,7 @@ def binary_exp_mips(binexp, reg1, a1, reg2, a2, reg3, a3):
     mips.append(store_reg(reg1, a1, type))
     return mips
 
-print(binary_exp_mips("int~","t1","a1","t2","a2","t3","a3"))
+# print(binary_exp_mips("int~","t1","a1","t2","a2","t3","a3"))
 
 # def LI(reg, const, type):
 #     if type == "int" or type == "char" or type == "short":

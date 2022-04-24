@@ -537,7 +537,7 @@ def p_postfix_expression_3(p):
                 is_func=0,
                 place=p[1].place,
                 lhs=1,
-                in_whose_scope=ST.scope_tables[ST.current_scope].name
+                in_whose_scope=ST.scope_tables[ST.currentScope].name
             )
             p[0].ast = build_AST_2(p, [1], "()")
             # p[0].ast = build_AST(p, rule_name)
@@ -659,7 +659,6 @@ def p_postfix_expression_3(p):
                     flag = 1
                     offset_string = cal_offset(p[1])
                     tmp, tmp_offset_string = ST.get_tmp_var("int")
-                    print(tmp_offset_string,tmp)
                     type1 = curr_list[0]
                     tmp2, tmp_offset_string2 = ST.get_tmp_var(curr_list[0])
                     p[0] = ST.find(tmp2)
@@ -1720,7 +1719,6 @@ def p_additive_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
-        print(p[0])
         
         if is_const(p[1].place) and is_const(p[3].place):
             if p[2] == "+":
@@ -2571,7 +2569,6 @@ def p_assignment_expression(p):
                 else:
                     # ARKA DOUBTS
                     print("else", p[0].type, temp_node.type)
-                    print(ST.find(p[1].addr))
                     offset_string1 = cal_offset(ST.find(p[1].addr))
                     
                     code_gen.append(
@@ -3760,9 +3757,9 @@ def p_compound_statement(p):
 
 def p_new_compound_statement(p):
     """new_compound_statement : LEFT_CURLY_BRACKET pop_scope_rcb
-    | LEFT_CURLY_BRACKET statement_list return_statement pop_scope_rcb
-    | LEFT_CURLY_BRACKET declaration_list return_statement pop_scope_rcb
-    | LEFT_CURLY_BRACKET declaration_list statement_list return_statement pop_scope_rcb
+    | LEFT_CURLY_BRACKET statement_list  pop_scope_rcb
+    | LEFT_CURLY_BRACKET declaration_list  pop_scope_rcb
+    | LEFT_CURLY_BRACKET declaration_list statement_list  pop_scope_rcb
     """
     rule_name = "new_compound_statement"
     if len(p) == 3:
@@ -3778,7 +3775,7 @@ def p_new_compound_statement(p):
             )
         )
         p[0] = ST.get_dummy()
-    elif len(p) == 5:
+    elif len(p) == 4:
         p[0] = p[2]
         p[0].name = "CompoundStatement"
         p[0].ast = p[2].ast
@@ -3801,10 +3798,39 @@ def p_new_compound_statement(p):
 
 
 def p_function_compound_statement(p):
-    """function_compound_statement : new_compound_statement"""
-    rule_name = "function_compound_statement"
-    p[0] = p[1]
-    p[0].ast = build_AST(p, rule_name)
+    """function_compound_statement :  LEFT_CURLY_BRACKET pop_scope_rcb
+    | LEFT_CURLY_BRACKET statement_list return_statement pop_scope_rcb
+    | LEFT_CURLY_BRACKET declaration_list return_statement pop_scope_rcb
+    | LEFT_CURLY_BRACKET declaration_list statement_list return_statement pop_scope_rcb
+    """
+    # rule_name = "function_compound_statement"
+    # p[0] = p[1]
+    # p[0].ast = build_AST(p, rule_name)
+    rule_name = "new_compound_statement"
+    if len(p) == 3:
+        p[0] = Node(
+            name="CompoundStatement", val="", type="", lno=p.lineno(1), children=[],
+        )
+        ST.error(
+            Error(
+                p.lineno(1),
+                rule_name,
+                "compilation error",
+                f"Empty function not allowed",
+            )
+        )
+        p[0] = ST.get_dummy()
+    elif len(p) == 5:
+        p[0] = p[2]
+        p[0].name = "CompoundStatement"
+        p[0].ast = p[2].ast
+    
+    else:
+        p[0] = Node(
+            name="CompoundStatement", val="", type="", children=[], lno=p.lineno(1),
+        )
+        # FIXME
+        p[0].ast = build_AST(p, rule_name)
 
 
 def p_declaration_list(p):
