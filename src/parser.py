@@ -1698,7 +1698,7 @@ def p_multipicative_expression(p):
                     [
                         p[3].type + "2" + p[0].type,
                         tmp_offset_string3,
-                        p[3].place + offset_string3,
+                        offset_string3,
                     ]
                 )
 
