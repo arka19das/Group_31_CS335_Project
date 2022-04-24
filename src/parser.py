@@ -659,7 +659,7 @@ def p_postfix_expression_3(p):
                     flag = 1
                     offset_string = cal_offset(p[1])
                     tmp, tmp_offset_string = ST.get_tmp_var("int")
-
+                    print(tmp_offset_string,tmp)
                     type1 = curr_list[0]
                     tmp2, tmp_offset_string2 = ST.get_tmp_var(curr_list[0])
                     p[0] = ST.find(tmp2)
@@ -1720,6 +1720,8 @@ def p_additive_expression(p):
         rule_name = p[2]
         _op = p[2][0] if p[2] is tuple else p[2]
         p[0] = type_util(p[1], p[3], _op)
+        print(p[0])
+        
         if is_const(p[1].place) and is_const(p[3].place):
             if p[2] == "+":
                 if p[0].type.upper() in TYPE_FLOAT:
@@ -1754,7 +1756,6 @@ def p_additive_expression(p):
                 activation_record.append(
                     [p[3].type + "2" + p[0].type, tmp_offset_string3, offset_string3,]
                 )
-
             code_gen.append([p[0].type + _op, p[0].place, tmp_var1, tmp_var3])
             activation_record.append(
                 [

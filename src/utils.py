@@ -348,24 +348,13 @@ def check_identifier(p, line):
 def type_util(op1: Node, op2: Node, op: str):
     # TODO: code_gen for type_conversion implicit
     rule_name = "type_util"
-    dummy_var, dummy_offset_string = ST.get_tmp_var("int")
+    
     scope_table = ST.scope_tables[ST.currentScope].name
-    dummy_node = Node(
-        name=op + "Operation",
-        val=dummy_var,
-        lno=op1.lno,
-        type="",
-        children=[],
-        place=dummy_var,
-        lhs=1,
-        in_whose_scope=scope_table,
-        offset=-(int(dummy_offset_string[0:-5])),
-    )
+   
 
     # Where are we using it @Martha ?
     if op1.type == "" or op2.type == "":
-        dummy_node.type = "int"
-        return dummy_node
+        return ST.get_dummy()
 
     top1 = str(op1.type)
     top2 = str(op2.type)
@@ -383,6 +372,7 @@ def type_util(op1: Node, op2: Node, op: str):
                         f"Invalid operation {op} on pointers of different levels",
                     )
                 )
+                return ST.get_dummy()
                 # return dummy_node
 
             if op1.base_type != op2.base_type:
@@ -394,6 +384,7 @@ def type_util(op1: Node, op2: Node, op: str):
                         f"Invalid operation {op} on pointers of different types",
                     )
                 )
+                return ST.get_dummy()
                 # return dummy_node
         else:
             ST.error(
@@ -404,6 +395,7 @@ def type_util(op1: Node, op2: Node, op: str):
                     f"Invalid operation {op} on pointers",
                 )
             )
+            return ST.get_dummy()
             # return dummy_node
 
         tmp_var, tmp_offset_string = ST.get_tmp_var(op1.type)
@@ -418,7 +410,7 @@ def type_util(op1: Node, op2: Node, op: str):
             place=tmp_var,
             lhs=1,
             in_whose_scope=scope_table,
-            offset=-(int(tmp_offset_string[0:-5])),
+            offset=ST.find(tmp_var).offset,
         )
 
     elif op1.level > 0 or op2.level > 0:
@@ -431,7 +423,7 @@ def type_util(op1: Node, op2: Node, op: str):
                     f"Incompatible data type {op} operator",
                 )
             )
-            return dummy_node
+            return ST.get_dummy()
         elif op1.level > 0:
             if op not in ["+", "-"]:
                 ST.error(
@@ -442,7 +434,7 @@ def type_util(op1: Node, op2: Node, op: str):
                         f"Invalid operation {op} on pointers",
                     )
                 )
-                return dummy_node
+                return ST.get_dummy()
 
             tmp_var, tmp_offset_string = ST.get_tmp_var(op1.type)
             scope_table = ST.scope_tables[ST.currentScope].name
@@ -456,7 +448,7 @@ def type_util(op1: Node, op2: Node, op: str):
                 place=tmp_var,
                 lhs=1,
                 in_whose_scope=scope_table,
-                offset=-(int(tmp_offset_string[0:-5])),
+                offset=ST.find(tmp_var).offset,
             )
 
         elif op2.level > 0 and tp1 in TYPE_FLOAT:
@@ -468,7 +460,7 @@ def type_util(op1: Node, op2: Node, op: str):
                     f"Incompatible data type {op} operator",
                 )
             )
-            return dummy_node
+            return ST.get_dummy()
 
         elif op2.level > 0:
             if op not in ["+", "-"]:
@@ -480,7 +472,7 @@ def type_util(op1: Node, op2: Node, op: str):
                         f"Invalid operation {op} on pointers",
                     )
                 )
-                return dummy_node
+                return ST.get_dummy()
             tmp_var, tmp_offset_string = ST.get_tmp_var(op2.type)
             scope_table = ST.scope_tables[ST.currentScope].name
             temp = Node(
@@ -493,7 +485,7 @@ def type_util(op1: Node, op2: Node, op: str):
                 place=tmp_var,
                 lhs=1,
                 in_whose_scope=scope_table,
-                offset=-(int(tmp_offset_string[0:-5])),
+                offset=ST.find(tmp_var).offset,
             )
 
     elif top1.startswith("struct") or top2.startswith("struct"):
@@ -509,7 +501,7 @@ def type_util(op1: Node, op2: Node, op: str):
 
         # typ = op1.type if top1.startswith("struct") else op2.type
         # temp.type = typ
-        return dummy_node
+        return ST.get_dummy()
 
     else:
         temp_1 = op1.type.split(" ")
@@ -540,7 +532,8 @@ def type_util(op1: Node, op2: Node, op: str):
                     f"Incompatible data type {op} operator",
                 )
             )
-            return dummy_node
+        
+            return ST.get_dummy()
 
         else:
             size1 = SIZE_OF_TYPE[tp1]
@@ -590,7 +583,7 @@ def type_util(op1: Node, op2: Node, op: str):
                 place=tmp_var,
                 lhs=1,
                 in_whose_scope=scope_table,
-                offset=-(int(tmp_offset_string[0:-5])),
+                offset=ST.find(tmp_var).offset,
             )
 
     p_node = ST.find(op1.val)
@@ -603,7 +596,8 @@ def type_util(op1: Node, op2: Node, op: str):
                 f"Invalid operation on {op1.val}",
             )
         )
-        return dummy_node
+        return ST.get_dummy()
+
     p_node = ST.find(op2.val)
     if (p_node is not None) and (op2.is_func == 1):
         ST.error(
@@ -614,7 +608,8 @@ def type_util(op1: Node, op2: Node, op: str):
                 f"Invalid operation on {op2.val}",
             )
         )
-        return dummy_node
+        return ST.get_dummy()
+
     return temp
 
 

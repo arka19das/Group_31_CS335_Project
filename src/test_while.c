@@ -9,7 +9,7 @@ struct t1
     int a;
     struct t2 d;
     int b;
-    // float d1;
+    float d1;
     // struct t1 *next;
 };
 
@@ -25,18 +25,19 @@ struct t1
 //     return sum;
     
 // }
-int func(int *x)
-{
-    *x=3;
+// int func(int *x)
+// {
+//     *x=3;
     
-    return 0;
-}
+//     return 0;
+// }
 int main()
 {
    
 
 //    int a1=100;
-    // struct t1 a;
+    struct t1 a,b;
+    int a1,b1;
     // float a1=3;
     // a.a=2;
     // b.d1=3;
@@ -44,13 +45,18 @@ int main()
     // a=b;
     // a.a=2;
     // a.d.a=1; /nested struct wrong
-    int *x,y=1000,z=3,arr[10];
+    /*int *x,y=1000,z=3,arr[10];
     // arr[19][1]=18737346;
     // arr[19]+1;
     arr[0]=2;
-    x=arr;
+    // x=arr;
+    func(x);
     // *x=300;
-    print_int(*x);
+    print_int(arr[0]);*/
+    // a.a=2;
+    // a=b;
+    // b1=a1+1;
+    // a.a=2;
     // func(a);
     return 0;
 }

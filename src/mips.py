@@ -615,8 +615,7 @@ def mips_generation(full_code_gen):
     freg2 = "$f2"
     freg3 = "$f3"
     mips_set = []
-    mips_set.append([".data"])
-    mips_set.append([".text"])
+    mips_set.append([".data\n.text",'\nprint_int:\n    lw $a0, 0($fp)\n    li $v0, 1\n    syscall\n    jr $ra\nprint_char:\n    lw $a0, 0($fp)\n    li $v0, 11\n    syscall\n    jr $ra\nprint_float:\n    l.s $f12, 0($fp)\n    li $v0, 2\n    syscall\n    jr $ra'])
     # mips_set.append([".globl main"])
     params = []
     return_offset = 0
