@@ -284,6 +284,7 @@ class SymbolTable:
         if vartype is not None:
             scope = self.currentScope
             scope_table = self.scope_tables[scope]
+            print(scope_table.name)
             node = Node(
                 name=vname,
                 val=value,
@@ -296,7 +297,18 @@ class SymbolTable:
             scope_table.insert(node)
             offsets[scope] += get_data_type_size(vartype)
             offsets[scope] += (4 - offsets[scope] % 4) % 4
-            tmp_offset_string = f"{-offsets[scope]}($fp)"
+            
+            count_ = scope_table.name.count("_")
+            offset = 0
+            temp=1
+            temp=table_name_to_num[scope_table.name]
+            for c_ in range(count_):  # CHECK ARKA BC
+                
+                temp=ST.parent[temp]
+                offset+=offsets[temp]
+
+            offset += offsets[scope]
+            tmp_offset_string = f"{-offset}($fp)"
             
             # symTab = get_current_symtab()
             # symTab.insert(

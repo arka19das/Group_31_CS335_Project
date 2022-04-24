@@ -24,7 +24,7 @@ int main(){
 
     int arr[2], i;
     for(i=0;i<2;i++){
-        arr[i]=i;
+        arr[i]=2<<i;
         print_int(arr[i]);
     }
     // for(int i=0;i<2;i++){
