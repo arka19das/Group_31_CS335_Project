@@ -481,11 +481,15 @@ def assign_op_ptr(atype, reg1, laddr, reg2, raddr):
     mips = []
     type = atype[:-1]
     load_instr = LOAD_INSTRUCTIONS.get(type, f"{error_variable} {atype} not found")
-    mips.append([load_instr, reg2, raddr])
-    mips.append(["lw", reg1, laddr])
+    if is_int(raddr):
+        mips.append(["li",reg2,raddr])
+    else:    
+        mips.append([load_instr, reg2, raddr])
+    mips.append(["la", reg1, laddr])
     mips.append(["sw", reg2, f"0({reg1})"])
     return mips
 
+#print(assign_op_ptr("int=","reg1","a1","reg2","1"))
 
 # int*=  var tmp_var
 def addr_str(reg1, laddr, raddr):
