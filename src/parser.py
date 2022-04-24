@@ -2563,8 +2563,8 @@ def p_assignment_expression(p):
                             activation_record.append(
                                 [
                                     "int=",
-                                    f"{int(offset_string1[0:-5])-int_offset}($fp)",
-                                    f"{int(offset_string3[0:-5])-int_offset}($fp)",
+                                    f"{int(offset_string1[0:-5])+int_offset}($fp)",
+                                    f"{int(offset_string3[0:-5])+int_offset}($fp)",
                                     "",
                                 ]
                             )
