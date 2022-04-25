@@ -35,7 +35,8 @@ White space, sometimes required to separate tokens, is also described in this ch
 []{#index-identifiers}
 
 Identifiers are sequences of characters used for naming variables, functions, new data types, and preprocessor macros.
-You can include letters, decimal digits, and the underscore character '`_`{.sample}' in identifiers. The first character of an identifier cannot be a digit. Identifiers are case sensitive.
+You can include letters and decimal digits in identifiers. The first character of an identifier cannot be a digit. Identifiers are case sensitive.
+Unlike C99, we do not allow underscores in a variable
 
 ------------------------------------------------------------------------
 
@@ -54,8 +55,8 @@ You cannot use them for any other purpose.
 Here is a list of keywords recognized by C:
 
 ```example
-break case char continue default do double else
-float for goto if int long return short signed sizeof
+break case char continue default do else
+float for goto if intreturn signed sizeof
 struct switch unsigned void while
 ```
 
@@ -99,7 +100,7 @@ You can force an integer constant to be of a long and/or unsigned integer type b
 
 `u` \ `U` :   Unsigned integer type.
 
-`l` \ `L` :   Long integer type.
+Float Constants are currently not allowed.
 
 ------------------------------------------------------------------------
 
@@ -140,30 +141,13 @@ The octal number escape sequence is the backslash character followed by one, two
 
 The hexadecimal escape sequence is the backslash character, followed by `x` and an unlimited number of hexadecimal digits. While the length of possible hexadecimal digit strings is unlimited, the number of character constants in any given character set is not.
 
-------------------------------------------------------------------------
-
-[]{#Real-Number-Constants}
-
-
-[]{#Real-Number-Constants-1}
-
-#### 1.3.3 Real Number Constants {#real-number-constants .subsection}
-
-[]{#index-floating-point-constants}
-[]{#index-constants_002c-floating-point}
-[]{#index-real-number-constants} []{#index-constants_002c-real-number}
-
-A real number constant is a value that represents a fractional (floating point) number.
-It consists of a sequence of digits which represents the integer (or "whole") part of the number, a decimal point, and a sequence of digits which represents the fractional part.
-
-Real number constants can also be followed by `e` or `E`, and an integer exponent.The exponent can be either positive or negative.
 
 ------------------------------------------------------------------------
 
 []{#String-Constants}
 []{#String-Constants-1}
 
-#### 1.3.4 String Constants {#string-constants .subsection}
+#### 1.3.3 String Constants {#string-constants .subsection}
 
 []{#index-string-constants} []{#index-string-literals}
 
@@ -271,8 +255,8 @@ You should use integer types for storing whole number values (and the `char` dat
 The sizes and ranges listed for these types are minimums; depending on your computer platform, these sizes and ranges may be larger.
 
 While these ranges provide a natural ordering, the standard does not require that any two types have a different range.
-For example, it is common for `int` and `long` to have the same range.
-The standard even allows `signed char` and `long` to have the same range, though such platforms are very unusual.
+For example, it is common for `int` to have the same range.
+The standard even allows `signed char` to have the same range, though such platforms are very unusual.
 
 - `signed char` []{#index-signed-char-data-type}\
   The 8-bit `signed char` data type can hold integer values in the range of -128 to 127.
@@ -285,30 +269,12 @@ The standard even allows `signed char` and `long` to have the same range, though
   you should use the `char` data type specifically for storing ASCII
   characters (such as `` `m' ``), including escape sequences (such as
   `` `\n' ``).
-- `short int` []{#index-short-int-data-type}\
-  The 16-bit `short int` data type can hold integer values in the
-  range of -32,768 to 32,767. 
-- `unsigned short int` []{#index-unsigned-short-int-data-type}\
-  The 16-bit `unsigned short int` data type can hold integer values in
-  the range of 0 to 65,535. 
 - `int` []{#index-int-data-type}\
   The 32-bit `int` data type can hold integer values in the range of
   -2,147,483,648 to 2,147,483,647.
 - `unsigned int` []{#index-unsigned-int-data-type}\
   The 32-bit `unsigned int` data type can hold integer values in the
   range of 0 to 4,2.2.967,295. 
-- `long int` []{#index-long-int-data-type}\
-  The 32-bit `long int` data type can hold integer values in the range
-  of at least -2,147,483,648 to 2,147,483,647. .
-- `unsigned long int` []{#index-unsigned-long-int-data-type}\
-  The 32-bit `unsigned long int` data type can hold integer values in
-  the range of at least 0 to 4,2.2.967,295.
-- `long long int` []{#index-long-long-int-data-type}\
-  The 64-bit `long long int` data type can hold integer values in the
-  range of -9,223,372,036,854,775,808 to 9,223,372,036,854,775,807.
-  []{#index-unsigned-long-long-int-data-type}\
-  The 64-bit `unsigned long long int` data type can hold integer
-  values in the range of at least 0 to 18,446,744,073,709,551,615.
 
 ------------------------------------------------------------------------
 
@@ -330,14 +296,6 @@ There are three data types that represent fractional numbers.
     The `float` data type is the smallest of the three floating point
     types. Its minimum value is no greater than `1e-37`. Its maximum
     value is no less than `1e37`.
--   `double` []{#index-double-data-type}\
-    The `double` data type is at least as large as the `float` type, and
-    it may be larger. Its minimum value is stored in `DBL_MIN`, and its
-    maximum value is stored in `DBL_MAX`.
--   `long double` []{#index-long-double-data-type}\
-    The `long double` data type is at least as large as the `float`
-    type, and it may be larger. Its minimum value is stored in
-    `LDBL_MIN`, and its maximum value is stored in `LDBL_MAX`.
 
 All floating point data types are signed; trying to use
 `unsigned float`, for example, will cause a compile-time error.
@@ -366,13 +324,15 @@ A structure is a programmer-defined data type made up of variables of other data
 []{#index-defining-structures} []{#index-structures_002c-defining}
 
 You define a structure using the `struct` keyword followed by the declarations of the structure's members, enclosed in braces.
-You declare each member of a structure just as you would normally declare a variable---using the data type followed by one or more variable names separated by commas, and ending with a semicolon.
+You declare each member of a structure just as you would normally declare a variable---using the data type followed by one or more variable names separated by commas, and optionally ending with a semicolon.
 Then end the structure definition with a semicolon after the closing brace.
 
 You should also include a name for the structure in between the `struct` keyword and the opening brace.
 This is optional, but if you leave it out, you can't refer to that structure data type later on.
 
 It is possible for a structure type to contain a field which is a pointer to the same type.
+
+A struct can not contain other structs as fields
 
 ------------------------------------------------------------------------
 
@@ -421,34 +381,6 @@ declare more than one such variable by separating the names with commas.
 You can declare variables of a structure type after defining the
 structure by using the `struct` keyword and the name you gave the
 structure type, followed by variable names separated by commas.
-
-------------------------------------------------------------------------
-
-[]{#Initializing-Structure-Members}
-
-
-[]{#Initializing-Structure-Members-1}
-
-#### 2.2.2.3 Initializing Structure Members {#initializing-structure-members .subsubsection}
-
-[]{#index-initializing-structure-members}
-[]{#index-structure-members_002c-initializing}
-
-You can initialize the members of a structure type to have certain
-values when you declare structure variables.
-
-If you do not initialize a structure variable, it's, members with
-integral types are initialized with 0 and pointer members are
-initialized to NULL.
-
-One way to initialize a structure is to specify the values in a set of
-braces and separated by commas. Those values are assigned to the
-structure members in the same order that the members are declared in the
-structure in definition. Another way to initialize the members is to specify the name of the member to initialize. This way, you can initialize the members in any order you like, and even leave some of them uninitialized.
-
-You can also initialize the structure variable's members when you
-declare the variable during the structure definition and  can also initialize fewer than all of a structure variable's
-members.
 
 ------------------------------------------------------------------------
 
@@ -509,39 +441,6 @@ For standard C code, the number of elements in an array must be positive.
 The number of elements can be as small as zero.
 Zero-length arrays are useful as the last element of a structure which is really a header for a variable-length object:
 
-C allows you to declare an array size using
-variables, rather than only constants.
-
-------------------------------------------------------------------------
-
-[]{#Initializing-Arrays}
-
-
-[]{#Initializing-Arrays-1}
-
-#### 2.3.2 Initializing Arrays {#initializing-arrays .subsection}
-
-[]{#index-initializing-arrays} []{#index-arrays_002c-initializing}
-
-You can initialize the elements in an array when you declare it by
-listing the initializing values, separated by commas, in a set of
-braces.
-
-
-You don't have to explicitly initialize all of the array elements.ro:
-
-You can initialize array elements out of order, by specifying which array
-indices to initialize. To do this, include the array index in brackets,
-and optionally the assignment operator, before the value.
-
-If you initialize every element of an array, then you do not have to
-specify its size; its size is determined by the number of elements you
-initialize.
-
-Alternately, if you specify which elements to initialize, then the size
-of the array is equal to the highest element number initialized, plus
-one.
-
 ------------------------------------------------------------------------
 
 []{#Accessing-Array-Elements}
@@ -557,61 +456,6 @@ one.
 You can access the elements of an array by specifying the array name,
 followed by the element index, enclosed in brackets. Remember that the
 array elements are numbered starting with zero.
-
-------------------------------------------------------------------------
-
-[]{#Arrays-as-Strings}
-
-
-[]{#Arrays-as-Strings-1}
-
-#### 2.3.4 Arrays as Strings {#arrays-as-strings .subsection}
-
-[]{#index-arrays-as-strings} []{#index-strings_002c-arrays-as}
-
-You can use an array of characters to hold a string (see [String
-Constants](#String-Constants)). The array may be built of either signed
-or unsigned characters.
-
-[]{#index-string-arrays_002c-declaring}
-[]{#index-declaring-string-arrays}
-
-When you declare the array, you can specify the number of elements it
-will have. That number will be the maximum number of characters that
-should be in the string, including the null character used to end the
-string. If you choose this option, then you do not have to initialize
-the array when you declare it. Alternately, you can simply initialize
-the array to a value, and its size will then be exactly large enough to
-hold whatever string you used to initialize it.
-
-[]{#index-string-arrays_002c-initializing}
-[]{#index-initializing-string-arrays}
-
-There are two different ways to initialize the array. You can specify of
-comma-delimited list of characters enclosed in braces, or you can
-specify a string literal enclosed in double quotation marks.
-
-
-The null character `\0` is included at the end
-of the string, even when not explicitly stated. (Note that if you
-initialize a string using an array of individual characters, then the
-null character is *not* guaranteed to be present. It might be, but such
-an occurrence would be one of chance, and should not be relied upon.)
-
-After initialization, you cannot assign a new string literal to an array
-using the assignment operator.
-
-
-However, you can change one character at a time, by accessing individual string elements as you
-would any other array:
-
-It is possible for you to explicitly state the number of elements in the
-array, and then initialize it using a string that has more characters
-than there are elements in the array. This is not a good thing. The
-larger string will *not* override the previously specified size of the
-array, and you will get a compile-time warning. Since the original array
-size remains, any part of the string that exceeds that original size is
-being written to a memory location that was not allocated for it.
 
 ------------------------------------------------------------------------
 
@@ -932,12 +776,12 @@ Bitwise negation reverses each bit in its operand.
 
 []{#Pointer-Operators-1}
 
-### 3.9 Pointer Operators {#pointer-operators .section}
+### 3.9 Pointer Operators {#pointer-operators .section} (Optional)
 
 []{#index-pointer-operators}
 
 You can use the address operator `&` to obtain the memory address of an
-object.
+identifier only.
 
 Function pointers and data pointers are not compatible, in the sense
 that you cannot expect to store the address of a function into a data
@@ -965,7 +809,7 @@ data type of its operand. The operand may be an actual type specifier
 (such as `int` or `float`), as well as any valid expression. When the
 operand is a type name, it must be enclosed in parentheses.
 
-The result of the `sizeof` operator is perhaps identical to `unsigned int` or `unsigned long int`; it varies from system to system.
+The result of the `sizeof` operator is perhaps identical to `unsigned int`; it varies from system to system.
 
 ------------------------------------------------------------------------
 
@@ -1065,25 +909,6 @@ on the truth value of its first operand.
 
 ------------------------------------------------------------------------
 
-[]{#Statements-and-Declarations-in-Expressions}
-
-
-[]{#Statements-and-Declarations-in-Expressions-1}
-
-### 3.17 Statements and Declarations in Expressions {#statements-and-declarations-in-expressions .section}
-
-[]{#index-statements-inside-expressions}
-[]{#index-declarations-inside-expressions}
-[]{#index-expressions-containing-statements}
-[]{#index-macros_002c-statements-in-expressions}
-
-As a GNU C extension, you can build an expression using compound
-statement enclosed in parentheses. This allows you to included loops,
-switches, and local variables within an expression.
-
-
-------------------------------------------------------------------------
-
 []{#Operator-Precedence}
 
 
@@ -1162,7 +987,7 @@ consists of an identifier
 followed by a colon.
 
 Label names should not interfere with other identifier names. The ISO C standard mandates that a label must be followed by at least
-one statement, possibly a null statemen otherwise undefined behavior shall occur in the compiler.
+one statement, possibly a null statement otherwise undefined behavior shall occur in the compiler.
 
 ------------------------------------------------------------------------
 
@@ -1199,7 +1024,7 @@ evaluates to false, then `else-statement`{.variable} is executed and
 
 You can use a series of `if` statements to test for multiple conditions.
 
-**Unlike GNU C99, for our subset of c the statement(s) compulsorily  have to be nexessarily in blocks using braces '{' at the beginning and '}' at the end for correct evaluation by our compiler.**
+**Unlike GNU C99, for our subset of c the statement(s) compulsorily  have to be necessarily in blocks using braces '{' at the beginning and '}' at the end for correct evaluation by our compiler.**
 
 
 ------------------------------------------------------------------------
@@ -1330,7 +1155,7 @@ for (initialize; test; step)
 :::
 
 
-**Unlike GNU C99, for our subset of c, the statement(s) following `for (initialize; test; step)`{.variable} compulsorily have to be nexessarily in blocks using braces '{' at the beginning and '}' at the end for correct evaluation by our compiler, just as we did above for if.**
+**Unlike GNU C99, for our subset of c, the statement(s) following `for (initialize; test; step)`{.variable} compulsorily have to be necessarily in blocks using braces '{' at the beginning and '}' at the end for correct evaluation by our compiler, just as we did above for if.**
 
 
 The `for` statement first evaluates the expression
@@ -1484,7 +1309,7 @@ If the function's return type is not the same as the type of
 `return-value`{.variable}, and automatic type conversion cannot be
 performed, then returning `return-value`{.variable} is invalid.
 
-If the function's return type is not `void` then return value *must* be specified.
+If the function's return type is not `void` then return value *must* be specified at the end of the body of the function.
 
 ------------------------------------------------------------------------
 
@@ -1562,11 +1387,6 @@ Every program requires at least one function, called '`main`'.
 This is where the program begins executing. The return type for `main` is always `int`. Reaching the `}` at the end of `main` without a return, or executing a `return` statement with no value (that is, `return;`) are both
 equivalent. The effect of this is equivalent to `return 0;`.
 
-You can write your `main` function that accept parameters from the command line. To accept command line parameters, you need to have two parameters in
-the `main` function, `int argc` followed by `char *argv[]`. They must have those data types---`int` and array of pointers to `char`.  `argv[0]`,
-the first element in the array, is the name of the program as typed at
-the command line.
-
 ------------------------------------------------------------------------
 
 []{#Recursive-Functions}
@@ -1612,40 +1432,7 @@ A declared object can be visible only within a particular function, or within a 
 
 This section shall contain details of various advanced features apart from the above mentioned basic features we are going to implement through our compiler along with some of the code optimizations
 **We are gonna implement this only if time permits**.
-------------------------------------------------------------------------
 
-[]{#DeadCode}
-
-[]{#DeadCode-1}
-
-### 7.1 Dead Code Elimination{#deadcode .section}
-
-This section deals with code optimization through the process of dead code elimination. If the compiler can obtain a section of code which can never be executed or does not modify the code results, it shall remove the section of that code thus decreasing the length of mips file and increasing the speed of execution.
-
-------------------------------------------------------------------------
-
-[]{#Short-Circuit-Evaluation}
-
-[]{#Short-Circuit-Evaluation-1}
-
-### 7.2 Short Circuit Evaluation{#shortcircuitevaluation .section}
-
-This is also used to increase the speed of execution of the code. In this the later arguments are only evaluated if after the evaluation of all the  arguments until now  is not sufficient to evaluate the value of the entire expression.
-
-------------------------------------------------------------------------
-
-[]{#Dynamic-Memory-Allocation}
-
-[]{#Dynamic-Memory-Allocation-1}
-
-### 7.3 Dynamic Memory Allocation{#dynamicmemoryallocation .section}
-
-We allow dynamic memory allocation of various size as per requirement which is not known during compile time like `malloc, calloc` functions.
-Freeing of these dynamically allocated memory during runtime is done using `free` function.
-
-Here, the malloc function  dynamically allocate a single large block of memory with the specified size. It returns a pointer of type void which can be cast into a pointer of any form. It doesn’t Initialize memory at execution time so that it has initialized each block with the default garbage value initially.
-
-The calloc  dynamically allocate a single large block of memory with the specified size. It returns a pointer of type void which can be cast into a pointer of any form. It initialize memory with default value zero initially. It takes two arguments the number of elements and size of each element.
 
 ------------------------------------------------------------------------
 
@@ -1653,9 +1440,9 @@ The calloc  dynamically allocate a single large block of memory with the specifi
 
 []{#File-Handling-1}
 
-### 7.4 File Handling{#filehandling .section}
+### 7.1 File Handling{#filehandling .section}
 
-We extend the basic C99 to include file IO using functions such as `fopen, flcose, fseek, fwrite, fread` for opening, closing, pointing at a specific location in the file, writing to a file, reading from a file respectively.
+We extend the basic C99 to include file IO using functions such as `fopen, fclose, fseek, fwrite, fread` for opening, closing, pointing at a specific location in the file, writing to a file, reading from a file respectively.
 
 ------------------------------------------------------------------------
 
@@ -1663,7 +1450,7 @@ We extend the basic C99 to include file IO using functions such as `fopen, flcos
 
 []{#Library-Functions-1}
 
-### 7.5 Library Functions{#libraryfunctions .section}
+### 7.2 Library Functions{#libraryfunctions .section}
 
 We implement various library functions to provide additional mathematical functions, string manipulation functions such as `strchr(),strlwr(),strupr()` to provide additional functionalities.
 
@@ -1675,30 +1462,21 @@ We implement various library functions to provide additional mathematical functi
 
 []{#Multidimensional Arrays-1}
 
-### 7.6 Multidimensional Arrays{#multidimensionalarrays .section}
+### 7.3 Multidimensional Arrays{#multidimensionalarrays .section}
 We plan to implement multidimensional arrays, in simple words as an array of arrays. Data in multidimensional arrays are stored in tabular form.
 
 Currently, we only allow pointers of level 1 to refer to rows of the multidimensional arrays. 
 Pointers of higher levels cannot be initialized to rows of multidimensional arrays 
 
-```c 
-int arr[2][3][4];
-int* ptr = arr[1][2]; // Works !
-int** ptr2 = arr[1]; // Fails
-```
-
 **We have started to implement this, work in progress**.
 
-----------------------------------------------------------------
+### 7.4 Compile Time Evaluation 
 
-[]{#Incomplete Arrays}
+Constant expressions are evaluated at compile time
 
-[]{#Incomplete Arrays-1}
+### 7.5 Return non-primitive types 
 
-### 7.7  Incomplete Arrays{#incompletearrays .section}
-We plan to implement arrays of unspecified length i.e the first dimension can be made optional.
-
-**We are gonna implement this only if time permits**.
+We can return non-primitive types such as struct from a function, as well simple types like int, float, etc.
 
 ----------------------------------------------------------------
 --------------------------------------------------------------------------

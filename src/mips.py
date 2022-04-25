@@ -295,7 +295,7 @@ def binary_exp_mips(binexp, reg1, a1, reg2, a2, reg3, a3):
             type += i
         else:
             op += i
-    print(type, op)
+    # print(type, op)
     # mips.append(load_reg(reg1, a1, type))
     mips.append(load_reg(reg2, a2, type))
     if (op == "+" or op == "-") and type in TYPE_INTEGER:
@@ -441,7 +441,7 @@ def binary_exp_mips(binexp, reg1, a1, reg2, a2, reg3, a3):
     mips.append(store_reg(reg1, a1, type))
     return mips
 
-print(binary_exp_mips("int~","t1","a1","t2","a2","t3","a3"))
+# print(binary_exp_mips("int~","t1","a1","t2","a2","t3","a3"))
 
 # def LI(reg, const, type):
 #     if type == "int" or type == "char" or type == "short":
@@ -481,11 +481,15 @@ def assign_op_ptr(atype, reg1, laddr, reg2, raddr):
     mips = []
     type = atype[:-1]
     load_instr = LOAD_INSTRUCTIONS.get(type, f"{error_variable} {atype} not found")
-    mips.append([load_instr, reg2, raddr])
+    if is_int(raddr):
+        mips.append(["li",reg2,raddr])
+    else:    
+        mips.append([load_instr, reg2, raddr])
     mips.append(["lw", reg1, laddr])
     mips.append(["sw", reg2, f"0({reg1})"])
     return mips
 
+#print(assign_op_ptr("int=","reg1","a1","reg2","1"))
 
 # int*=  var tmp_var
 def addr_str(reg1, laddr, raddr):
@@ -611,8 +615,7 @@ def mips_generation(full_code_gen):
     freg2 = "$f2"
     freg3 = "$f3"
     mips_set = []
-    mips_set.append([".data"])
-    mips_set.append([".text"])
+    mips_set.append([".data\n.text",'\nprint_int:\n    lw $a0, 0($fp)\n    li $v0, 1\n    syscall\n    jr $ra\nprint_char:\n    lw $a0, 0($fp)\n    li $v0, 11\n    syscall\n    jr $ra\nprint_float:\n    l.s $f12, 0($fp)\n    li $v0, 2\n    syscall\n    jr $ra     \nread_int:\n    li $v0, 5\n    syscall\n    jr $ra\nread_char:\n    li $v0, 12\n    syscall\n    jr $ra\n'])
     # mips_set.append([".globl main"])
     params = []
     return_offset = 0
@@ -642,7 +645,7 @@ def mips_generation(full_code_gen):
         )
         if "2" in s and "_" not in s and s!="2load":
             conversion_type = s.split("2")
-            print(code_gen)
+            # print(code_gen)
             mips_set += conversion(conversion_type[0], code_gen[2], conversion_type[1], code_gen[1])
 
         elif s.endswith(operators):
@@ -694,17 +697,18 @@ def mips_generation(full_code_gen):
                 mips_set.extend(assign_op_ptr(s, freg1, code_gen[1],freg2, code_gen[2]))
         
         elif s == "2load" or s == "4load":
-            type = ""
-            op = ""
-            for i in s:
-                if i.isalpha() or i == " ":
-                    type += i
-                else:
-                    op += i
-            if type in TYPE_INTEGER:        
-                mips_set.extend(nload(s, ireg1 ,ireg2, code_gen[1], code_gen[2]))
-            else:
-                mips_set.extend(nload(s, freg1,freg2, code_gen[1], code_gen[2]))
+            # type = ""
+            # op = ""
+            # for i in s:
+            #     if i.isalpha() or i == " ":
+            #         type += i
+            #     else:
+            #         op += i
+            # print(type,"hello")
+            # if type in TYPE_INTEGER:        
+            mips_set.extend(nload(s, ireg1 ,ireg2, code_gen[1], code_gen[2]))
+            # else:
+            # mips_set.extend(nload(s, freg1,freg2, code_gen[1], code_gen[2]))
         #ISME KAISE KARNA FLOAT HANDLE
         elif s.endswith("non_primitive_load"):
             mips_set.extend(non_prim_load(s,"$t0","$t1",code_gen[1],code_gen[2]))    
@@ -763,16 +767,25 @@ def mips_generation(full_code_gen):
             
             for p in params:
                 mips_set.append(p)
-            params = []
+            
             mips_set.append(["LA","$fp",f"{-int(node_type[2])}($fp)"])
             mips_set.append(["move","$sp","$fp"])
             mips_set.append(["jal", code_gen[1], ""])
+            
             mips_set.append(["ADD","$fp","$fp",f"{int(node_type[3])-sz}"])
             # mips_set.append(["MOV","$fp","$t0"])
             mips_set.append(["LW", "$ra", "-8($fp)"])
             mips_set.append(["move","$sp","$fp"])
             mips_set.append(["LW", "$fp", "-4($fp)"])
             mips_set.append(["move","$sp","$fp"])
+            if "read_int" == code_gen[1]:
+                mips_set.append(["SW","$v0",params[0][-1]])
+            elif "read_char" == code_gen[1]:
+                mips_set.append(["SW","$v0",params[0][-1]])   
+            # elif "read_float" == code_gen[1]:
+            #     mips_set.append(["SW","$f0",params[0][-1]])    
+            # print(node_type,params[0])
+            params = []
             
         elif "param" in s:
             if is_char(code_gen[1]):

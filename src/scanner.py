@@ -143,7 +143,7 @@ class Lexer(object):
     t_OCT_CONSTANT = r"0[0-7]+([uU][lL][lL]|[uU][lL]|[lL][lL]|[uU]|[lL])?"
     t_FLOAT_CONSTANT = r"((\d+)(\.\d+)(e(\+|-)?(\d+))? | (\d+)\.?e(\+|-)?(\d+)| (\.\d+)(e(\+|-)?(\d+))?)([lL]|[fF])?"
     t_STRING_LITERAL = r"\"([^\"\\\n]|(\\.))*\""
-    t_CHAR_CONSTANT = r"(L)?\'([^\\\n]|(\\.))*?\'"
+    t_CHAR_CONSTANT = r"\'([^\"\\\n]|(\\.))*\'"
     t_RIGHT_ASSIGN = r">>="
     t_LEFT_ASSIGN = r"<<="
     t_ADD_ASSIGN = r"\+="
