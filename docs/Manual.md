@@ -35,7 +35,8 @@ White space, sometimes required to separate tokens, is also described in this ch
 []{#index-identifiers}
 
 Identifiers are sequences of characters used for naming variables, functions, new data types, and preprocessor macros.
-You can include letters, decimal digits, and the underscore character '`_`{.sample}' in identifiers. The first character of an identifier cannot be a digit. Identifiers are case sensitive.
+You can include letters and decimal digits in identifiers. The first character of an identifier cannot be a digit. Identifiers are case sensitive.
+Unlike C99, we do not allow underscores in a variable
 
 ------------------------------------------------------------------------
 
@@ -1472,6 +1473,10 @@ Pointers of higher levels cannot be initialized to rows of multidimensional arra
 ### 7.4 Compile Time Evaluation 
 
 Constant expressions are evaluated at compile time
+
+### 7.5 Return non-primitive types 
+
+We can return non-primitive types such as struct from a function, as well simple types like int, float, etc.
 
 ----------------------------------------------------------------
 --------------------------------------------------------------------------
