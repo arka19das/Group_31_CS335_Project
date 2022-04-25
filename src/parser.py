@@ -382,10 +382,13 @@ def p_identifier(p):
     )
     rule_name = "identifier"
     p1_node = ST.find(p[1])
+    print(p1_node.array,p1_node.type)
     if p1_node is not None:
-        for tp in p1_node.type.split():
+        t = p1_node.type.split()
+        p[0].type=t[0]
+        for tp in t[1:]:
             if tp!="*":
-                p[0].type+=tp
+                p[0].type=p[0].type+" "+tp
 
         temp_count = str(p1_node.type).count("*")
         if temp_count != 0:
@@ -810,7 +813,7 @@ def p_postfix_expression_3(p):
             v1, v_offset_string = ST.get_tmp_var("int")
             if len(p[1].array)==0:
                 ##akshay check line 809
-                p[0].type.rstrip(' ')
+                p[0].type= p[0].type.rstrip(' ')
                 code_gen.append(["int=", v1, "0",""])
                 activation_record.append(
                     ["int=", v_offset_string, "0",""]
@@ -1203,21 +1206,25 @@ def p_unary_expression(p):
             )
             p[0] = ST.get_dummy()
             p[0] = p[1]
-        elif len(p[1].array) > 0 and isinstance(p[1].array[0], int) and isinstance(p[1].array[-1], str):
+        elif len(p[1].array) > 0 and isinstance(p[1].array[0], int):
+            
             p[0] = p[1]
-            p[0].array = []
+            # p[0].array = []
+            
             v2, v2_offset_string = ST.get_tmp_var(p[1].type)
             # p[]
             # code_gen.append(["OKAY"])
             code_gen.append(["addr", v2, p[1].place, ""])
-            code_gen.append(["int-", v2, v2, code_gen[-2][1]])
             offset_string = cal_offset(p[1])
+            
             activation_record.append(
                 ["int", v2_offset_string, offset_string, ""]
             )
-            activation_record.append(
-                ["int-", v2_offset_string, v2_offset_string, code_gen[-2][1]]
-            )
+            if  isinstance(p[1].array[-1], str):
+                code_gen.append(["int-", v2, v2, code_gen[-2][1]])
+                activation_record.append(
+                    ["int-", v2_offset_string, v2_offset_string, code_gen[-2][1]]
+                )
             p[0].val = p[0].place = v2
         else:
             p[0] = p[1]
