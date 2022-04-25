@@ -3741,6 +3741,7 @@ def p_statement(p):
     | selection_statement
     | iteration_statement
     | jump_statement
+    | return_statement
     """
     rule_name = "statement"
     p[0] = Node(name="Statement", val="", type="", children=[], lno=p.lineno(1),)
