@@ -382,7 +382,6 @@ def p_identifier(p):
     )
     rule_name = "identifier"
     p1_node = ST.find(p[1])
-    print(p1_node.array,p1_node.type)
     if p1_node is not None:
         t = p1_node.type.split()
         p[0].type=t[0]
@@ -3613,7 +3612,8 @@ def p_type_name(p):
         p[0] = p[1]
         p[0].name = "TypeName"
     else:
-        p[1].type = TYPE_EASY[p[1].type.upper()].lower()
+        if p[1].type.upper in PRIMITIVE_TYPES:
+            p[1].type = TYPE_EASY[p[1].type.upper()].lower()
 
         p[0] = Node(name="TypeName", val="", type=p[1].type, lno=p[1].lno, children=[])
         if p[2].type.endswith("*"):
