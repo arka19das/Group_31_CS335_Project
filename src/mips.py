@@ -645,7 +645,7 @@ def mips_generation(full_code_gen):
         )
         if "2" in s and "_" not in s and s!="2load":
             conversion_type = s.split("2")
-            print(code_gen)
+            # print(code_gen)
             mips_set += conversion(conversion_type[0], code_gen[2], conversion_type[1], code_gen[1])
 
         elif s.endswith(operators):
