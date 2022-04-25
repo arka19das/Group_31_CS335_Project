@@ -10,8 +10,8 @@ struct Line {
 float getSlope(struct Line line) {
 
     float slope =  (line.y2 - line.y1) / (line.x2 - line.x1);
-    //print_float(slope);
-    return (line.y2 - line.y1) / (line.x2 - line.x1);
+    print_float(slope);
+    return slope;
 }
 
 int main() {
