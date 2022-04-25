@@ -454,22 +454,25 @@ def p_postfix_expression_3(p):
         p[0].ast = build_AST_2(p, [1], p[2])
         check_identifier(p[1], p.lineno(1))
         offset_string = cal_offset(p[1])
-        # if p[1].type.endswith("*"):
-        #     code_gen.append(["int=", p[1].place, tmp_var, ""])
-        #     activation_record.append(["int=", offset_string, tmp_offset_string, ""])
+        if p[1].type.endswith("*"):
+            code_gen.append(["int=",tmp_var, p[1].place,  ""])
+            activation_record.append(["int=", tmp_offset_string, offset_string, ""])
 
-        # else:
-        #     code_gen.append(
-        #         [p[1].type + "=", p[1].place, tmp_var,""]
-        #     )
-        #     activation_record.append(
-        #         [
-        #             p[1].type + "=",
-        #             offset_string,
-        #             tmp_offset_string,
-        #             ""
-        #         ]
-        #     )
+        else:
+            code_gen.append(
+                [p[1].type + "=", tmp_var,p[1].place, ""]
+            )
+            activation_record.append(
+                [
+                    p[1].type + "=",
+                    
+                    tmp_offset_string,
+                    offset_string,
+                    ""
+                ]
+            )
+        ## ekhane ai
+        print(p[1].place,tmp_var)
 
         # code_gen.append(f"f{tmp_var} := {p[1].place}")
         # DONE: FLOAT not supported yet and neither are pointers dhang se
@@ -1490,7 +1493,6 @@ def p_unary_expression(p):
                 activation_record.append(["label", label1, ":", ""])
                 activation_record.append(["int=", tmp_offset_string, "1", ""])
                 activation_record.append(["label", label2, ":", ""])
-                # print(p[2].place, 1)
 
                 # code_gen.append([p[2].type + "!", tmp_var, p[2].place, ""])
         elif p[1].val not in ["!", "+"] and p[2].type.upper() not in PRIMITIVE_TYPES:
@@ -1605,7 +1607,6 @@ def p_cast_expression(p):
                 )
             )
             p[0] = ST.get_dummy()
-        # print(p[2].type, p[4].type)
         # TODO: EXPLICIT TYPE CONVERSION of pointers of different levels
         # till now it has not been done
         if p[2].type.count("*") != p[4].type.count("*"):
@@ -4653,7 +4654,7 @@ if __name__ == "__main__":
         # if args.output[-4:] == ".dot":
         #     args.output = args.output[:-4]
         #     graph.render(filename=args.output, cleanup=True)
-        # else:
+        # else:cd
         #     graph.render(filename="ast", cleanup=True)
         file = open("3ac.txt", "w")
 
