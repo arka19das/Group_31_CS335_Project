@@ -615,7 +615,7 @@ def mips_generation(full_code_gen):
     freg2 = "$f2"
     freg3 = "$f3"
     mips_set = []
-    mips_set.append([".data\n.text",'\nprint_int:\n    lw $a0, 0($fp)\n    li $v0, 1\n    syscall\n    jr $ra\nprint_char:\n    lw $a0, 0($fp)\n    li $v0, 11\n    syscall\n    jr $ra\nprint_float:\n    l.s $f12, 0($fp)\n    li $v0, 2\n    syscall\n    jr $ra'])
+    mips_set.append([".data\n.text",'\nprint_int:\n    lw $a0, 0($fp)\n    li $v0, 1\n    syscall\n    jr $ra\nprint_char:\n    lw $a0, 0($fp)\n    li $v0, 11\n    syscall\n    jr $ra\nprint_float:\n    l.s $f12, 0($fp)\n    li $v0, 2\n    syscall\n    jr $ra     \nread_int:\n    li $v0, 5\n    syscall\n    jr $ra'])
     # mips_set.append([".globl main"])
     params = []
     return_offset = 0
@@ -767,16 +767,21 @@ def mips_generation(full_code_gen):
             
             for p in params:
                 mips_set.append(p)
-            params = []
+            
             mips_set.append(["LA","$fp",f"{-int(node_type[2])}($fp)"])
             mips_set.append(["move","$sp","$fp"])
             mips_set.append(["jal", code_gen[1], ""])
+            
             mips_set.append(["ADD","$fp","$fp",f"{int(node_type[3])-sz}"])
             # mips_set.append(["MOV","$fp","$t0"])
             mips_set.append(["LW", "$ra", "-8($fp)"])
             mips_set.append(["move","$sp","$fp"])
             mips_set.append(["LW", "$fp", "-4($fp)"])
             mips_set.append(["move","$sp","$fp"])
+            if "read_int" == code_gen[1]:
+                mips_set.append(["SW","$v0",params[0][-1]])
+            # print(node_type,params[0])
+            params = []
             
         elif "param" in s:
             if is_char(code_gen[1]):

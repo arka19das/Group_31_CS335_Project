@@ -760,7 +760,7 @@ pre_append_array = [
         type="int",
         val="",
         is_func=1,
-        argument_list=[],
+        argument_list=["int"],
         lno=-1,
         in_whose_scope="#global",
     ),

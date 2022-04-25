@@ -13,6 +13,9 @@ struct p{
 // }
 
 int main(){
+    int i;
+    read_int(i);
+    print_int(i);
     // struct p z[2];
     // z[1].a=100;
     // print_int(z[1].a);
@@ -22,13 +25,5 @@ int main(){
     // print_int(z.arr[1]);
     // print_float(z.p);
 
-    int arr[2], i;
-    for(i=0;i<2;i++){
-        arr[i]=2<<i;
-        print_int(arr[i]);
-    }
-    // for(int i=0;i<2;i++){
-    //     print_int(arr[i]);
-    // }
     return 0;
 }
