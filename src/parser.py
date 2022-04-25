@@ -1218,7 +1218,7 @@ def p_unary_expression(p):
             offset_string = cal_offset(p[1])
             
             activation_record.append(
-                ["int", v2_offset_string, offset_string, ""]
+                ["addr", v2_offset_string, offset_string, ""]
             )
             if  isinstance(p[1].array[-1], str):
                 code_gen.append(["int-", v2, v2, code_gen[-2][1]])
@@ -3608,7 +3608,8 @@ def p_type_name(p):
     """
     rule_name = "type_name"
     if len(p) == 2:
-        p[1].type = TYPE_EASY[p[1].type.upper()].lower()
+        if p[1].type.upper in PRIMITIVE_TYPES:
+            p[1].type = TYPE_EASY[p[1].type.upper()].lower()
         p[0] = p[1]
         p[0].name = "TypeName"
     else:
