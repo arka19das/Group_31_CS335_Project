@@ -3888,6 +3888,7 @@ def p_new_compound_statement(p):
 
 def p_function_compound_statement(p):
     """function_compound_statement :  LEFT_CURLY_BRACKET pop_scope_rcb
+    | LEFT_CURLY_BRACKET return_statement pop_scope_rcb
     | LEFT_CURLY_BRACKET statement_list return_statement pop_scope_rcb
     | LEFT_CURLY_BRACKET declaration_list return_statement pop_scope_rcb
     | LEFT_CURLY_BRACKET declaration_list statement_list return_statement pop_scope_rcb
