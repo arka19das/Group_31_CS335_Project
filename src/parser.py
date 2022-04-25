@@ -266,31 +266,31 @@ def p_char_constant(p):
     a = p[1][1:-1]
     b = None
     if len(a) == 2:
-        if a == "\a":
+        if a == "\\a":
             b = 7
-        elif a == "\b":
+        elif a == "\\b":
             b = 8
-        elif a == "\f":
+        elif a == "\\f":
             b = 12
-        elif a == "\n":
+        elif a == "\\n":
             b = 10
-        elif a == "\r":
+        elif a == "\\r":
             b = 13
-        elif a == "\t":
+        elif a == "\\t":
             b = 9
-        elif a == "\v":
+        elif a == "\\v":
             b = 11
-        elif a == "'":
+        elif a == "\\'":
             b = 39
-        elif a == '"':
+        elif a == '\\"':
             b = 34
-        elif a == "\\":
+        elif a == "\\\\":
             b = 92
         elif a == "?":
             b = 63
-        elif a == "\0":
+        elif a == "\\0":
             b = 0
-        elif a == "\?":
+        elif a == "\\?":
             b = 63
         else:
             ST.error(
@@ -811,7 +811,7 @@ def p_postfix_expression_3(p):
             if len(p[1].array)==0:
                 ##akshay check line 809
                 p[0].type.rstrip(' ')
-                code_gen.append(["int+", v1, "0",""])
+                code_gen.append(["int=", v1, "0",""])
                 activation_record.append(
                     ["int=", v_offset_string, "0",""]
                 )
@@ -1015,11 +1015,11 @@ def p_postfix_expression_3(p):
                 p[0] = ST.get_dummy()
                 return
             else:
-                i = len(p1v_node.argument_list) - 1
+                i = 0
                 temp_act = []
                 temp_3ac = []
                 func_offset = 0
-                for arguments in reversed(p1v_node.argument_list):
+                for arguments in (p1v_node.argument_list):
                     # HAVE TO THINK
                     # MODIFIED
                     # curVal = p[3].children[i].val
@@ -1119,11 +1119,11 @@ def p_postfix_expression_3(p):
                             for j in range(0,temp_offset,4):
                                 temp_3ac.append([f"param", p[1].val, " ", p[3].children[i].val])
                                 temp_act.append(
-                                    [f"param_int", p[1].val, func_offset++temp_offset-j, f"{-offset-j}($fp)"]
+                                    [f"param_int", p[1].val, func_offset+temp_offset-j, f"{-offset-j}($fp)"]
                                 )
                             
                         func_offset+=temp_offset
-                    i -= 1
+                    i += 1
                     
                 param_size = func_offset
                 func_offset=8
@@ -1203,8 +1203,7 @@ def p_unary_expression(p):
             )
             p[0] = ST.get_dummy()
             p[0] = p[1]
-
-        elif len(p[1].array) > 0 and isinstance(p[1].array[0], int):
+        elif len(p[1].array) > 0 and isinstance(p[1].array[0], int) and isinstance(p[1].array[-1], str):
             p[0] = p[1]
             p[0].array = []
             v2, v2_offset_string = ST.get_tmp_var(p[1].type)
