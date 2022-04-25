@@ -4746,4 +4746,3 @@ if __name__ == "__main__":
     dump_symbol_table_csv(args.v)
 
     # print(ST.scope_tables[])
-arrr
