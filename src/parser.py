@@ -692,46 +692,88 @@ def p_postfix_expression_3(p):
                         )
                         p[0] = ST.get_dummy()
                         return  ## IS RETURN ACTUALLY REQUIRED --ADDED BY ARKA
+                    if p[2]=='.':
+                        size1=struct_node.size
+                        
+                        code_gen.append(["addr", tmp, p[1].place, ""])
+                        activation_record.append(
+                            ["addr", tmp_offset_string, offset_string, "",]
+                        )
+                        code_gen.append(["int+", tmp, tmp, str(size1-curr_list[3]-get_data_type_size(curr_list[0]))])
+                        activation_record.append(
+                            ["int+", tmp_offset_string, tmp_offset_string, str(size1-curr_list[3]-get_data_type_size(curr_list[0]))]
+                        )
+                        if type1.upper() in PRIMITIVE_TYPES:
+                            code_gen.append(
+                                [f"{get_data_type_size(type1)}load", tmp2, tmp, ""]
+                            )
+                            activation_record.append(
+                                [
+                                    f"{get_data_type_size(type1)}load",
+                                    tmp_offset_string2,
+                                    tmp_offset_string,
+                                    "",
+                                ]
+                            )
 
-                    code_gen.append(["addr", tmp, p[1].place, ""])
-                    activation_record.append(
-                        ["addr", tmp_offset_string, offset_string, "",]
-                    )
+                        else:
+                            code_gen.append(
+                                [
+                                    f"{get_data_type_size(type1)}non_primitive_load",
+                                    tmp2,
+                                    tmp,
+                                    "",
+                                ]
+                            )
+                            activation_record.append(
+                                [
+                                    f"{get_data_type_size(type1)}non_primitive_load",
+                                    tmp_offset_string2,
+                                    tmp_offset_string,
+                                    "",
+                                ]
+                            )
                     # if curr_list[3] > 0:
-                    code_gen.append(["int+", tmp, tmp, str(struct_node.size-curr_list[3]-get_data_type_size(curr_list[0]))])
-                    activation_record.append(
-                        ["int+", tmp_offset_string, tmp_offset_string, str(struct_node.size-curr_list[3]-get_data_type_size(curr_list[0]))]
-                    )
-                    if type1.upper() in PRIMITIVE_TYPES:
-                        code_gen.append(
-                            [f"{get_data_type_size(type1)}load", tmp2, tmp, ""]
-                        )
+                    if p[2]=='->':
+                        size1=ST.find(struct_name[0:-2]).size
+                        code_gen.append(["int=", tmp, p[1].place, ""])
                         activation_record.append(
-                            [
-                                f"{get_data_type_size(type1)}load",
-                                tmp_offset_string2,
-                                tmp_offset_string,
-                                "",
-                            ]
+                            ["int=", tmp_offset_string, offset_string, "",]
                         )
+                        code_gen.append(["int+", tmp, tmp, str(size1-curr_list[3]-get_data_type_size(curr_list[0]))])
+                        activation_record.append(
+                            ["int+", tmp_offset_string, tmp_offset_string, str(size1-curr_list[3]-get_data_type_size(curr_list[0]))]
+                        )
+                        if type1.upper() in PRIMITIVE_TYPES:
+                            code_gen.append(
+                                [f"{get_data_type_size(type1)}load", tmp2, tmp, ""]
+                            )
+                            activation_record.append(
+                                [
+                                    f"{get_data_type_size(type1)}load",
+                                    tmp_offset_string2,
+                                    tmp_offset_string,
+                                    "",
+                                ]
+                            )
 
-                    else:
-                        code_gen.append(
-                            [
-                                f"{get_data_type_size(type1)}non_primitive_load",
-                                tmp2,
-                                tmp,
-                                "",
-                            ]
-                        )
-                        activation_record.append(
-                            [
-                                f"{get_data_type_size(type1)}non_primitive_load",
-                                tmp_offset_string2,
-                                tmp_offset_string,
-                                "",
-                            ]
-                        )
+                        else:
+                            code_gen.append(
+                                [
+                                    f"{get_data_type_size(type1)}non_primitive_load",
+                                    tmp2,
+                                    tmp,
+                                    "",
+                                ]
+                            )
+                            activation_record.append(
+                                [
+                                    f"{get_data_type_size(type1)}non_primitive_load",
+                                    tmp_offset_string2,
+                                    tmp_offset_string,
+                                    "",
+                                ]
+                            )
                     ## load instruction may be redundant or not required sometimes
 
             if flag == 0:
