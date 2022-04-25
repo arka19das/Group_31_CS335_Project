@@ -1121,8 +1121,9 @@ def p_postfix_expression_3(p):
                             for j in range(0,temp_offset,4):
                                 temp_3ac.append([f"param", p[1].val, " ", p[3].children[i].val])
                                 temp_act.append(
-                                    [f"param_int", p[1].val, func_offset+temp_offset-j, f"{-offset-j}($fp)"]
+                                    [f"param_int", p[1].val, func_offset+temp_offset-j, f"{offset+j}($fp)"]
                                 )
+                                
                             
                         func_offset+=temp_offset
                     i += 1
