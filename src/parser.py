@@ -4758,11 +4758,23 @@ def async_parse(data, seconds=10):
     return
 
 
+def preprocess(data):
+    new_data = [] 
+    for line in data.split('\n'):
+        if line == "@import math":
+            with open("stdlib/mathlib.c") as math:
+                new_data += math.read().split("\n");
+                pass
+        else:
+            new_data += [line]
+    return '\n'.join(new_data)
+
 if __name__ == "__main__":
     args = getArgs().parse_args()
     graph = Digraph(format="dot")
     with open(str(args.input), "r+") as file:
         data = file.read()
+    data = preprocess(data)
     pre_append_to_table()
     tree = async_parse(data)
 

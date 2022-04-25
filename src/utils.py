@@ -60,20 +60,13 @@ PRIMITIVE_TYPES = TYPE_CHAR + TYPE_FLOAT + TYPE_INTEGER
 
 SIZE_OF_TYPE = {
     "VOID": 0,
-    "CHAR": 1,
-    "SHORT": 2,
+    "CHAR": 4,
     "FLOAT": 4,
     "INT": 4,
-    "DOUBLE": 8,
-    "SHORT INT": 2,
     "SIGNED CHAR": 1,
-    "SIGNED SHORT": 2,
-    "SIGNED SHORT INT": 2,
     "SIGNED": 4,
     "SIGNED INT": 4,
     "UNSIGNED CHAR": 1,
-    "UNSIGNED SHORT": 2,
-    "UNSIGNED SHORT INT": 2,
     "UNSIGNED": 4,
     "UNSIGNED INT": 4,
 }
