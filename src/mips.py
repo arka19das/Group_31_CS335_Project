@@ -615,7 +615,7 @@ def mips_generation(full_code_gen):
     freg2 = "$f2"
     freg3 = "$f3"
     mips_set = []
-    mips_set.append([".data\n.text",'\nprint_int:\n    lw $a0, 0($fp)\n    li $v0, 1\n    syscall\n    jr $ra\nprint_char:\n    lw $a0, 0($fp)\n    li $v0, 11\n    syscall\n    jr $ra\nprint_float:\n    l.s $f12, 0($fp)\n    li $v0, 2\n    syscall\n    jr $ra     \nread_int:\n    li $v0, 5\n    syscall\n    jr $ra'])
+    mips_set.append([".data\n.text",'\nprint_int:\n    lw $a0, 0($fp)\n    li $v0, 1\n    syscall\n    jr $ra\nprint_char:\n    lw $a0, 0($fp)\n    li $v0, 11\n    syscall\n    jr $ra\nprint_float:\n    l.s $f12, 0($fp)\n    li $v0, 2\n    syscall\n    jr $ra     \nread_int:\n    li $v0, 5\n    syscall\n    jr $ra\nread_char:\n    li $v0, 12\n    syscall\n    jr $ra\n'])
     # mips_set.append([".globl main"])
     params = []
     return_offset = 0
@@ -645,7 +645,7 @@ def mips_generation(full_code_gen):
         )
         if "2" in s and "_" not in s and s!="2load":
             conversion_type = s.split("2")
-            # print(code_gen)
+            print(code_gen)
             mips_set += conversion(conversion_type[0], code_gen[2], conversion_type[1], code_gen[1])
 
         elif s.endswith(operators):
@@ -780,6 +780,10 @@ def mips_generation(full_code_gen):
             mips_set.append(["move","$sp","$fp"])
             if "read_int" == code_gen[1]:
                 mips_set.append(["SW","$v0",params[0][-1]])
+            elif "read_char" == code_gen[1]:
+                mips_set.append(["SW","$v0",params[0][-1]])   
+            # elif "read_float" == code_gen[1]:
+            #     mips_set.append(["SW","$f0",params[0][-1]])    
             # print(node_type,params[0])
             params = []
             
