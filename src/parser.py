@@ -4521,10 +4521,12 @@ def p_return_statement(p):
                 Error(
                     p.lineno(1),
                     rule_name,
-                    "warning",
+                    "compilation error",
                     f"Function return type is not {p[2].type}",
                 )
             )
+            p[0]=ST.get_dummy()
+            return
         # return_size=param_size=0
         temp = ST.scope_tables[ST.currentScope].name.split("_")[0]
         node =ST.find(temp)
