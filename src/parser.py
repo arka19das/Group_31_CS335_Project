@@ -472,7 +472,6 @@ def p_postfix_expression_3(p):
                 ]
             )
         ## ekhane ai
-        print(p[1].place,tmp_var)
 
         # code_gen.append(f"f{tmp_var} := {p[1].place}")
         # DONE: FLOAT not supported yet and neither are pointers dhang se
@@ -612,7 +611,7 @@ def p_postfix_expression_3(p):
                 children=[],
                 place=p[1].place,
                 offset=p[1].offset,
-                in_whose_scope=p[1].in_whose_scope,
+                in_whose_scope=ST.scope_tables[ST.currentScope].name,
                 
             )
             p[0].ast = build_AST_2(p, [1, 3], p[2])
@@ -756,7 +755,7 @@ def p_postfix_expression_3(p):
                 parentStruct=p[1].parentStruct,
                 place=p[1].place,
                 offset=p[1].offset,
-                in_whose_scope=p[1].in_whose_scope,
+                in_whose_scope=ST.scope_tables[ST.currentScope].name,
                 
             )
             p[0].ast = build_AST_2(p, [1, 3], "[]")
@@ -1183,7 +1182,7 @@ def p_unary_expression(p):
                 level=p[2].level,
                 lhs=1,
                 offset=p[2].offset,
-                in_whose_scope=p[2].in_whose_scope,
+                in_whose_scope=ST.scope_tables[ST.currentScope].name,
                 
             )
             check_identifier(p[2], p.lineno(2))
@@ -1256,7 +1255,7 @@ def p_unary_expression(p):
                 place=tmp_var,
                 lhs=1,
                 offset=p[2].offset,
-                in_whose_scope=p[2].in_whose_scope,
+                in_whose_scope=ST.scope_tables[ST.currentScope].name,
                 
             )
 
@@ -1286,7 +1285,7 @@ def p_unary_expression(p):
                 children=[p[2]],
                 lhs=1,
                 offset=p[2].offset,
-                in_whose_scope=p[2].in_whose_scope,
+                in_whose_scope=ST.scope_tables[ST.currentScope].name,
                 
             )
             if "__tmp" in p[2].place or is_const(p[2].place):
@@ -1330,7 +1329,7 @@ def p_unary_expression(p):
                 type=p[2].type[:-2],
                 offset=p[2].offset,
                 addr=p[2].place,
-                in_whose_scope=p[2].in_whose_scope,
+                in_whose_scope=ST.scope_tables[ST.currentScope].name,
                 
             )
             temp_var, tmp_offset_string = ST.get_tmp_var(p[2].type[:-2])
@@ -1401,7 +1400,7 @@ def p_unary_expression(p):
                 level=p[2].level,
                 lhs=1,
                 offset=p[2].offset,
-                in_whose_scope=p[2].in_whose_scope,
+                in_whose_scope=ST.scope_tables[ST.currentScope].name,
                 
             )
             code_gen.append([p[2].type + "_uminus", tmp_var, "0", p[2].place])
@@ -1444,7 +1443,7 @@ def p_unary_expression(p):
                     lhs=1,
                     level=p[2].level,
                     offset=p[2].offset,
-                    in_whose_scope=p[2].in_whose_scope,
+                    in_whose_scope=ST.scope_tables[ST.currentScope].name,
                     
                 )
                 code_gen.append([p[2].type + "~", tmp_var, p[2].place, ""])
@@ -1475,7 +1474,7 @@ def p_unary_expression(p):
                     lhs=1,
                     level=p[2].level,
                     offset=p[2].offset,
-                    in_whose_scope=p[2].in_whose_scope,
+                    in_whose_scope=ST.scope_tables[ST.currentScope].name,
                     
                 )
                 label1 = ST.get_tmp_label()
@@ -1513,7 +1512,7 @@ def p_unary_expression(p):
                 children=[],
                 lhs=1,
                 offset=p[2].offset,
-                in_whose_scope=p[2].in_whose_scope,
+                in_whose_scope=ST.scope_tables[ST.currentScope].name,
             )
         p[0].ast = build_AST(p, rule_name)
     else:
@@ -1741,6 +1740,7 @@ def p_additive_expression(p):
             tmp_var3 = p[3].place
             offset_string1 = cal_offset(p[1])
             offset_string3 = cal_offset(p[3])
+            print(p[1])
             tmp_offset_string1 = offset_string1
             tmp_offset_string3 = offset_string3
             if p[1].type != p[0].type:
