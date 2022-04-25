@@ -2,7 +2,7 @@
 
 int main(){  
     int i;
-    i = read_int();
+    read_int(i);
     // i=1000;
     if (i<100)
     {

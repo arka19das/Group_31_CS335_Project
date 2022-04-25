@@ -29,7 +29,7 @@ void quickSort (int * data, int low, int high) {
 
 	quickSort( data, low, p-1);
 	quickSort( data, p+1, high);
-
+    return;
 }
 int main() {
 	int i;
