@@ -277,7 +277,7 @@ class SymbolTable:
         if vartype is not None:
             scope = self.currentScope
             scope_table = self.scope_tables[scope]
-            print(scope_table.name)
+            # print(scope_table.name)
             node = Node(
                 name=vname,
                 val=value,

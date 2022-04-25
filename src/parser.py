@@ -2684,7 +2684,7 @@ def p_assignment_expression(p):
                         )
                 else:
                     # ARKA DOUBTS
-                    print("else", p[0].type, temp_node.type)
+                    # print("else", p[0].type, temp_node.type)
                     offset_string1 = cal_offset(ST.find(p[1].addr))
                     
                     code_gen.append(
