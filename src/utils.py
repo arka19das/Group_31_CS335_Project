@@ -63,10 +63,10 @@ SIZE_OF_TYPE = {
     "CHAR": 4,
     "FLOAT": 4,
     "INT": 4,
-    "SIGNED CHAR": 1,
+    "SIGNED CHAR": 4,
     "SIGNED": 4,
     "SIGNED INT": 4,
-    "UNSIGNED CHAR": 1,
+    "UNSIGNED CHAR": 4,
     "UNSIGNED": 4,
     "UNSIGNED INT": 4,
 }
