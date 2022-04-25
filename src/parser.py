@@ -1208,11 +1208,11 @@ def p_unary_expression(p):
             p[0] = p[1]
         elif len(p[1].array) > 0 and isinstance(p[1].array[0], int):
             
-            p[0] = p[1]
+            # p[0] = p[1]
             # p[0].array = []
-            
             v2, v2_offset_string = ST.get_tmp_var(p[1].type)
             # p[]
+            p[0]=ST.find(v2)
             # code_gen.append(["OKAY"])
             code_gen.append(["addr", v2, p[1].place, ""])
             offset_string = cal_offset(p[1])
@@ -4746,3 +4746,4 @@ if __name__ == "__main__":
     dump_symbol_table_csv(args.v)
 
     # print(ST.scope_tables[])
+arrr
