@@ -3328,8 +3328,28 @@ def p_direct_declarator_3(p):
     p[0].ast = build_AST(p, rule_name)
     p[0].level=p[1].level+1
     p[0].array = copy.deepcopy(p[1].array)
-    p[0].array.append(int(p[3].place))
-
+    if not is_const(p[3].place):
+        ST.error(
+                    Error(
+                        p[1].lno,
+                        rule_name,
+                        "compilation error",
+                        f"Array {p[1].val} cannot have variable dimension",
+                    )
+                )
+    else:
+        if p[3].type.upper() in TYPE_FLOAT:
+            ST.error(
+                        Error(
+                            p[1].lno,
+                            rule_name,
+                            "compilation error",
+                            f"Array {p[1].val} cannot have float type dimension",
+                        )
+                    )
+        if p[3].type.upper() in TYPE_INTEGER+TYPE_CHAR:
+            p[0].array.append(int(p[3].place))
+    # p[0].array.append(5)
 
 def p_direct_declarator_4(p):
     """direct_declarator : direct_declarator LEFT_THIRD_BRACKET RIGHT_THIRD_BRACKET
@@ -3340,21 +3360,14 @@ def p_direct_declarator_4(p):
         p[0].ast = p[1].ast
         # p[0].ast = build_AST(p, rule_name)
     else:
-        if p[2] == "[":
-            p[0].array = copy.deepcopy(p[1].array)
-            if len(p[0].array) > 0:
-                ST.error(
-                    Error(
-                        p[1].lno,
-                        rule_name,
-                        "compilation error",
-                        f"Array {p[1].val} cannot have variable dimension except first",
-                    )
-                )
-                p[0] = ST.get_dummy()
-            p[0].array.append(0)
-        p[0].level=p[1].level+1
-        p[0].ast = build_AST(p, rule_name)
+        ST.error(
+            Error(
+                p[1].lno,
+                rule_name,
+                "compilation error",
+                f"Array {p[1].val} cannot have empty dimension",
+            )
+        )
 
     if p[3] == ")":
         if ST.parent_table.find(p[1].val):

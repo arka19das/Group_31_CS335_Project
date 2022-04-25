@@ -14,8 +14,14 @@ struct p{
 
 int main(){
     int i;
-    read_int(i);
-    print_int(i);
+    int arr[i];
+    int arr1[5];
+    int arr3[5+10];
+    int arr5[5+'a'];
+    int arr6[1.1];
+    int arr7[];
+    // read_int(i);
+    // print_int(i);
     // struct p z[2];
     // z[1].a=100;
     // print_int(z[1].a);
