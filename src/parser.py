@@ -1396,7 +1396,7 @@ def p_unary_expression(p):
                 val=p[2].val,
                 lno=p[2].lno,
                 type=p[2].type + " *",
-                level=p[1].level + 1,
+                level=p[2].level + 1,
                 children=[p[2]],
                 lhs=1,
                 offset=p[2].offset,
