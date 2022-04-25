@@ -52,7 +52,6 @@ def cal_offset(p):
     count_ = p.in_whose_scope.count("_")
     offset = 0
 
-    #print(p.val,p.lno, ST.scope_tables[ST.currentScope].name,p.in_whose_scope)
     temp=1
     temp=table_name_to_num[p.in_whose_scope]
     for c_ in range(count_):  # CHECK ARKA BC
@@ -63,7 +62,6 @@ def cal_offset(p):
     offset += p.offset
     offset+=get_data_type_size(p.type)
     
-    # print(offset ,p.place,p.in_whose_scope,offsets[1])
     if offset:
         offset_string = f"{-offset}($fp)"
     else:
@@ -385,8 +383,11 @@ def p_identifier(p):
     rule_name = "identifier"
     p1_node = ST.find(p[1])
     if p1_node is not None:
-        p[0].type = p1_node.type
-        temp_count = str(p[0].type).count("*")
+        for tp in p1_node.type.split():
+            if tp!="*":
+                p[0].type+=tp
+
+        temp_count = str(p1_node.type).count("*")
         if temp_count != 0:
             p[0].level = temp_count
         p[0].array = p1_node.array
@@ -395,8 +396,8 @@ def p_identifier(p):
         p[0].ast = build_AST(p, rule_name)
         p[0].offset = p1_node.offset
         p[0].in_whose_scope = p1_node.in_whose_scope
-        if temp_count != p[0].level:
-            p[0].type += (" *") * (p[0].level - temp_count)
+        if p[0].level:
+            p[0].type += (" *") * p[0].level
 
     else:
         ST.error(
@@ -773,6 +774,7 @@ def p_postfix_expression_3(p):
                     )
                 )
                 p[0] = ST.get_dummy()
+                return
             ##begin AKSHAY ADDED THIS..ASK FOR HELP
             elif p[1].type.count("*") > 0:
                 p[0].type = p[1].type[:-2]
@@ -806,6 +808,71 @@ def p_postfix_expression_3(p):
 
             d = len(p[1].array) - p[0].level - 1
             v1, v_offset_string = ST.get_tmp_var("int")
+            if len(p[1].array)==0:
+                ##akshay check line 809
+                p[0].type.rstrip(' ')
+                code_gen.append(["int+", v1, "0",""])
+                activation_record.append(
+                    ["int=", v_offset_string, "0",""]
+                )
+                code_gen.append(["int+", v1, v1, temp_var])
+                activation_record.append(
+                    ["int+", v_offset_string, v_offset_string, temp_offset_string,]
+                )
+                code_gen.append(["int*", v1, v1, str(get_data_type_size(p[0].type))])
+                activation_record.append(
+                    [
+                        "int*",
+                        v_offset_string,
+                        v_offset_string,
+                        str(get_data_type_size(p[0].type)),
+                    ]
+                )
+                v2, v2_offset_string = ST.get_tmp_var(p[1].type)
+                # p[]
+
+                code_gen.append(["int=", v2, p[1].place, ""])
+                activation_record.append(
+                    ["int=", v2_offset_string, offset_string, ""]
+                )
+
+                code_gen.append(["int-", v2, v2, v1])
+                
+                activation_record.append(
+                    ["int-", v2_offset_string, v2_offset_string, v_offset_string,]
+                )
+
+                type1 = p[0].type  # TODO: BUGGED
+                v3, v3_offset_string = ST.get_tmp_var(type1)
+                p[0].place = v3
+                p[0].addr = v2
+                p[0].offset=ST.find(v3).offset
+                # agar isko stack pe liya to p[0].place ko v3 me store krne se gayab hojayega
+                if type1.upper() in PRIMITIVE_TYPES:
+                    code_gen.append([f"{get_data_type_size(type1)}load", v3, v2, ""])
+                    activation_record.append(
+                        [
+                            f"{get_data_type_size(type1)}load",
+                            v3_offset_string,
+                            v2_offset_string,
+                            "",
+                        ]
+                    )
+
+                else:
+                    code_gen.append(
+                        [f"{get_data_type_size(type1)}non_primitive_load", v3, v2, ""]
+                    )
+                    activation_record.append(
+                        [
+                            f"{get_data_type_size(type1)}non_primitive_load",
+                            v3_offset_string,
+                            v2_offset_string,
+                            "",
+                        ]
+                    )
+                return
+            
             if isinstance(p[1].array[-1], int):
                 code_gen.append(["int=", v1, "0",""])
                 activation_record.append(
@@ -1740,7 +1807,6 @@ def p_additive_expression(p):
             tmp_var3 = p[3].place
             offset_string1 = cal_offset(p[1])
             offset_string3 = cal_offset(p[3])
-            print(p[1])
             tmp_offset_string1 = offset_string1
             tmp_offset_string3 = offset_string3
             if p[1].type != p[0].type:
