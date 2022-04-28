@@ -35,18 +35,21 @@ int main() {
 	int i;
 	int j;
 	int k;
-	int a[50];
+    int sz = 5;
+	int a[5];
 	j = 31;
-	for ( i = 0; i < 50; i++) 
+	for ( i = 0; i < sz; i++) 
 	{ 
-		a[i] = j*35 - i;
+        int x;
+        read_int(x);    
+		a[i] = x;
 		print_int(a[i]);
 		print_char(' ');
 	}
 	print_char('\n');
 
-	quickSort(a,0,49);
-	for ( i = 0; i < 50; i++) 
+	quickSort(a,0,sz);
+	for ( i = 0; i < sz; i++) 
 	{ 
 		print_int(a[i]);
 		print_char(' ');
